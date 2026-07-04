@@ -37675,7 +37675,7 @@ app.get("/sub/:userId", async (req, res) => {
     }
     if (!allKeys.includes(userKey)) allKeys.unshift(userKey);
     const combined = allKeys.join("\n");
-    res.send(combined);
+    res.send(Buffer.from(combined).toString("base64"));
   } catch(e) {
     console.error(e);
     res.status(500).send("");
