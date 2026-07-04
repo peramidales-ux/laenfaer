@@ -56796,7 +56796,7 @@ var CHANNEL_URL = process.env.CHANNEL_URL ?? "https://t.me/laenfaer_vpn";
 var BOT_USERNAME = process.env.BOT_USERNAME ?? "laenfaer_vpn_bot";
 var YOOMONEY_URL = "https://yoomoney.ru/to/4100118805863911";
 function mainMenuKb() {
-  return new InlineKeyboard().text("\u{1F511} \u041F\u043E\u043B\u0443\u0447\u0438\u0442\u044C \u043A\u043B\u044E\u0447", "get_free_key_random").row().text("\u{1F6D2} \u041C\u0430\u0433\u0430\u0437\u0438\u043D", "open_shop").text("\u{1F464} \u041F\u0440\u043E\u0444\u0438\u043B\u044C", "open_profile").row().text("\u{1F310} \u041B\u0438\u0447\u043D\u044B\u0439 \u043A\u0430\u0431\u0438\u043D\u0435\u0442", { web_app: { url: process.env.RENDER_EXTERNAL_URL || "https://laenfaer.onrender.com/app" } }).row().text("\u{1F4AC} \u041F\u043E\u0434\u0434\u0435\u0440\u0436\u043A\u0430", "open_support").text("\u{1F4CA} \u0421\u0435\u0440\u0432\u0435\u0440\u044B", "open_status").row().text("\u2753 \u041A\u0430\u043A \u043F\u043E\u0434\u043A\u043B\u044E\u0447\u0438\u0442\u044C\u0441\u044F", "how_to_connect").row();
+  return new InlineKeyboard().text("\u{1F511} \u041F\u043E\u043B\u0443\u0447\u0438\u0442\u044C \u043A\u043B\u044E\u0447", "get_free_key_random").row().text("\u{1F6D2} \u041C\u0430\u0433\u0430\u0437\u0438\u043D", "open_shop").text("\u{1F464} \u041F\u0440\u043E\u0444\u0438\u043B\u044C", "open_profile").row().text("\u{1F4AC} \u041F\u043E\u0434\u0434\u0435\u0440\u0436\u043A\u0430", "open_support").text("\u{1F4CA} \u0421\u0435\u0440\u0432\u0435\u0440\u044B", "open_status").row().text("\u{1F310} \u041B\u0438\u0447\u043D\u044B\u0439 \u043A\u0430\u0431\u0438\u043D\u0435\u0442", "open_miniapp").row().text("\u2753 \u041A\u0430\u043A \u043F\u043E\u0434\u043A\u043B\u044E\u0447\u0438\u0442\u044C\u0441\u044F", "how_to_connect").row();
 }
 function profileKb() {
   return new InlineKeyboard().text("\u{1F511} \u041C\u043E\u0439 \u043A\u043B\u044E\u0447", "show_key").row().text("\u{1F4B8} \u0412\u044B\u0432\u0435\u0441\u0442\u0438 \u0447\u0435\u0440\u0435\u0437 \u0421\u0411\u041F", "open_withdraw").row().text("\u{1F381} \u0420\u0435\u0444\u0435\u0440\u0430\u043B\u044B", "open_ref").row().text("\u{1F4D6} \u0418\u043D\u0441\u0442\u0440\u0443\u043A\u0446\u0438\u044F", "open_info").row().text("\u{1F4AC} \u041F\u043E\u0434\u0434\u0435\u0440\u0436\u043A\u0430", "open_support").row().text("\u{1F3E0} \u0412 \u0433\u043B\u0430\u0432\u043D\u043E\u0435 \u043C\u0435\u043D\u044E", "to_main");
@@ -57515,6 +57515,16 @@ userBot.callbackQuery("open_status", async (ctx) => {
     "\u{1F4CA} \u0421\u0422\u0410\u0422\u0423\u0421 \u0421\u0415\u0420\u0412\u0415\u0420\u041E\u0412\n\n\u0413\u0435\u0440\u043C\u0430\u043D\u0438\u044F \u2014 \u{1F7E2} \u041E\u043D\u043B\u0430\u0439\u043D\n\u041D\u0438\u0434\u0435\u0440\u043B\u0430\u043D\u0434\u044B \u2014 \u{1F7E2} \u041E\u043D\u043B\u0430\u0439\u043D\n\u0424\u0438\u043D\u043B\u044F\u043D\u0434\u0438\u044F \u2014 \u{1F7E2} \u041E\u043D\u043B\u0430\u0439\u043D\n\n\u041D\u0430\u0433\u0440\u0443\u0437\u043A\u0430: 12%\n\u0414\u043E\u0441\u0442\u0443\u043F\u043D\u043E\u0441\u0442\u044C: 99.9%\n\n\u0412\u0441\u0435 \u0441\u0438\u0441\u0442\u0435\u043C\u044B \u0440\u0430\u0431\u043E\u0442\u0430\u044E\u0442 \u0448\u0442\u0430\u0442\u043D\u043E!",
     { reply_markup: backToMainKb() }
   );
+  await ctx.answerCallbackQuery();
+});
+userBot.callbackQuery("open_miniapp", async (ctx) => {
+  const domain = getSubDomain();
+  const appUrl = domain ? domain + "/app" : "https://laenfaer.onrender.com/app";
+  const { ReplyKeyboard } = await import("grammy");
+  const kb = new ReplyKeyboard().webApp("\u{1F310} \u041E\u0442\u043A\u0440\u044B\u0442\u044C", appUrl).row().text("\u{1F3E0} \u0413\u043B\u0430\u0432\u043D\u043E\u0435 \u043C\u0435\u043D\u044E");
+  await ctx.reply("\u{1F310} \u041D\u0430\u0436\u043C\u0438 \u043A\u043D\u043E\u043F\u043A\u0443 \u043D\u0438\u0436\u0435, \u0447\u0442\u043E\u0431\u044B \u043E\u0442\u043A\u0440\u044B\u0442\u044C \u043B\u0438\u0447\u043D\u044B\u0439 \u043A\u0430\u0431\u0438\u043D\u0435\u0442:", {
+    reply_markup: kb
+  });
   await ctx.answerCallbackQuery();
 });
 userBot.on("message:photo", async (ctx) => {
