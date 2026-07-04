@@ -59055,7 +59055,8 @@ async function registerCommands() {
       await userBot.api.setChatMenuButton({
         menu_button: {
           type: "web_app",
-          text: "\uD83C\uDF10 LAENFAER VPN"
+          text: "\uD83C\uDF10 LAENFAER VPN",
+          web_app: { url: miniAppUrl }
         }
       });
       logger.info("Mini App menu button registered");
