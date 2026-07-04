@@ -38228,74 +38228,113 @@ app.get("/app", async (req, res) => {
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-html,body{font-family:'Inter',-apple-system,sans-serif;background:#0d0d14;color:#fff;min-height:100vh;overflow-x:hidden}
-body{background:linear-gradient(180deg,#111119 0%,#0d0d14 100%)}
-.shell{max-width:480px;margin:0 auto;min-height:100vh;position:relative;padding-bottom:68px}
-.page{position:absolute;top:0;left:0;right:0;opacity:0;transform:translateY(8px) scale(.98);pointer-events:none;transition:all .3s cubic-bezier(.4,0,.2,1);padding:12px 14px 20px;will-change:transform,opacity}
+html,body{font-family:'Inter',-apple-system,sans-serif;background:#07090D;color:#fff;min-height:100vh;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse at 50% 0%,rgba(139,197,63,.06) 0%,transparent 60%);pointer-events:none}
+.shell{max-width:480px;margin:0 auto;min-height:100vh;position:relative;padding-bottom:72px}
+
+/* Particles canvas */
+#particles{position:fixed;inset:0;z-index:0;pointer-events:none}
+
+/* Pages */
+.page{position:absolute;top:0;left:0;right:0;opacity:0;transform:translateY(10px);pointer-events:none;transition:all .35s cubic-bezier(.4,0,.2,1);padding:14px 16px 20px;will-change:transform,opacity}
 .page.on{opacity:1;transform:none;pointer-events:auto;position:relative}
-.hdr{padding:8px 0 16px;text-align:center}
-.hdr-logo{font-size:18px;font-weight:900;letter-spacing:1.5px;text-transform:uppercase;background:linear-gradient(135deg,#7c3aed 0%,#2563eb 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
-.hdr-sub{font-size:11px;color:rgba(255,255,255,.3);margin-top:2px}
-.c{background:#16161f;border:1px solid rgba(255,255,255,.06);border-radius:16px;padding:18px;margin-bottom:12px;position:relative;overflow:hidden}
-.c::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent 10%,rgba(255,255,255,.08) 50%,transparent 90%)}
-.c-accent{border-color:rgba(124,58,237,.2);background:linear-gradient(135deg,rgba(124,58,237,.06),rgba(37,99,235,.04))}
-.st{font-size:11px;font-weight:700;color:rgba(255,255,255,.3);text-transform:uppercase;letter-spacing:1.2px;margin-bottom:14px}
+
+/* Header */
+.hdr{padding:12px 0 18px;text-align:center}
+.hdr-logo{font-size:17px;font-weight:900;letter-spacing:2px;text-transform:uppercase;color:#8BC53F}
+.hdr-sub{font-size:11px;color:rgba(255,255,255,.2);margin-top:3px}
+
+/* Glass card */
+.c{background:rgba(17,28,45,.6);border:1px solid rgba(139,197,63,.08);border-radius:24px;padding:20px;margin-bottom:14px;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);position:relative;overflow:hidden}
+.c::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(139,197,63,.15),transparent)}
+.c-glow{box-shadow:0 0 40px rgba(139,197,63,.04),inset 0 0 40px rgba(139,197,63,.02)}
+
+/* Section title */
+.st{font-size:11px;font-weight:700;color:rgba(139,197,63,.6);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:14px}
+
+/* Badge */
 .badge{display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:20px;font-size:12px;font-weight:700}
-.badge-on{background:rgba(34,197,94,.1);color:#4ade80;border:1px solid rgba(34,197,94,.15)}
-.badge-off{background:rgba(239,68,68,.1);color:#f87171;border:1px solid rgba(239,68,68,.15)}
+.badge-on{background:rgba(139,197,63,.1);color:#8BC53F;border:1px solid rgba(139,197,63,.15)}
+.badge-off{background:rgba(239,68,68,.08);color:#f87171;border:1px solid rgba(239,68,68,.12)}
 .badge-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
-.badge-on .badge-dot{background:#4ade80;box-shadow:0 0 8px rgba(74,222,128,.5);animation:blink 2s ease infinite}
+.badge-on .badge-dot{background:#8BC53F;box-shadow:0 0 8px rgba(139,197,63,.6);animation:blink 2s ease infinite}
 .badge-off .badge-dot{background:#f87171}
 @keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
-.hero{text-align:center;padding:24px 16px 20px}
-.hero-emoji{font-size:44px;margin-bottom:10px;display:block;animation:float 3s ease-in-out infinite}
-@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+
+/* Hero */
+.hero{text-align:center;padding:20px 16px 24px}
+.hero-icon{width:64px;height:64px;border-radius:20px;background:rgba(139,197,63,.08);border:1px solid rgba(139,197,63,.12);display:flex;align-items:center;justify-content:center;margin:0 auto 12px;font-size:28px;animation:float 3s ease-in-out infinite}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
 .hero-name{font-size:18px;font-weight:800}
-.hero-id{font-size:11px;color:rgba(255,255,255,.25);margin-top:3px}
-.days-box{text-align:center;padding:20px 0 8px}
-.days-num{font-size:64px;font-weight:900;line-height:1;background:linear-gradient(135deg,#7c3aed,#2563eb);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
-.days-label{font-size:11px;color:rgba(255,255,255,.25);text-transform:uppercase;letter-spacing:2px;margin-top:4px}
-.days-exp{font-size:11px;color:rgba(255,255,255,.2);margin-top:8px}
-.stats{display:flex;gap:8px;margin-bottom:12px}
-.stat{flex:1;background:#16161f;border:1px solid rgba(255,255,255,.04);border-radius:14px;padding:14px 8px;text-align:center}
-.stat-v{font-size:18px;font-weight:800;line-height:1}
-.stat-l{font-size:9px;color:rgba(255,255,255,.25);margin-top:6px;text-transform:uppercase;letter-spacing:.8px;font-weight:600}
-.c1{color:#4ade80}.c2{color:#a78bfa}.c3{color:#facc15}.c4{color:#f472b6}
-.link{background:#111119;border:1px solid rgba(255,255,255,.04);border-radius:12px;padding:12px;font-family:'SF Mono',monospace;font-size:10px;word-break:break-all;color:rgba(167,139,250,.7);line-height:1.6;margin-bottom:12px}
-.btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;font-family:'Inter',sans-serif;font-size:13px;font-weight:700;padding:14px;border-radius:14px;border:none;cursor:pointer;transition:transform .12s,opacity .12s;text-decoration:none}
-.btn:active{transform:scale(.97);opacity:.8}
-.btn-p{background:linear-gradient(135deg,#7c3aed,#2563eb);color:#fff;box-shadow:0 4px 20px rgba(124,58,237,.2)}
-.btn-g{background:rgba(255,255,255,.05);color:rgba(255,255,255,.7);border:1px solid rgba(255,255,255,.06)}
+.hero-id{font-size:11px;color:rgba(255,255,255,.2);margin-top:3px}
+
+/* Days */
+.days{text-align:center;padding:16px 0 8px}
+.days-num{font-size:72px;font-weight:900;line-height:1;color:#8BC53F;text-shadow:0 0 40px rgba(139,197,63,.2)}
+.days-lbl{font-size:11px;color:rgba(255,255,255,.2);text-transform:uppercase;letter-spacing:2px;margin-top:6px}
+.days-exp{font-size:11px;color:rgba(255,255,255,.15);margin-top:8px}
+
+/* Stats */
+.stats{display:flex;gap:8px;margin-bottom:14px}
+.stat{flex:1;background:rgba(17,28,45,.5);border:1px solid rgba(139,197,63,.06);border-radius:18px;padding:16px 6px;text-align:center}
+.stat-v{font-size:20px;font-weight:800;line-height:1}
+.stat-l{font-size:9px;color:rgba(255,255,255,.2);margin-top:6px;text-transform:uppercase;letter-spacing:.8px;font-weight:600}
+.c1{color:#8BC53F}.c2{color:#60a5fa}.c3{color:#facc15}.c4{color:#f472b6}
+
+/* Link */
+.link{background:rgba(7,9,13,.6);border:1px solid rgba(139,197,63,.06);border-radius:14px;padding:12px 14px;font-family:'SF Mono',monospace;font-size:10px;word-break:break-all;color:rgba(139,197,63,.6);line-height:1.6;margin-bottom:12px}
+
+/* Buttons */
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;font-family:'Inter',sans-serif;font-size:13px;font-weight:700;padding:14px;border-radius:16px;border:none;cursor:pointer;transition:all .15s;text-decoration:none}
+.btn:active{transform:scale(.97);opacity:.85}
+.btn-p{background:linear-gradient(135deg,#8BC53F,#6B9E2F);color:#07090D;box-shadow:0 4px 24px rgba(139,197,63,.2)}
+.btn-g{background:rgba(139,197,63,.06);color:rgba(255,255,255,.6);border:1px solid rgba(139,197,63,.1)}
 .btn-row{display:flex;gap:8px}
 .btn-row .btn{flex:1}
-.srv{display:flex;align-items:center;gap:10px;padding:12px;background:rgba(255,255,255,.02);border-radius:12px;margin-bottom:6px}
-.srv-dot{width:6px;height:6px;border-radius:50%;background:#4ade80;flex-shrink:0;box-shadow:0 0 6px rgba(74,222,128,.4)}
+
+/* Server */
+.srv{display:flex;align-items:center;gap:10px;padding:12px 14px;background:rgba(17,28,45,.4);border:1px solid rgba(139,197,63,.04);border-radius:14px;margin-bottom:6px}
+.srv-dot{width:6px;height:6px;border-radius:50%;background:#8BC53F;flex-shrink:0;box-shadow:0 0 8px rgba(139,197,63,.4)}
 .srv-info{flex:1;min-width:0}
 .srv-name{font-size:12px;font-weight:600}
-.srv-meta{font-size:10px;color:rgba(255,255,255,.25);margin-top:1px}
-.srv-ms{font-size:10px;font-weight:700;color:#4ade80;flex-shrink:0}
-.ref-link{background:#111119;border:1px dashed rgba(124,58,237,.2);border-radius:10px;padding:10px;text-align:center;font-family:monospace;font-size:11px;color:#a78bfa;margin:10px 0}
-.faq-q{font-size:12px;font-weight:700;color:#a78bfa;margin-bottom:6px}
-.faq-a{font-size:12px;color:rgba(255,255,255,.35);line-height:1.6;margin-bottom:12px}
+.srv-meta{font-size:10px;color:rgba(255,255,255,.2);margin-top:1px}
+.srv-ms{font-size:10px;font-weight:700;color:#8BC53F;flex-shrink:0}
+
+/* Ref */
+.ref{background:rgba(7,9,13,.5);border:1px dashed rgba(139,197,63,.12);border-radius:12px;padding:10px;text-align:center;font-family:monospace;font-size:11px;color:#8BC53F;margin:10px 0}
+
+/* FAQ */
+.faq-q{font-size:12px;font-weight:700;color:#8BC53F;margin-bottom:6px}
+.faq-a{font-size:12px;color:rgba(255,255,255,.3);line-height:1.6;margin-bottom:14px}
+
+/* Apps */
 .app-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.app-c{background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.04);border-radius:14px;padding:16px;text-align:center;text-decoration:none;color:#fff;transition:transform .12s}
+.app-c{background:rgba(17,28,45,.4);border:1px solid rgba(139,197,63,.06);border-radius:16px;padding:16px;text-align:center;text-decoration:none;color:#fff;transition:transform .15s}
 .app-c:active{transform:scale(.97)}
-.app-c .ico{font-size:28px;margin-bottom:6px}
-.app-c .nm{font-size:12px;font-weight:700;color:#a78bfa}
-.app-c .ds{font-size:10px;color:rgba(255,255,255,.25);margin-top:2px}
-.nav{position:fixed;bottom:0;left:0;right:0;background:rgba(13,13,20,.95);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border-top:1px solid rgba(255,255,255,.05);display:flex;justify-content:space-around;padding:6px 0 max(6px,env(safe-area-inset-bottom));z-index:50}
-.nav-i{display:flex;flex-direction:column;align-items:center;gap:2px;padding:5px 8px;border:none;background:none;color:rgba(255,255,255,.2);font-family:'Inter',sans-serif;font-size:9px;font-weight:600;cursor:pointer;transition:color .2s;border-radius:8px;position:relative}
-.nav-i.on{color:#a78bfa}
+.app-c .ico{font-size:26px;margin-bottom:6px}
+.app-c .nm{font-size:12px;font-weight:700;color:#8BC53F}
+.app-c .ds{font-size:10px;color:rgba(255,255,255,.2);margin-top:2px}
+
+/* Nav */
+.nav{position:fixed;bottom:0;left:0;right:0;background:rgba(7,9,13,.92);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border-top:1px solid rgba(139,197,63,.06);display:flex;justify-content:space-around;padding:6px 0 max(6px,env(safe-area-inset-bottom));z-index:50}
+.nav-i{display:flex;flex-direction:column;align-items:center;gap:2px;padding:5px 8px;border:none;background:none;color:rgba(255,255,255,.15);font-family:'Inter',sans-serif;font-size:9px;font-weight:600;cursor:pointer;transition:color .2s;border-radius:8px;position:relative}
+.nav-i.on{color:#8BC53F}
 .nav-i .ic{font-size:18px;transition:transform .2s cubic-bezier(.4,0,.2,1)}
 .nav-i.on .ic{transform:scale(1.1) translateY(-1px)}
-.nav-i::after{content:'';position:absolute;top:0;left:50%;width:0;height:2px;background:linear-gradient(90deg,#7c3aed,#2563eb);border-radius:1px;transition:width .25s,left .25s}
+.nav-i::after{content:'';position:absolute;top:0;left:50%;width:0;height:2px;background:#8BC53F;border-radius:1px;transition:width .25s,left .25s}
 .nav-i.on::after{width:18px;left:calc(50% - 9px)}
-.toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%) translateY(16px);background:linear-gradient(135deg,#7c3aed,#2563eb);color:#fff;padding:10px 22px;border-radius:12px;font-size:12px;font-weight:600;box-shadow:0 8px 24px rgba(124,58,237,.3);opacity:0;transition:opacity .25s,transform .25s;z-index:60;pointer-events:none;white-space:nowrap}
+
+/* Toast */
+.toast{position:fixed;bottom:84px;left:50%;transform:translateX(-50%) translateY(16px);background:linear-gradient(135deg,#8BC53F,#6B9E2F);color:#07090D;padding:10px 22px;border-radius:14px;font-size:12px;font-weight:700;box-shadow:0 8px 24px rgba(139,197,63,.3);opacity:0;transition:opacity .25s,transform .25s;z-index:60;pointer-events:none;white-space:nowrap}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* Loading */
 .ld{text-align:center;padding:80px 20px}
-.ld-spin{width:28px;height:28px;border:2px solid rgba(124,58,237,.15);border-top-color:#7c3aed;border-radius:50%;animation:spin .6s linear infinite;margin:0 auto 10px}
+.ld-ring{width:28px;height:28px;border:2px solid rgba(139,197,63,.1);border-top-color:#8BC53F;border-radius:50%;animation:spin .6s linear infinite;margin:0 auto 10px}
 @keyframes spin{to{transform:rotate(360deg)}}
-.ld-txt{font-size:11px;color:rgba(255,255,255,.2)}
+.ld-txt{font-size:11px;color:rgba(255,255,255,.15)}
+
+/* Stagger */
 .anim>*{opacity:0;transform:translateY(8px);animation:rise .35s ease forwards}
 .anim>*:nth-child(1){animation-delay:.03s}
 .anim>*:nth-child(2){animation-delay:.06s}
@@ -38304,12 +38343,12 @@ body{background:linear-gradient(180deg,#111119 0%,#0d0d14 100%)}
 .anim>*:nth-child(5){animation-delay:.15s}
 .anim>*:nth-child(6){animation-delay:.18s}
 .anim>*:nth-child(7){animation-delay:.21s}
-.anim>*:nth-child(8){animation-delay:.24s}
 @keyframes rise{to{opacity:1;transform:none}}
 </style>
 </head>
 <body>
-<div class="shell" id="S"><div class="ld"><div class="ld-spin"></div><div class="ld-txt">Загрузка...</div></div></div>
+<canvas id="particles"></canvas>
+<div class="shell" id="S"><div class="ld"><div class="ld-ring"></div><div class="ld-txt">Загрузка...</div></div></div>
 <div class="toast" id="T"></div>
 <div class="nav" id="N" style="display:none">
 <button class="nav-i on" data-p="home"><span class="ic">🏠</span>Главная</button>
@@ -38319,8 +38358,11 @@ body{background:linear-gradient(180deg,#111119 0%,#0d0d14 100%)}
 <button class="nav-i" data-p="faq"><span class="ic">💬</span>Помощь</button>
 </div>
 <script>
+/* Particles */
+(function(){var c=document.getElementById('particles'),x=c.getContext('2d');function resize(){c.width=window.innerWidth;c.height=window.innerHeight}resize();window.addEventListener('resize',resize);var pts=[];for(var i=0;i<40;i++){pts.push({x:Math.random()*c.width,y:Math.random()*c.height,r:Math.random()*2+.5,dx:(Math.random()-.5)*.3,dy:(Math.random()-.5)*.3,o:Math.random()*.3+.1})}function draw(){x.clearRect(0,0,c.width,c.height);for(var i=0;i<pts.length;i++){var p=pts[i];p.x+=p.dx;p.y+=p.dy;if(p.x<0||p.x>c.width)p.dx*=-1;if(p.y<0||p.y>c.height)p.dy*=-1;x.beginPath();x.arc(p.x,p.y,p.r,0,Math.PI*2);x.fillStyle='rgba(139,197,63,'+p.o+')';x.fill()}requestAnimationFrame(draw)}draw()})();
+
 var Tg=window.Telegram&&window.Telegram.WebApp;
-if(Tg){Tg.ready();Tg.expand();Tg.setHeaderColor('#0d0d14');Tg.setBackgroundColor('#0d0d14');}
+if(Tg){Tg.ready();Tg.expand();Tg.setHeaderColor('#07090D');Tg.setBackgroundColor('#07090D');}
 var uid=Tg&&Tg.initDataUnsafe&&Tg.initDataUnsafe.user&&Tg.initDataUnsafe.user.id;
 var E={};var cur='home';
 function $(s){return document.querySelector(s)}
@@ -38328,28 +38370,28 @@ function toast(m){var t=$('#T');t.textContent=m;t.classList.add('show');setTimeo
 function go(p){if(p===cur)return;var o=E[cur],n=E[p];if(o){o.classList.remove('on');o.style.display='none';}if(n){n.style.display='';requestAnimationFrame(function(){requestAnimationFrame(function(){n.classList.add('on')})});}document.querySelectorAll('.nav-i').forEach(function(b){b.classList.toggle('on',b.dataset.p===p)});cur=p;}
 document.querySelectorAll('.nav-i').forEach(function(b){b.addEventListener('click',function(){go(b.dataset.p)})});
 document.addEventListener('click',function(e){var b=e.target.closest('[data-copy]');if(!b)return;var el=$('#'+b.dataset.copy);if(!el)return;navigator.clipboard.writeText(el.innerText).then(function(){if(Tg)Tg.HapticFeedback.notificationOccurred('success');toast('Скопировано!')})});
-if(!uid){document.getElementById('S').innerHTML='<div class="c" style="text-align:center;margin-top:40px"><div style="font-size:36px;margin-bottom:10px">🔒</div><div style="font-size:16px;font-weight:800">Откройте из Telegram</div><div style="font-size:11px;color:rgba(255,255,255,.25);margin-top:6px">Мини-приложение работает только внутри Telegram</div></div>';}
+if(!uid){document.getElementById('S').innerHTML='<div class="c" style="text-align:center;margin-top:40px"><div style="font-size:36px;margin-bottom:10px">🔒</div><div style="font-size:16px;font-weight:800">Откройте из Telegram</div><div style="font-size:11px;color:rgba(255,255,255,.2);margin-top:6px">Мини-приложение работает только внутри Telegram</div></div>';}
 else{
 fetch('/api/profile/'+uid).then(function(r){return r.json()}).then(function(d){
 var N=d.name||'Пользователь',U=d.username||'',H=d.hasActiveSub,D=d.daysLeft||0,Ta=d.tariff||'',SL=d.subLink||'',SC=d.serverCount||0,RC=d.refCount||0,TP=d.totalPaid||0,BL=d.balance||0,ED=d.expireDate||'',SRV=d.servers||[];
 var h='';
 h+='<div class="page on" id="p-home" style="display:block"><div class="hdr"><div class="hdr-logo">LAENFAER VPN</div><div class="hdr-sub">Безопасный интернет</div></div><div class="anim">';
-h+='<div class="c hero"><span class="hero-emoji">⚡</span><div class="hero-name">'+N+'</div><div class="hero-id">'+(U?'@'+U:'ID '+uid)+'</div>';
+h+='<div class="c hero"><div class="hero-icon">⚡</div><div class="hero-name">'+N+'</div><div class="hero-id">'+(U?'@'+U:'ID '+uid)+'</div>';
 h+='<div style="margin-top:12px">'+(H?'<span class="badge badge-on"><span class="badge-dot"></span>Активна · '+Ta+'</span>':'<span class="badge badge-off"><span class="badge-dot"></span>Не активна</span>')+'</div></div>';
-if(H){h+='<div class="c c-accent"><div class="days-box"><div class="days-num">'+D+'</div><div class="days-label">дней осталось</div>'+(ED?'<div class="days-exp">до '+ED+'</div>':'')+'</div></div>';}
+if(H){h+='<div class="c c-glow"><div class="days"><div class="days-num">'+D+'</div><div class="days-lbl">дней осталось</div>'+(ED?'<div class="days-exp">до '+ED+'</div>':'')+'</div></div>';}
 h+='<div class="stats"><div class="stat"><div class="stat-v c1">'+D+'</div><div class="stat-l">Дней</div></div><div class="stat"><div class="stat-v c2">'+SC+'</div><div class="stat-l">Серв.</div></div><div class="stat"><div class="stat-v c3">'+RC+'</div><div class="stat-l">Рефер.</div></div><div class="stat"><div class="stat-v c4">'+TP+'₽</div><div class="stat-l">Оплачено</div></div></div>';
 if(H&&SL){h+='<div class="c"><div class="st">Подписка</div><button class="btn btn-p" data-copy="sl">Копировать подписку</button></div>';}
 h+='</div></div>';
 h+='<div class="page" id="p-sub" style="display:none"><div class="hdr"><div class="hdr-logo">ПОДПИСКА</div></div><div class="anim">';
-if(H){h+='<div class="c c-accent"><div class="badge badge-on" style="margin-bottom:14px"><span class="badge-dot"></span>'+Ta+' · '+D+' дн.</div><div class="link" id="sl">'+SL+'</div><div class="btn-row"><button class="btn btn-p" data-copy="sl">Копировать</button><a class="btn btn-g" href="'+SL+'" target="_blank">Открыть</a></div></div>';}
+if(H){h+='<div class="c c-glow"><div class="badge badge-on" style="margin-bottom:14px"><span class="badge-dot"></span>'+Ta+' · '+D+' дн.</div><div class="link" id="sl">'+SL+'</div><div class="btn-row"><button class="btn btn-p" data-copy="sl">Копировать</button><a class="btn btn-g" href="'+SL+'" target="_blank">Открыть</a></div></div>';}
 else{h+='<div class="c" style="text-align:center;padding:32px"><div style="font-size:36px;margin-bottom:8px">🔒</div><div style="font-size:15px;font-weight:800;color:#f87171">Нет подписки</div></div>';}
 h+='</div></div>';
 h+='<div class="page" id="p-srv" style="display:none"><div class="hdr"><div class="hdr-logo">СЕРВЕРЫ</div></div><div class="anim"><div class="c"><div class="st">Доступные · '+SC+'</div>';
-SRV.forEach(function(s,i){h+='<div class="srv"><div class="srv-dot" style="animation-delay:'+(i*.2)+'s"></div><div class="srv-info"><div class="srv-name">'+s.name+'</div><div class="srv-meta">'+s.country+'</div></div><div class="srv-ms">'+s.ping+'</div></div>';});
+SRV.forEach(function(s,i){h+='<div class="srv"><div class="srv-dot" style="animation-delay:'+(i*.15)+'s"></div><div class="srv-info"><div class="srv-name">'+s.name+'</div><div class="srv-meta">'+s.country+'</div></div><div class="srv-ms">'+s.ping+'</div></div>';});
 h+='</div><div class="c"><div class="st">Приложения</div><div class="app-grid"><a class="app-c" href="https://play.google.com/store/apps/details?id=com.happproxy"><div class="ico">🤖</div><div class="nm">HappProxy</div><div class="ds">Android</div></a><a class="app-c" href="https://apps.apple.com/ru/app/happ-proxy-utility-plus/id6746188973"><div class="ico">📱</div><div class="nm">Happ iOS</div><div class="ds">iPhone / iPad</div></a></div></div></div></div>';
-h+='<div class="page" id="p-me" style="display:none"><div class="hdr"><div class="hdr-logo">ПРОФИЛЬ</div></div><div class="anim"><div class="c hero"><span class="hero-emoji">👤</span><div class="hero-name">'+N+'</div><div class="hero-id">'+(U?'@'+U:'ID '+uid)+'</div></div>';
+h+='<div class="page" id="p-me" style="display:none"><div class="hdr"><div class="hdr-logo">ПРОФИЛЬ</div></div><div class="anim"><div class="c hero"><div class="hero-icon">👤</div><div class="hero-name">'+N+'</div><div class="hero-id">'+(U?'@'+U:'ID '+uid)+'</div></div>';
 h+='<div class="stats"><div class="stat"><div class="stat-v c4">'+TP+'₽</div><div class="stat-l">Оплачено</div></div><div class="stat"><div class="stat-v c1">'+BL+'₽</div><div class="stat-l">Баланс</div></div><div class="stat"><div class="stat-v c3">'+RC+'</div><div class="stat-l">Рефералы</div></div><div class="stat"><div class="stat-v c2">'+D+'</div><div class="stat-l">Дней</div></div></div>';
-h+='<div class="c"><div class="st">Реферальная программа</div><div style="font-size:11px;color:rgba(255,255,255,.3);margin-bottom:8px">Приглашайте друзей</div><div class="ref-link" id="rc">https://t.me/laenfaer_vpn_bot?start='+uid+'</div><button class="btn btn-g" data-copy="rc">Копировать ссылку</button></div></div></div>';
+h+='<div class="c"><div class="st">Реферальная программа</div><div style="font-size:11px;color:rgba(255,255,255,.2);margin-bottom:8px">Приглашайте друзей</div><div class="ref" id="rc">https://t.me/laenfaer_vpn_bot?start='+uid+'</div><button class="btn btn-g" data-copy="rc">Копировать ссылку</button></div></div></div>';
 h+='<div class="page" id="p-faq" style="display:none"><div class="hdr"><div class="hdr-logo">ПОМОЩЬ</div></div><div class="anim"><div class="c"><div class="st">Как подключиться</div><div class="faq-q">1. Скачайте приложение</div><div class="faq-a">Android — HappProxy<br>iPhone — Happ / INCY</div><div class="faq-q">2. Добавьте подписку</div><div class="faq-a">Скопируйте ссылку из вкладки «Ключ»</div><div class="faq-q">3. Подключитесь</div><div class="faq-a">Сервер выбирается автоматически</div></div><div class="c"><div class="st">Поддержка</div><a class="btn btn-g" href="https://t.me/laenfaer_vpn_bot" style="text-decoration:none">Написать в бот</a></div></div></div>';
 document.getElementById('S').innerHTML=h;document.getElementById('N').style.display='flex';
 ['home','sub','srv','me','faq'].forEach(function(p){E[p]=$('#p-'+p)});
@@ -38358,46 +38400,6 @@ document.getElementById('S').innerHTML=h;document.getElementById('N').style.disp
 </script>
 </body>
 </html>`);
-});
-
-// Mini App API
-app.get("/api/profile/:userId", async (req, res) => {
-  try {
-    const userId = String(req.params.userId);
-    const domain = getSubDomain();
-    const [user, sub] = await Promise.all([
-      db.select().from(usersTable).where(eq(usersTable.telegramId, userId)).limit(1),
-      db.select().from(subscriptionsTable).where(eq(subscriptionsTable.telegramId, userId)).limit(1),
-    ]);
-    const u = user[0];
-    const s = sub[0];
-    const now = new Date();
-    const hasActiveSub = s && new Date(s.expiresAt) > now;
-    const daysLeft = hasActiveSub ? Math.ceil((new Date(s.expiresAt) - now) / 86400000) : 0;
-    const tariff = hasActiveSub ? s.tariff : "";
-    const expireDate = hasActiveSub ? new Date(s.expiresAt).toLocaleDateString("ru-RU") : "";
-    const subLink = hasActiveSub && domain ? domain + "/sub/" + userId : "";
-    res.json({
-      name: u?.name || "Пользователь",
-      username: u?.username || "",
-      hasActiveSub, daysLeft, tariff, expireDate, subLink,
-      serverCount: 50,
-      refCount: u?.refBalance || 0,
-      refCode: userId,
-      totalPaid: u?.totalPaid || 0,
-      balance: u?.balance || 0,
-      servers: [
-        { name: "Авто-выбор", country: "🌍 Автоматически", ping: "最优" },
-        { name: "Германия", country: "🇩🇪 Europe", ping: "18ms" },
-        { name: "Нидерланды", country: "🇳🇱 Europe", ping: "22ms" },
-        { name: "Финляндия", country: "🇫🇮 Europe", ping: "15ms" },
-        { name: "Россия", country: "🇷🇺 CIS", ping: "8ms" },
-      ],
-    });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Internal error" });
-  }
 });
 
 var app_default = app;
