@@ -37648,7 +37648,7 @@ app.get("/sub/:userId", async (req, res) => {
     res.setHeader("hide-settings", "1");
     res.setHeader("profile-title", "base64:" + Buffer.from("\u26A1 LAENFAER VPN \u26A1").toString("base64"));
     res.setHeader("subscription-userinfo", "upload=0; download=0; total=0; expire=" + expireHeader);
-    res.setHeader("profile-update-interval", "1");
+    res.setHeader("profile-update-interval", "12");
     res.setHeader("support-url", "https://t.me/laenfaer_vpn_bot");
     res.setHeader("profile-web-page-url", "https://t.me/laenfaer_vpn_bot");
     res.setHeader("content-disposition", "attachment; filename=LAENFAER_VPN");
