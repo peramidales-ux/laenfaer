@@ -37467,7 +37467,6 @@ router2.get("/sub", (req, res) => {
   const keyWithName = key.includes("#") ? key : `${key}#LAENFAER VPN`;
   const b64 = Buffer.from(keyWithName, "utf-8").toString("base64");
   res.setHeader("Content-Type", "text/plain; charset=utf-8");
-    res.setHeader("hide-settings", "1");
   res.setHeader("Cache-Control", "no-store");
   res.setHeader("Profile-Update-Interval", "1");
   res.setHeader("profile-title", Buffer.from(profileName, "utf-8").toString("base64"));
@@ -37645,14 +37644,12 @@ app.get("/sub/:userId", async (req, res) => {
     const sub = await db.select().from(subscriptionsTable).where(eq(subscriptionsTable.telegramId, userId)).limit(1);
     const expireHeader = sub.length ? Math.floor(new Date(sub[0].expiresAt).getTime() / 1000) : 0;
     res.setHeader("Content-Type", "text/plain; charset=utf-8");
-    res.setHeader("hide-settings", "1");
     res.setHeader("profile-title", "base64:" + Buffer.from("\u26A1 LAENFAER VPN \u26A1").toString("base64"));
     res.setHeader("subscription-userinfo", "upload=0; download=0; total=0; expire=" + expireHeader);
     res.setHeader("profile-update-interval", "12");
     res.setHeader("support-url", "https://t.me/laenfaer_vpn_bot");
     res.setHeader("profile-web-page-url", "https://t.me/laenfaer_vpn_bot");
     res.setHeader("content-disposition", "attachment; filename=LAENFAER_VPN");
-    res.setHeader("hide-settings", "1");
     res.setHeader("announce", "base64:" + Buffer.from("\u26A1 LAENFAER VPN \u2014 \u0431\u044B\u0441\u0442\u0440\u043E, \u043D\u0430\u0434\u0451\u0436\u043D\u043E, \u0431\u0435\u0437 \u043E\u0433\u0440\u0430\u043D\u0438\u0447\u0435\u043D\u0438\u0439\n\u{1F504} \u041D\u0430\u0436\u043C\u0438 \u2139\uFE0F \u0434\u043B\u044F \u0438\u043D\u0444\u043E\u0440\u043C\u0430\u0446\u0438\u0438 \u043E \u043F\u043E\u0434\u043F\u0438\u0441\u043A\u0435\n\u{1F310} \u0410\u0432\u0442\u043E\u0432\u044B\u0431\u043E\u0440 \u0441\u0435\u0440\u0432\u0435\u0440\u0430 \u0440\u0430\u0431\u043E\u0442\u0430\u0435\u0442 \u0430\u0432\u0442\u043E\u043C\u0430\u0442\u0438\u0447\u0435\u0441\u043A\u0438\n\u{1F198} \u041F\u043E\u0434\u0434\u0435\u0440\u0436\u043A\u0430: @laenfaer_vpn_bot").toString("base64"));
     if (!sub.length || !sub[0].key || new Date(sub[0].expiresAt) < new Date()) {
       return res.send("");
