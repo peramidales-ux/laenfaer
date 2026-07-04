@@ -38188,30 +38188,37 @@ $('#S').innerHTML=h;$('#N').style.display='flex';
 });
 
 // API for mini app
+const profileCache = new Map();
 app.get("/api/profile/:userId", async (req, res) => {
   try {
     const userId = String(req.params.userId);
-    const user = await db.select().from(usersTable).where(eq(usersTable.telegramId, userId)).limit(1);
-    const sub = await db.select().from(subscriptionsTable).where(eq(subscriptionsTable.telegramId, userId)).limit(1);
+    const now = Date.now();
+    const cached = profileCache.get(userId);
+    if (cached && now - cached.ts < 30000) {
+      return res.json(cached.data);
+    }
+    const domain = getSubDomain();
+    const [user, sub, freeCount, premCount] = await Promise.all([
+      db.select().from(usersTable).where(eq(usersTable.telegramId, userId)).limit(1),
+      db.select().from(subscriptionsTable).where(eq(subscriptionsTable.telegramId, userId)).limit(1),
+      db.select({ count: sql`count(*)` }).from(freeKeysTable),
+      db.select({ count: sql`count(*)` }).from(premiumKeysTable),
+    ]);
     const u = user[0];
     const s = sub[0];
-    const now = new Date();
-    const hasActiveSub = s && new Date(s.expiresAt) > now;
-    const daysLeft = hasActiveSub ? Math.ceil((new Date(s.expiresAt) - now) / 86400000) : 0;
+    const hasActiveSub = s && new Date(s.expiresAt) > new Date();
+    const daysLeft = hasActiveSub ? Math.ceil((new Date(s.expiresAt) - new Date()) / 86400000) : 0;
     const tariff = hasActiveSub ? s.tariff : "";
     const expireDate = hasActiveSub ? new Date(s.expiresAt).toLocaleDateString("ru-RU") : "";
-    const domain = getSubDomain();
     const subLink = hasActiveSub && domain ? domain + "/sub/" + userId : "";
     let qrSvg = "";
     if (subLink) {
       const QRCode = await import("qrcode");
-      qrSvg = await QRCode.toString(subLink, { type: "svg", margin: 2, width: 150, color: { dark: "#c084fc", light: "#ffffff00" } });
+      qrSvg = await QRCode.toString(subLink, { type: "svg", margin: 2, width: 150, color: { dark: "#a78bfa", light: "#ffffff00" } });
     }
-    const allKeys = await db.select().from(freeKeysTable);
-    const premKeys = await db.select().from(premiumKeysTable);
-    const serverCount = allKeys.length + premKeys.length;
-    const refCount = await getReferralCount(userId);
-    res.json({
+    const refCountQ = await db.select({ count: sql`count(*)` }).from(referralsTable).where(eq(referralsTable.inviterId, userId));
+    const serverCount = (Number(freeCount[0]?.count || 0) + Number(premCount[0]?.count || 0));
+    const data = {
       name: u?.name || "Пользователь",
       username: u?.username || "",
       hasActiveSub,
@@ -38221,18 +38228,25 @@ app.get("/api/profile/:userId", async (req, res) => {
       qrSvg,
       subLink,
       serverCount,
-      refCount,
+      refCount: Number(refCountQ[0]?.count || 0),
       refCode: userId,
       totalPaid: u?.totalPaid || 0,
       balance: u?.balance || 0,
-      servers: allKeys.slice(0, 10).map((k, i) => ({
-        name: "Сервер " + (i + 1),
-        country: "🌍 Авто",
-        ping: Math.floor(Math.random() * 30 + 10) + "ms"
-      })),
-    });
+      servers: [
+        { name: "Авто-выбор", country: "🌍 Автоматически", ping: "最优" },
+        { name: "Германия", country: "🇩🇪 Europe", ping: Math.floor(Math.random() * 20 + 15) + "ms" },
+        { name: "Нидерланды", country: "🇳🇱 Europe", ping: Math.floor(Math.random() * 25 + 12) + "ms" },
+        { name: "Финляндия", country: "🇫🇮 Europe", ping: Math.floor(Math.random() * 30 + 10) + "ms" },
+        { name: "Россия", country: "🇷🇺 CIS", ping: Math.floor(Math.random() * 10 + 5) + "ms" },
+      ],
+    };
+    profileCache.set(userId, { data, ts: now });
+    res.json(data);
   } catch (err) {
     console.error(err);
+    res.status(500).json({ error: "Internal error" });
+  }
+});
     res.status(500).json({ error: "Internal error" });
   }
 });
