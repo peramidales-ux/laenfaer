@@ -56642,25 +56642,20 @@ function subRequiredKb() {
   return new InlineKeyboard().url("\u{1F4E2} \u041F\u043E\u0434\u043F\u0438\u0441\u0430\u0442\u044C\u0441\u044F \u043D\u0430 \u043A\u0430\u043D\u0430\u043B", CHANNEL_URL).row().text("\u2705 \u041F\u0440\u043E\u0432\u0435\u0440\u0438\u0442\u044C \u043F\u043E\u0434\u043F\u0438\u0441\u043A\u0443", "check_sub_again");
 }
 function getSubDomain() {
-  const renderUrl = process.env.RENDER_EXTERNAL_URL;
-  if (renderUrl) return renderUrl.replace(/\/$/, "");
-  const domains = (process.env.REPLIT_DOMAINS ?? "").split(",").map((d) => d.trim()).filter(Boolean);
-  return domains[0] ? `https://${domains[0]}` : "";
+  return process.env.RENDER_EXTERNAL_URL || "https://laenfaer.onrender.com";
 }
 function connectKb() {
   return new InlineKeyboard().text("\u{1F916} Android", "connect_android").text("\u{1F4F1} iPhone", "connect_iphone").row().text("\u{1F511} \u041F\u043E\u043A\u0430\u0437\u0430\u0442\u044C \u043A\u043B\u044E\u0447", "show_key").row().text("\u2753 \u041A\u0430\u043A \u043F\u043E\u0434\u043A\u043B\u044E\u0447\u0438\u0442\u044C\u0441\u044F", "how_to_connect").row().text("\u{1F3E0} \u0412 \u0433\u043B\u0430\u0432\u043D\u043E\u0435 \u043C\u0435\u043D\u044E", "to_main");
 }
 function connectAndroidKb(key) {
-  const domains = (process.env.REPLIT_DOMAINS ?? "").split(",").map((d) => d.trim()).filter(Boolean);
-  const domain2 = domains[0] ?? "";
+  const domain2 = getSubDomain();
   const encodedKey = encodeURIComponent(key);
-  return new InlineKeyboard().url("\u{1F916} HappProxy", domain2 ? `https://${domain2}/connect?app=happproxy&key=${encodedKey}` : `https://laenfaer-redirect.vercel.app/r?url=${encodeURIComponent("happ://add/" + key)}`).row().text("\u{1F519} \u041D\u0430\u0437\u0430\u0434", "connect_back");
+  return new InlineKeyboard().url("\u{1F916} HappProxy", domain2 ? `https://${domain2.replace(/^https?:\/\//, "")}/connect?app=happproxy&key=${encodedKey}` : `https://laenfaer-redirect.vercel.app/r?url=${encodeURIComponent("happ://add/" + key)}`).row().text("\u{1F519} \u041D\u0430\u0437\u0430\u0434", "connect_back");
 }
 function connectIphoneKb(key) {
-  const domains = (process.env.REPLIT_DOMAINS ?? "").split(",").map((d) => d.trim()).filter(Boolean);
-  const domain2 = domains[0] ?? "";
+  const domain2 = getSubDomain();
   const encodedKey = encodeURIComponent(key);
-  return new InlineKeyboard().url("\u{1F4F1} Happ iOS", domain2 ? `https://${domain2}/connect?app=happ_ios&key=${encodedKey}` : `https://laenfaer-redirect.vercel.app/r?url=${encodeURIComponent("happ://add/" + key)}`).row().text("\u{1F519} \u041D\u0430\u0437\u0430\u0434", "connect_back");
+  return new InlineKeyboard().url("\u{1F4F1} Happ iOS", domain2 ? `https://${domain2.replace(/^https?:\/\//, "")}/connect?app=happ_ios&key=${encodedKey}` : `https://laenfaer-redirect.vercel.app/r?url=${encodeURIComponent("happ://add/" + key)}`).row().text("\u{1F519} \u041D\u0430\u0437\u0430\u0434", "connect_back");
 }
 function activeSupportKb() {
   return new InlineKeyboard().text("\u{1F519} \u041D\u0430\u0437\u0430\u0434", "back_from_support").text("\u{1F3E0} \u0413\u043B\u0430\u0432\u043D\u043E\u0435 \u043C\u0435\u043D\u044E", "to_main").row().text("\u{1F512} \u0417\u0430\u043A\u0440\u044B\u0442\u044C \u0447\u0430\u0442", "close_support_chat");
