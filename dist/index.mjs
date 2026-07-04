@@ -37982,131 +37982,141 @@ app.get("/app", async (req, res) => {
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-html,body{font-family:'Inter',-apple-system,sans-serif;background:#06060e;color:#fff;min-height:100vh;overflow-x:hidden;-webkit-tap-highlight-color:transparent}
-body{background:radial-gradient(ellipse at 50% 0%,#1a0a3e 0%,#06060e 60%)}
-.shell{max-width:440px;margin:0 auto;min-height:100vh;position:relative;padding-bottom:72px}
+html,body{font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;background:#0d0d14;color:#fff;min-height:100vh;overflow-x:hidden;-webkit-tap-highlight-color:transparent;scroll-behavior:smooth}
+body{background:linear-gradient(180deg,#111119 0%,#0d0d14 100%)}
+.shell{max-width:480px;margin:0 auto;min-height:100vh;position:relative;padding-bottom:68px}
 
-/* ===== Pages ===== */
-.page{position:absolute;top:0;left:0;right:0;opacity:0;transform:translateY(12px);pointer-events:none;transition:opacity .35s cubic-bezier(.4,0,.2,1),transform .35s cubic-bezier(.4,0,.2,1);padding:16px 16px 20px}
-.page.on{opacity:1;transform:translateY(0);pointer-events:auto;position:relative}
+/* Pages */
+.page{position:absolute;top:0;left:0;right:0;opacity:0;transform:translateY(8px) scale(.98);pointer-events:none;transition:all .3s cubic-bezier(.4,0,.2,1);padding:12px 14px 20px;will-change:transform,opacity}
+.page.on{opacity:1;transform:none;pointer-events:auto;position:relative}
 
-/* ===== Cards ===== */
-.card{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:20px;padding:20px;margin-bottom:14px;backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);position:relative;overflow:hidden}
-.card::after{content:'';position:absolute;top:0;left:20%;right:20%;height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.12),transparent)}
-.card-glow{background:linear-gradient(135deg,rgba(168,85,247,.08),rgba(99,102,241,.06));border-color:rgba(168,85,247,.15)}
+/* Header bar */
+.hdr{padding:8px 0 16px;text-align:center}
+.hdr-logo{font-size:18px;font-weight:900;letter-spacing:1.5px;text-transform:uppercase;background:linear-gradient(135deg,#7c3aed 0%,#2563eb 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.hdr-sub{font-size:11px;color:rgba(255,255,255,.3);margin-top:2px}
 
-/* ===== Hero ===== */
-.hero{text-align:center;padding:28px 20px 24px}
-.hero-ring{width:80px;height:80px;border-radius:50%;background:conic-gradient(#a855f7,#6366f1,#818cf8,#a855f7);padding:3px;margin:0 auto 14px;animation:spin 4s linear infinite}
-@keyframes spin{to{transform:rotate(360deg)}}
-.hero-avatar{width:100%;height:100%;border-radius:50%;background:#06060e;display:flex;align-items:center;justify-content:center;font-size:32px}
-.hero-name{font-size:20px;font-weight:800;letter-spacing:-.3px}
-.hero-sub{font-size:12px;color:rgba(255,255,255,.4);margin-top:4px}
-.hero-badge{display:inline-flex;align-items:center;gap:5px;margin-top:12px;padding:6px 14px;border-radius:20px;font-size:12px;font-weight:700}
-.badge-active{background:rgba(34,197,94,.12);color:#4ade80;border:1px solid rgba(34,197,94,.2)}
-.badge-expired{background:rgba(239,68,68,.12);color:#f87171;border:1px solid rgba(239,68,68,.2)}
-.badge-dot{width:6px;height:6px;border-radius:50%;animation:pulse 2s ease infinite}
-.badge-active .badge-dot{background:#4ade80}
-.badge-expired .badge-dot{background:#f87171}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+/* Card */
+.c{background:#16161f;border:1px solid rgba(255,255,255,.06);border-radius:16px;padding:18px;margin-bottom:12px;position:relative;overflow:hidden}
+.c::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent 10%,rgba(255,255,255,.08) 50%,transparent 90%)}
+.c-accent{border-color:rgba(124,58,237,.2);background:linear-gradient(135deg,rgba(124,58,237,.06),rgba(37,99,235,.04))}
 
-/* ===== Countdown ===== */
-.countdown{text-align:center;margin:20px 0 4px}
-.cd-num{font-size:56px;font-weight:900;background:linear-gradient(135deg,#a855f7,#6366f1);-webkit-background-clip:text;-webkit-text-fill-color:transparent;line-height:1}
-.cd-label{font-size:12px;color:rgba(255,255,255,.35);margin-top:4px;letter-spacing:2px;text-transform:uppercase}
+/* Section title */
+.st{font-size:11px;font-weight:700;color:rgba(255,255,255,.3);text-transform:uppercase;letter-spacing:1.2px;margin-bottom:14px}
 
-/* ===== Stats Grid ===== */
-.stats{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;margin-bottom:14px}
-.stat{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.05);border-radius:14px;padding:14px 6px;text-align:center}
-.stat-val{font-size:18px;font-weight:800;line-height:1}
-.stat-lbl{font-size:9px;color:rgba(255,255,255,.35);margin-top:6px;text-transform:uppercase;letter-spacing:.8px;font-weight:600}
-.c-green{color:#4ade80}.c-purple{color:#c084fc}.c-yellow{color:#facc15}.c-pink{color:#f472b6}
+/* Status badge */
+.badge{display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:20px;font-size:12px;font-weight:700}
+.badge-on{background:rgba(34,197,94,.1);color:#4ade80;border:1px solid rgba(34,197,94,.15)}
+.badge-off{background:rgba(239,68,68,.1);color:#f87171;border:1px solid rgba(239,68,68,.15)}
+.badge-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.badge-on .badge-dot{background:#4ade80;box-shadow:0 0 8px rgba(74,222,128,.5);animation:blink 2s ease infinite}
+.badge-off .badge-dot{background:#f87171}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
 
-/* ===== QR ===== */
-.qr-box{text-align:center;padding:16px}
-.qr-box svg{border-radius:16px;padding:10px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.05)}
+/* Hero card */
+.hero{text-align:center;padding:24px 16px 20px}
+.hero-emoji{font-size:44px;margin-bottom:10px;display:block;animation:float 3s ease-in-out infinite}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+.hero-name{font-size:18px;font-weight:800}
+.hero-id{font-size:11px;color:rgba(255,255,255,.25);margin-top:3px}
 
-/* ===== Link Box ===== */
-.link-box{background:rgba(0,0,0,.4);border:1px solid rgba(255,255,255,.06);border-radius:12px;padding:12px 14px;font-family:'Inter',monospace;font-size:10px;word-break:break-all;color:rgba(192,132,252,.8);line-height:1.6;margin-bottom:14px}
+/* Days counter */
+.days-box{text-align:center;padding:20px 0 8px}
+.days-num{font-size:64px;font-weight:900;line-height:1;background:linear-gradient(135deg,#7c3aed,#2563eb);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.days-label{font-size:11px;color:rgba(255,255,255,.25);text-transform:uppercase;letter-spacing:2px;margin-top:4px}
+.days-exp{font-size:11px;color:rgba(255,255,255,.2);margin-top:8px}
 
-/* ===== Buttons ===== */
-.btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;font-family:'Inter',sans-serif;font-size:13px;font-weight:700;padding:14px;border-radius:14px;border:none;cursor:pointer;transition:transform .15s,opacity .15s;text-decoration:none}
-.btn:active{transform:scale(.97);opacity:.85}
-.btn-fill{background:linear-gradient(135deg,#a855f7 0%,#6366f1 100%);color:#fff;box-shadow:0 6px 24px rgba(168,85,247,.25)}
-.btn-ghost{background:rgba(255,255,255,.06);color:rgba(255,255,255,.8);border:1px solid rgba(255,255,255,.08)}
-.btn-row{display:flex;gap:8px;margin-top:10px}
+/* Stats row */
+.stats{display:flex;gap:8px;margin-bottom:12px}
+.stat{flex:1;background:#16161f;border:1px solid rgba(255,255,255,.04);border-radius:14px;padding:14px 8px;text-align:center}
+.stat-v{font-size:18px;font-weight:800;line-height:1}
+.stat-l{font-size:9px;color:rgba(255,255,255,.25);margin-top:6px;text-transform:uppercase;letter-spacing:.8px;font-weight:600}
+.c1{color:#4ade80}.c2{color:#a78bfa}.c3{color:#facc15}.c4{color:#f472b6}
+
+/* QR */
+.qr{text-align:center;padding:8px 0}
+.qr svg{border-radius:14px;padding:8px;background:#111119;border:1px solid rgba(255,255,255,.04)}
+
+/* Link */
+.link{background:#111119;border:1px solid rgba(255,255,255,.04);border-radius:12px;padding:12px;font-family:'SF Mono',monospace;font-size:10px;word-break:break-all;color:rgba(167,139,250,.7);line-height:1.6;margin-bottom:12px}
+
+/* Buttons */
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;font-family:'Inter',sans-serif;font-size:13px;font-weight:700;padding:14px;border-radius:14px;border:none;cursor:pointer;transition:transform .12s,opacity .12s;text-decoration:none}
+.btn:active{transform:scale(.97);opacity:.8}
+.btn-p{background:linear-gradient(135deg,#7c3aed,#2563eb);color:#fff;box-shadow:0 4px 20px rgba(124,58,237,.2)}
+.btn-g{background:rgba(255,255,255,.05);color:rgba(255,255,255,.7);border:1px solid rgba(255,255,255,.06)}
+.btn-row{display:flex;gap:8px}
 .btn-row .btn{flex:1}
 
-/* ===== Server List ===== */
-.srv{display:flex;align-items:center;gap:10px;padding:12px 14px;background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.04);border-radius:12px;margin-bottom:6px;transition:background .2s}
-.srv:active{background:rgba(255,255,255,.06)}
-.srv-dot{width:7px;height:7px;border-radius:50%;background:#4ade80;box-shadow:0 0 8px rgba(74,222,128,.4);flex-shrink:0;animation:pulse 2.5s ease infinite}
+/* Tariff cards */
+.tariff{background:#16161f;border:1px solid rgba(255,255,255,.05);border-radius:14px;padding:14px;margin-bottom:8px;display:flex;align-items:center;gap:12px;transition:background .15s}
+.tariff:active{background:#1c1c28}
+.tariff-icon{font-size:28px;flex-shrink:0}
+.tariff-info{flex:1}
+.tariff-name{font-size:13px;font-weight:700}
+.tariff-desc{font-size:10px;color:rgba(255,255,255,.3);margin-top:2px}
+.tariff-price{font-size:14px;font-weight:800;color:#a78bfa;flex-shrink:0}
+
+/* Server */
+.srv{display:flex;align-items:center;gap:10px;padding:12px;background:rgba(255,255,255,.02);border-radius:12px;margin-bottom:6px}
+.srv-dot{width:6px;height:6px;border-radius:50%;background:#4ade80;flex-shrink:0;box-shadow:0 0 6px rgba(74,222,128,.4)}
 .srv-info{flex:1;min-width:0}
-.srv-name{font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.srv-meta{font-size:10px;color:rgba(255,255,255,.3);margin-top:2px}
-.srv-ping{font-size:10px;font-weight:700;color:#4ade80;flex-shrink:0}
+.srv-name{font-size:12px;font-weight:600}
+.srv-meta{font-size:10px;color:rgba(255,255,255,.25);margin-top:1px}
+.srv-ms{font-size:10px;font-weight:700;color:#4ade80;flex-shrink:0}
 
-/* ===== App Cards ===== */
+/* Ref */
+.ref-link{background:#111119;border:1px dashed rgba(124,58,237,.2);border-radius:10px;padding:10px;text-align:center;font-family:monospace;font-size:11px;color:#a78bfa;margin:10px 0}
+
+/* FAQ */
+.faq-q{font-size:12px;font-weight:700;color:#a78bfa;margin-bottom:6px}
+.faq-a{font-size:12px;color:rgba(255,255,255,.35);line-height:1.6;margin-bottom:12px}
+
+/* App cards */
 .app-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.app-c{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.05);border-radius:14px;padding:16px;text-align:center;text-decoration:none;color:#fff;transition:transform .15s,background .15s}
-.app-c:active{transform:scale(.97);background:rgba(255,255,255,.07)}
+.app-c{background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.04);border-radius:14px;padding:16px;text-align:center;text-decoration:none;color:#fff;transition:transform .12s}
+.app-c:active{transform:scale(.97)}
 .app-c .ico{font-size:28px;margin-bottom:6px}
-.app-c .nm{font-size:12px;font-weight:700;color:#c084fc}
-.app-c .ds{font-size:10px;color:rgba(255,255,255,.35);margin-top:2px}
+.app-c .nm{font-size:12px;font-weight:700;color:#a78bfa}
+.app-c .ds{font-size:10px;color:rgba(255,255,255,.25);margin-top:2px}
 
-/* ===== FAQ ===== */
-.faq{margin-bottom:8px}
-.faq-q{font-size:12px;font-weight:700;color:#c084fc;margin-bottom:6px}
-.faq-a{font-size:12px;color:rgba(255,255,255,.45);line-height:1.6}
+/* Nav */
+.nav{position:fixed;bottom:0;left:0;right:0;background:rgba(13,13,20,.95);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border-top:1px solid rgba(255,255,255,.05);display:flex;justify-content:space-around;padding:6px 0 max(6px,env(safe-area-inset-bottom));z-index:50}
+.nav-i{display:flex;flex-direction:column;align-items:center;gap:2px;padding:5px 8px;border:none;background:none;color:rgba(255,255,255,.2);font-family:'Inter',sans-serif;font-size:9px;font-weight:600;cursor:pointer;transition:color .2s;border-radius:8px;position:relative}
+.nav-i.on{color:#a78bfa}
+.nav-i .ic{font-size:18px;transition:transform .2s cubic-bezier(.4,0,.2,1)}
+.nav-i.on .ic{transform:scale(1.1) translateY(-1px)}
+.nav-i::after{content:'';position:absolute;top:0;left:50%;width:0;height:2px;background:linear-gradient(90deg,#7c3aed,#2563eb);border-radius:1px;transition:width .25s,left .25s}
+.nav-i.on::after{width:18px;left:calc(50% - 9px)}
 
-/* ===== Profile ===== */
-.profile-head{text-align:center;padding:20px 0 16px}
-.profile-ring{width:64px;height:64px;border-radius:50%;background:conic-gradient(#a855f7,#6366f1,#818cf8,#a855f7);padding:2.5px;margin:0 auto 10px;animation:spin 5s linear infinite}
-.profile-inner{width:100%;height:100%;border-radius:50%;background:#0a0a1a;display:flex;align-items:center;justify-content:center;font-size:24px}
-.profile-name{font-size:16px;font-weight:800}
-.profile-id{font-size:11px;color:rgba(255,255,255,.3);margin-top:2px}
-.ref-code{background:rgba(0,0,0,.3);border:1px dashed rgba(168,85,247,.25);border-radius:10px;padding:10px;text-align:center;font-family:monospace;font-size:12px;color:#c084fc;letter-spacing:.5px;margin:10px 0}
-
-/* ===== Section ===== */
-.sec-title{font-size:11px;font-weight:700;color:rgba(192,132,252,.8);text-transform:uppercase;letter-spacing:1px;margin-bottom:12px}
-
-/* ===== Bottom Nav ===== */
-.nav{position:fixed;bottom:0;left:0;right:0;background:rgba(6,6,14,.92);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border-top:1px solid rgba(255,255,255,.06);display:flex;justify-content:space-around;padding:6px 0 max(6px,env(safe-area-inset-bottom));z-index:50}
-.nav-i{display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 10px;border:none;background:none;color:rgba(255,255,255,.25);font-family:'Inter',sans-serif;font-size:9px;font-weight:600;cursor:pointer;transition:color .25s;border-radius:10px;position:relative}
-.nav-i.on{color:#c084fc}
-.nav-i .ic{font-size:18px;transition:transform .25s cubic-bezier(.4,0,.2,1)}
-.nav-i.on .ic{transform:scale(1.15) translateY(-1px)}
-.nav-i::after{content:'';position:absolute;top:-1px;left:50%;width:0;height:2px;background:#a855f7;border-radius:1px;transition:width .3s cubic-bezier(.4,0,.2,1),left .3s cubic-bezier(.4,0,.2,1)}
-.nav-i.on::after{width:16px;left:calc(50% - 8px)}
-
-/* ===== Toast ===== */
-.toast{position:fixed;bottom:84px;left:50%;transform:translateX(-50%) translateY(20px);background:linear-gradient(135deg,#a855f7,#6366f1);color:#fff;padding:10px 22px;border-radius:12px;font-size:12px;font-weight:600;box-shadow:0 8px 32px rgba(168,85,247,.35);opacity:0;transition:opacity .3s,transform .3s;z-index:60;pointer-events:none;white-space:nowrap}
+/* Toast */
+.toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%) translateY(16px);background:linear-gradient(135deg,#7c3aed,#2563eb);color:#fff;padding:10px 22px;border-radius:12px;font-size:12px;font-weight:600;box-shadow:0 8px 24px rgba(124,58,237,.3);opacity:0;transition:opacity .25s,transform .25s;z-index:60;pointer-events:none;white-space:nowrap}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 
-/* ===== Loading ===== */
+/* Loading */
 .ld{text-align:center;padding:80px 20px}
-.ld-ring{width:36px;height:36px;border:3px solid rgba(168,85,247,.15);border-top-color:#a855f7;border-radius:50%;animation:spin .7s linear infinite;margin:0 auto 12px}
-.ld-text{font-size:12px;color:rgba(255,255,255,.3)}
+.ld-spin{width:28px;height:28px;border:2px solid rgba(124,58,237,.15);border-top-color:#7c3aed;border-radius:50%;animation:spin .6s linear infinite;margin:0 auto 10px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.ld-txt{font-size:11px;color:rgba(255,255,255,.2)}
 
-/* ===== Stagger animation ===== */
-.anim>*,.anim>*>*{opacity:0;transform:translateY(10px);animation:fadeUp .4s ease forwards}
-.anim>*:nth-child(1){animation-delay:.05s}
-.anim>*:nth-child(2){animation-delay:.1s}
-.anim>*:nth-child(3){animation-delay:.15s}
-.anim>*:nth-child(4){animation-delay:.2s}
-.anim>*:nth-child(5){animation-delay:.25s}
-.anim>*:nth-child(6){animation-delay:.3s}
-.anim>*:nth-child(7){animation-delay:.35s}
-.anim>*:nth-child(8){animation-delay:.4s}
-.anim>*:nth-child(9){animation-delay:.45s}
-.anim>*:nth-child(10){animation-delay:.5s}
-@keyframes fadeUp{to{opacity:1;transform:translateY(0)}}
+/* Stagger */
+.anim>*{opacity:0;transform:translateY(8px);animation:rise .35s ease forwards}
+.anim>*:nth-child(1){animation-delay:.03s}
+.anim>*:nth-child(2){animation-delay:.06s}
+.anim>*:nth-child(3){animation-delay:.09s}
+.anim>*:nth-child(4){animation-delay:.12s}
+.anim>*:nth-child(5){animation-delay:.15s}
+.anim>*:nth-child(6){animation-delay:.18s}
+.anim>*:nth-child(7){animation-delay:.21s}
+.anim>*:nth-child(8){animation-delay:.24s}
+.anim>*:nth-child(9){animation-delay:.27s}
+.anim>*:nth-child(10){animation-delay:.3s}
+@keyframes rise{to{opacity:1;transform:none}}
 </style>
 </head>
 <body>
-<div class="shell" id="shell"><div class="ld"><div class="ld-ring"></div><div class="ld-text">Загрузка...</div></div></div>
-<div class="toast" id="toast"></div>
-<div class="nav" id="nav" style="display:none">
+<div class="shell" id="S"><div class="ld"><div class="ld-spin"></div><div class="ld-txt">Загрузка...</div></div></div>
+<div class="toast" id="T"></div>
+<div class="nav" id="N" style="display:none">
 <button class="nav-i on" data-p="home"><span class="ic">🏠</span>Главная</button>
 <button class="nav-i" data-p="sub"><span class="ic">🔑</span>Ключ</button>
 <button class="nav-i" data-p="srv"><span class="ic">🌐</span>Серверы</button>
@@ -38114,70 +38124,64 @@ body{background:radial-gradient(ellipse at 50% 0%,#1a0a3e 0%,#06060e 60%)}
 <button class="nav-i" data-p="faq"><span class="ic">💬</span>Помощь</button>
 </div>
 <script>
-const T=window.Telegram?.WebApp;
-if(T){T.ready();T.expand();T.setHeaderColor('#06060e');T.setBackgroundColor('#06060e');}
-const uid=T?.initDataUnsafe?.user?.id;
+const Tg=window.Telegram?.WebApp;
+if(Tg){Tg.ready();Tg.expand();Tg.setHeaderColor('#0d0d14');Tg.setBackgroundColor('#0d0d14');}
+const uid=Tg?.initDataUnsafe?.user?.id;
+const E={};
 let cur='home';
-const P={};
 function $(s){return document.querySelector(s)}
 function $$(s){return document.querySelectorAll(s)}
-function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),1800)}
-function go(p){if(p===cur)return;const old=P[cur],nw=P[p];if(old){old.classList.remove('on');old.style.display='none';}if(nw){nw.style.display='';requestAnimationFrame(()=>requestAnimationFrame(()=>nw.classList.add('on')));}$$('.nav-i').forEach(b=>b.classList.toggle('on',b.dataset.p===p));cur=p;}
+function toast(m){const t=$('#T');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),1800)}
+function go(p){if(p===cur)return;const o=E[cur],n=E[p];if(o){o.classList.remove('on');o.style.display='none';}if(n){n.style.display='';requestAnimationFrame(()=>requestAnimationFrame(()=>n.classList.add('on')));}$$('.nav-i').forEach(b=>b.classList.toggle('on',b.dataset.p===p));cur=p;}
 $$('.nav-i').forEach(b=>b.addEventListener('click',()=>go(b.dataset.p)));
-if(!uid){$('#shell').innerHTML='<div class="card" style="text-align:center;margin-top:40px"><div style="font-size:36px;margin-bottom:10px">🔒</div><div style="font-size:16px;font-weight:800">Откройте из Telegram</div><div style="font-size:12px;color:rgba(255,255,255,.35);margin-top:6px">Мини-приложение работает только внутри Telegram</div></div>';}
+function cpy(id,msg){const e=$('#'+id);if(!e)return;navigator.clipboard.writeText(e.innerText).then(()=>{if(Tg)Tg.HapticFeedback.notificationOccurred('success');toast(msg);});}
+if(!uid){$('#S').innerHTML='<div class="c" style="text-align:center;margin-top:40px"><div style="font-size:36px;margin-bottom:10px">🔒</div><div style="font-size:16px;font-weight:800">Откройте из Telegram</div><div style="font-size:11px;color:rgba(255,255,255,.25);margin-top:6px">Мини-приложение работает только внутри Telegram</div></div>';}
 else{
 fetch('/api/profile/'+uid).then(r=>r.json()).then(d=>{
-const N=d.name||'Пользователь',U=d.username||'',H=d.hasActiveSub,D=d.daysLeft||0,Tar=d.tariff||'',QR=d.qrSvg||'',SL=d.subLink||'',SC=d.serverCount||0,RC=d.refCount||0,TP=d.totalPaid||0,BL=d.balance||0,ED=d.expireDate||'',SRV=d.servers||[];
+const N=d.name||'Пользователь',U=d.username||'',H=d.hasActiveSub,D=d.daysLeft||0,Ta=d.tariff||'',QR=d.qrSvg||'',SL=d.subLink||'',SC=d.serverCount||0,RC=d.refCount||0,TP=d.totalPaid||0,BL=d.balance||0,ED=d.expireDate||'',SRV=d.servers||[];
 let h='';
 // HOME
-h+='<div class="page on" id="p-home" style="display:block"><div class="anim">';
-h+='<div class="card hero"><div class="hero-ring"><div class="hero-avatar">⚡</div></div><div class="hero-name">'+N+'</div><div class="hero-sub">'+(U?'@'+U:'ID '+uid)+'</div>';
-if(H)h+='<div class="hero-badge badge-active"><span class="badge-dot"></span>Активна · '+Tar+'</div>';
-else h+='<div class="hero-badge badge-expired"><span class="badge-dot"></span>Не активна</div>';
-h+='</div>';
-if(H){h+='<div class="card card-glow"><div class="countdown"><div class="cd-num">'+D+'</div><div class="cd-label">дней осталось</div></div>'+(ED?'<div style="text-align:center;font-size:11px;color:rgba(255,255,255,.25);margin-top:4px">до '+ED+'</div>':'')+'</div>';}
-h+='<div class="stats"><div class="stat"><div class="stat-val c-green">'+D+'</div><div class="stat-lbl">Дней</div></div><div class="stat"><div class="stat-val c-purple">'+SC+'</div><div class="stat-lbl">Серв.</div></div><div class="stat"><div class="stat-val c-yellow">'+RC+'</div><div class="stat-lbl">Рефер.</div></div><div class="stat"><div class="stat-val c-pink">'+TP+'₽</div><div class="stat-lbl">Оплачено</div></div></div>';
-if(H&&SL){h+='<div class="card"><div class="sec-title">🔗 Быстрый доступ</div><div style="text-align:center;margin-bottom:12px">'+QR+'</div><button class="btn btn-fill" onclick="cP()">📋 Копировать подписку</button></div>';}
+h+='<div class="page on" id="p-home" style="display:block"><div class="hdr"><div class="hdr-logo">LAENFAER VPN</div><div class="hdr-sub">Безопасный интернет</div></div><div class="anim">';
+h+='<div class="c hero"><span class="hero-emoji">⚡</span><div class="hero-name">'+N+'</div><div class="hero-id">'+(U?'@'+U:'ID '+uid)+'</div>';
+h+='<div style="margin-top:12px">'+(H?'<span class="badge badge-on"><span class="badge-dot"></span>Активна · '+Ta+'</span>':'<span class="badge badge-off"><span class="badge-dot"></span>Не активна</span>')+'</div></div>';
+if(H){h+='<div class="c c-accent"><div class="days-box"><div class="days-num">'+D+'</div><div class="days-label">дней осталось</div>'+(ED?'<div class="days-exp">до '+ED+'</div>':'')+'</div></div>';}
+h+='<div class="stats"><div class="stat"><div class="stat-v c1">'+D+'</div><div class="stat-l">Дней</div></div><div class="stat"><div class="stat-v c2">'+SC+'</div><div class="stat-l">Серв.</div></div><div class="stat"><div class="stat-v c3">'+RC+'</div><div class="stat-l">Рефер.</div></div><div class="stat"><div class="stat-v c4">'+TP+'₽</div><div class="stat-l">Оплачено</div></div></div>';
+if(H&&SL){h+='<div class="c"><div class="st">Подписка</div><div class="qr">'+QR+'</div><button class="btn btn-p" onclick="cpy(\'sl\',\'Скопировано!\')">📋 Копировать подписку</button></div>';}
 h+='</div></div>';
 // SUB
-h+='<div class="page" id="p-sub" style="display:none"><div class="anim">';
+h+='<div class="page" id="p-sub" style="display:none"><div class="hdr"><div class="hdr-logo">ПОДПИСКА</div></div><div class="anim">';
 if(H){
-h+='<div class="card card-glow"><div class="sec-title">📱 Подписка активна</div><div style="display:flex;align-items:center;gap:10px;margin-bottom:14px"><div class="hero-badge badge-active" style="margin:0"><span class="badge-dot"></span>'+Tar+'</div><span style="font-size:13px;color:rgba(255,255,255,.4)">'+D+' дн. · до '+ED+'</span></div>';
-if(QR)h+='<div class="qr-box">'+QR+'</div>';
-h+='<div class="link-box" id="subLink">'+SL+'</div><div class="btn-row"><button class="btn btn-fill" onclick="cP()">📋 Копировать</button><a class="btn btn-ghost" href="'+SL+'" target="_blank">🌐 Открыть</a></div></div>';
-}else{h+='<div class="card" style="text-align:center;padding:40px 20px"><div style="font-size:40px;margin-bottom:10px">🔒</div><div style="font-size:16px;font-weight:800;color:#f87171">Нет активной подписки</div><div style="font-size:12px;color:rgba(255,255,255,.35);margin-top:6px">Напишите боту /start для покупки</div></div>';}
+h+='<div class="c c-accent"><div class="badge badge-on" style="margin-bottom:14px"><span class="badge-dot"></span>'+Ta+' · '+D+' дн.</div>';
+if(QR)h+='<div class="qr">'+QR+'</div>';
+h+='<div class="link" id="sl">'+SL+'</div><div class="btn-row"><button class="btn btn-p" onclick="cpy(\'sl\',\'Скопировано!\')">📋 Копировать</button><a class="btn btn-g" href="'+SL+'" target="_blank">🌐 Открыть</a></div></div>';
+}else{h+='<div class="c" style="text-align:center;padding:32px"><div style="font-size:36px;margin-bottom:8px">🔒</div><div style="font-size:15px;font-weight:800;color:#f87171">Нет подписки</div><div style="font-size:11px;color:rgba(255,255,255,.25);margin-top:4px">Напишите /start в боте</div></div>';}
 h+='</div></div>';
 // SERVERS
-h+='<div class="page" id="p-srv" style="display:none"><div class="anim">';
-h+='<div class="card"><div class="sec-title">🌍 Доступные серверы · '+SC+'</div>';
-SRV.forEach((s,i)=>{h+='<div class="srv"><div class="srv-dot" style="animation-delay:'+i*.3+'s"></div><div class="srv-info"><div class="srv-name">'+s.name+'</div><div class="srv-meta">'+s.country+'</div></div><div class="srv-ping">'+s.ping+'</div></div>';});
-if(!SRV.length)h+='<div style="text-align:center;padding:20px;color:rgba(255,255,255,.25);font-size:12px">Серверы обновляются автоматически</div>';
+h+='<div class="page" id="p-srv" style="display:none"><div class="hdr"><div class="hdr-logo">СЕРВЕРЫ</div></div><div class="anim">';
+h+='<div class="c"><div class="st">Доступные · '+SC+'</div>';
+SRV.forEach((s,i)=>{h+='<div class="srv"><div class="srv-dot" style="animation-delay:'+(i*.2)+'s"></div><div class="srv-info"><div class="srv-name">'+s.name+'</div><div class="srv-meta">'+s.country+'</div></div><div class="srv-ms">'+s.ping+'</div></div>';});
 h+='</div>';
-h+='<div class="card"><div class="sec-title">📱 Приложения</div><div class="app-grid"><a class="app-c" href="https://play.google.com/store/apps/details?id=com.happproxy"><div class="ico">🤖</div><div class="nm">HappProxy</div><div class="ds">Android</div></a><a class="app-c" href="https://apps.apple.com/ru/app/happ-proxy-utility-plus/id6746188973"><div class="ico">📱</div><div class="nm">Happ iOS</div><div class="ds">iPhone / iPad</div></a></div></div>';
+h+='<div class="c"><div class="st">Приложения</div><div class="app-grid"><a class="app-c" href="https://play.google.com/store/apps/details?id=com.happproxy"><div class="ico">🤖</div><div class="nm">HappProxy</div><div class="ds">Android</div></a><a class="app-c" href="https://apps.apple.com/ru/app/happ-proxy-utility-plus/id6746188973"><div class="ico">📱</div><div class="nm">Happ iOS</div><div class="ds">iPhone / iPad</div></a></div></div>';
 h+='</div></div>';
 // PROFILE
-h+='<div class="page" id="p-me" style="display:none"><div class="anim">';
-h+='<div class="card"><div class="profile-head"><div class="profile-ring"><div class="profile-inner">👤</div></div><div class="profile-name">'+N+'</div><div class="profile-id">'+(U?'@'+U:'ID '+uid)+'</div></div>';
-h+='<div class="stats"><div class="stat"><div class="stat-val c-pink">'+TP+'₽</div><div class="stat-lbl">Оплачено</div></div><div class="stat"><div class="stat-val c-green">'+BL+'₽</div><div class="stat-lbl">Баланс</div></div><div class="stat"><div class="stat-val c-yellow">'+RC+'</div><div class="stat-lbl">Рефералы</div></div><div class="stat"><div class="stat-val c-purple">'+D+'</div><div class="stat-lbl">Дней</div></div></div></div>';
-h+='<div class="card"><div class="sec-title">🎁 Реферальная ссылка</div><div style="font-size:11px;color:rgba(255,255,255,.3);margin-bottom:8px">Приглашайте друзей — получайте бонусы</div><div class="ref-code" id="refCode">https://t.me/laenfaer_vpn_bot?start='+uid+'</div><button class="btn btn-ghost" onclick="cR()">📋 Копировать ссылку</button></div>';
+h+='<div class="page" id="p-me" style="display:none"><div class="hdr"><div class="hdr-logo">ПРОФИЛЬ</div></div><div class="anim">';
+h+='<div class="c hero"><span class="hero-emoji">👤</span><div class="hero-name">'+N+'</div><div class="hero-id">'+(U?'@'+U:'ID '+uid)+'</div></div>';
+h+='<div class="stats"><div class="stat"><div class="stat-v c4">'+TP+'₽</div><div class="stat-l">Оплачено</div></div><div class="stat"><div class="stat-v c1">'+BL+'₽</div><div class="stat-l">Баланс</div></div><div class="stat"><div class="stat-v c3">'+RC+'</div><div class="stat-l">Рефералы</div></div><div class="stat"><div class="stat-v c2">'+D+'</div><div class="stat-l">Дней</div></div></div>';
+h+='<div class="c"><div class="st">Реферальная программа</div><div style="font-size:11px;color:rgba(255,255,255,.3);margin-bottom:8px">Приглашайте друзей — получайте 25% от оплаты</div><div class="ref-link" id="rc">https://t.me/laenfaer_vpn_bot?start='+uid+'</div><button class="btn btn-g" onclick="cpy(\'rc\',\'Скопировано!\')">📋 Копировать ссылку</button></div>';
 h+='</div></div>';
 // FAQ
-h+='<div class="page" id="p-faq" style="display:none"><div class="anim">';
-h+='<div class="card"><div class="sec-title">❓ Как подключиться</div>';
-h+='<div class="faq" style="margin-bottom:14px"><div class="faq-q">1. Скачайте приложение</div><div class="faq-a">Android — HappProxy из Google Play<br>iPhone — Happ из App Store</div></div>';
-h+='<div class="faq" style="margin-bottom:14px"><div class="faq-q">2. Добавьте подписку</div><div class="faq-a">Скопируйте ссылку из вкладки «Ключ» и вставьте в приложение</div></div>';
-h+='<div class="faq"><div class="faq-q">3. Подключитесь</div><div class="faq-a">Нажмите кнопку подключения. Сервер выбирается автоматически</div></div>';
+h+='<div class="page" id="p-faq" style="display:none"><div class="hdr"><div class="hdr-logo">ПОМОЩЬ</div></div><div class="anim">';
+h+='<div class="c"><div class="st">Как подключиться</div>';
+h+='<div class="faq-q">1. Скачайте приложение</div><div class="faq-a">Android — HappProxy<br>iPhone — Happ / INCY</div>';
+h+='<div class="faq-q">2. Добавьте подписку</div><div class="faq-a">Скопируйте ссылку из вкладки «Ключ» и вставьте в приложение</div>';
+h+='<div class="faq-q">3. Подключитесь</div><div class="faq-a">Нажмите кнопку подключения. Сервер выбирается автоматически</div>';
 h+='</div>';
-h+='<div class="card"><div class="sec-title">💬 Поддержка</div><a class="btn btn-ghost" href="https://t.me/laenfaer_vpn_bot" style="text-decoration:none">💬 Написать в поддержку</a></div>';
+h+='<div class="c"><div class="st">Поддержка</div><a class="btn btn-g" href="https://t.me/laenfaer_vpn_bot" style="text-decoration:none">💬 Написать в бот</a></div>';
 h+='</div></div>';
-$('#shell').innerHTML=h;
-$('#nav').style.display='flex';
-// Cache page elements
-['home','sub','srv','me','faq'].forEach(p=>{P[p]=$('#p-'+p);});
-}).catch(()=>{$('#shell').innerHTML='<div class="card" style="text-align:center;margin-top:40px"><div style="font-size:16px;font-weight:800;color:#f87171">Ошибка загрузки</div></div>';});
+$('#S').innerHTML=h;$('#N').style.display='flex';
+['home','sub','srv','me','faq'].forEach(p=>{E[p]=$('#p-'+p);});
+}).catch(()=>{$('#S').innerHTML='<div class="c" style="text-align:center;margin-top:40px"><div style="font-size:15px;font-weight:800;color:#f87171">Ошибка загрузки</div></div>';});
 }
-function cP(){const el=$('#subLink');if(!el)return;navigator.clipboard.writeText(el.innerText).then(()=>{if(T)T.HapticFeedback.notificationOccurred('success');toast('Подписка скопирована!');});}
-function cR(){const el=$('#refCode');if(!el)return;navigator.clipboard.writeText(el.innerText).then(()=>{if(T)T.HapticFeedback.notificationOccurred('success');toast('Ссылка скопирована!');});}
 </script>
 </body>
 </html>`);
