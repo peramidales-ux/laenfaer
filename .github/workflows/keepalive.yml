@@ -12,3 +12,4 @@ jobs:
         run: curl -s -o /dev/null https://laenfaer.onrender.com/
       - name: Trigger Render Deploy
         run: curl -s -X POST "https://api.render.com/v1/services/srv-d945d1pkh4rs73eh99e0/deploys" -H "Authorization: BearerREDACTED_RENDER_KEY" -H "Content-Type: application/json" -d '{}' || true
+# v2
