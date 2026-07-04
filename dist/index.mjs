@@ -38028,137 +38028,271 @@ app.get("/app", async (req, res) => {
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <title>LAENFAER VPN</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-html,body{font-family:'Inter',-apple-system,sans-serif;background:#07090D;color:#fff;min-height:100vh;overflow-x:hidden}
-body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse at 50% 0%,rgba(139,197,63,.06) 0%,transparent 60%);pointer-events:none}
-.shell{max-width:480px;margin:0 auto;min-height:100vh;position:relative;padding-bottom:72px}
+html,body{font-family:'Inter',sans-serif;background:#07090D;color:#fff;min-height:100vh;overflow-x:hidden;-webkit-tap-highlight-color:transparent}
+.shell{max-width:480px;margin:0 auto;min-height:100vh;position:relative;padding-bottom:76px}
 #particles{position:fixed;inset:0;z-index:0;pointer-events:none}
-.page{position:absolute;top:0;left:0;right:0;opacity:0;transform:translateY(10px);pointer-events:none;transition:all .35s cubic-bezier(.4,0,.2,1);padding:14px 16px 20px;will-change:transform,opacity}
+.page{position:absolute;top:0;left:0;right:0;opacity:0;transform:translateY(8px);pointer-events:none;transition:all .3s cubic-bezier(.4,0,.2,1);padding:12px 14px 24px;will-change:transform,opacity}
 .page.on{opacity:1;transform:none;pointer-events:auto;position:relative}
-.hdr{padding:12px 0 18px;text-align:center}
-.hdr-logo{font-size:17px;font-weight:900;letter-spacing:2px;text-transform:uppercase;color:#8BC53F}
-.hdr-sub{font-size:11px;color:rgba(255,255,255,.2);margin-top:3px}
-.c{background:rgba(17,28,45,.6);border:1px solid rgba(139,197,63,.08);border-radius:24px;padding:20px;margin-bottom:14px;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);position:relative;overflow:hidden}
-.c::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(139,197,63,.15),transparent)}
-.c-glow{box-shadow:0 0 40px rgba(139,197,63,.04),inset 0 0 40px rgba(139,197,63,.02)}
-.st{font-size:11px;font-weight:700;color:rgba(139,197,63,.6);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:14px}
-.badge{display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:20px;font-size:12px;font-weight:700}
-.badge-on{background:rgba(139,197,63,.1);color:#8BC53F;border:1px solid rgba(139,197,63,.15)}
-.badge-off{background:rgba(239,68,68,.08);color:#f87171;border:1px solid rgba(239,68,68,.12)}
-.badge-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
-.badge-on .badge-dot{background:#8BC53F;box-shadow:0 0 8px rgba(139,197,63,.6);animation:blink 2s ease infinite}
-.badge-off .badge-dot{background:#f87171}
-@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
-.hero{text-align:center;padding:20px 16px 24px}
-.hero-icon{width:64px;height:64px;border-radius:20px;background:rgba(139,197,63,.08);border:1px solid rgba(139,197,63,.12);display:flex;align-items:center;justify-content:center;margin:0 auto 12px;font-size:28px;animation:float 3s ease-in-out infinite}
-@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
-.hero-name{font-size:18px;font-weight:800}
-.hero-id{font-size:11px;color:rgba(255,255,255,.2);margin-top:3px}
-.days{text-align:center;padding:16px 0 8px}
-.days-num{font-size:72px;font-weight:900;line-height:1;color:#8BC53F;text-shadow:0 0 40px rgba(139,197,63,.2)}
-.days-lbl{font-size:11px;color:rgba(255,255,255,.2);text-transform:uppercase;letter-spacing:2px;margin-top:6px}
-.days-exp{font-size:11px;color:rgba(255,255,255,.15);margin-top:8px}
-.stats{display:flex;gap:8px;margin-bottom:14px}
-.stat{flex:1;background:rgba(17,28,45,.5);border:1px solid rgba(139,197,63,.06);border-radius:18px;padding:16px 6px;text-align:center}
+
+/* Header bar */
+.hbar{display:flex;align-items:center;gap:10px;padding:12px 14px;background:rgba(17,28,45,.5);border-radius:16px;margin-bottom:16px;border:1px solid rgba(139,197,63,.06)}
+.hbar-logo{width:36px;height:36px;border-radius:10px;background:rgba(139,197,63,.15);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:900;color:#8BC53F;flex-shrink:0}
+.hbar-name{flex:1;font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hbar-bell{width:32px;height:32px;border-radius:10px;background:rgba(139,197,63,.08);display:flex;align-items:center;justify-content:center;font-size:16px;cursor:pointer}
+.hbar-lang{padding:5px 10px;border-radius:10px;background:rgba(139,197,63,.08);font-size:11px;font-weight:700;color:#8BC53F;cursor:pointer;display:flex;align-items:center;gap:4px}
+
+/* Section */
+.st{font-size:11px;font-weight:700;color:rgba(255,255,255,.25);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:12px}
+
+/* Cards */
+.c{background:rgba(17,28,45,.55);border:1px solid rgba(139,197,63,.08);border-radius:20px;padding:18px;margin-bottom:12px;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);position:relative;overflow:hidden}
+.c::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(139,197,63,.12),transparent)}
+.c-sm{padding:14px;border-radius:16px}
+
+/* Hero */
+.hero-title{font-size:24px;font-weight:900;line-height:1.2;margin-bottom:4px}
+.hero-sub{font-size:13px;color:rgba(255,255,255,.35)}
+.badge{display:inline-flex;align-items:center;gap:5px;padding:5px 12px;border-radius:16px;font-size:11px;font-weight:700;background:rgba(139,197,63,.08);color:#8BC53F;border:1px solid rgba(139,197,63,.12);margin-top:8px}
+
+/* Status + traffic card */
+.status-row{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+.status-dot{width:8px;height:8px;border-radius:50%;background:#8BC53F;box-shadow:0 0 8px rgba(139,197,63,.5)}
+.status-text{font-size:12px;font-weight:700;color:#8BC53F;text-transform:uppercase;letter-spacing:1px}
+.status-badge{margin-left:auto;padding:4px 10px;border-radius:12px;font-size:10px;font-weight:700;background:rgba(139,197,63,.1);color:#8BC53F;border:1px solid rgba(139,197,63,.15)}
+.traffic-header{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px}
+.traffic-title{font-size:14px;font-weight:700}
+.traffic-pct{font-size:28px;font-weight:900;color:#8BC53F}
+.traffic-sub{font-size:11px;color:rgba(255,255,255,.25);margin-bottom:10px}
+.progress{height:6px;border-radius:3px;background:rgba(255,255,255,.06);overflow:hidden;margin-bottom:6px}
+.progress-fill{height:100%;border-radius:3px;background:linear-gradient(90deg,#8BC53F,#6B9E2F);transition:width .5s}
+.progress-labels{display:flex;justify-content:space-between;font-size:9px;color:rgba(255,255,255,.2)}
+
+/* Device card */
+.device-card{background:rgba(17,28,45,.4);border:1px solid rgba(139,197,63,.06);border-radius:14px;padding:14px;display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.device-icon{width:32px;height:32px;border-radius:10px;background:rgba(139,197,63,.1);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.device-info{flex:1}
+.device-title{font-size:12px;font-weight:600}
+.device-sub{font-size:10px;color:rgba(255,255,255,.25)}
+.device-status{width:8px;height:8px;border-radius:50%;background:#8BC53F;box-shadow:0 0 6px rgba(139,197,63,.4)}
+
+/* Tariff row */
+.tariff-row{display:flex;gap:10px;margin-bottom:10px}
+.tariff-box{flex:1;background:rgba(17,28,45,.4);border:1px solid rgba(139,197,63,.06);border-radius:16px;padding:14px}
+.tariff-label{font-size:10px;font-weight:700;color:rgba(255,255,255,.25);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px}
+.tariff-value{font-size:14px;font-weight:800}
+.tariff-sub{font-size:10px;color:rgba(255,255,255,.2);margin-top:4px}
+
+/* Timer */
+.timer-card{background:linear-gradient(135deg,rgba(17,28,45,.6),rgba(17,28,45,.4));border:1px solid rgba(139,197,63,.1);border-radius:16px;padding:16px;text-align:center;margin-bottom:10px}
+.timer-label{font-size:10px;font-weight:700;color:rgba(255,255,255,.25);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px}
+.timer-icon{font-size:16px;margin-bottom:4px}
+.timer-digits{display:flex;justify-content:center;gap:4px}
+.timer-d{font-size:32px;font-weight:900;color:#8BC53F;line-height:1}
+.timer-sep{font-size:28px;font-weight:900;color:rgba(139,197,63,.3);line-height:1;padding-top:2px}
+.timer-exp{font-size:10px;color:rgba(255,255,255,.2);margin-top:8px}
+
+/* Stats row */
+.stats{display:flex;gap:8px;margin-bottom:12px}
+.stat{flex:1;background:rgba(17,28,45,.4);border:1px solid rgba(139,197,63,.06);border-radius:16px;padding:14px 8px;text-align:center}
 .stat-v{font-size:20px;font-weight:800;line-height:1}
 .stat-l{font-size:9px;color:rgba(255,255,255,.2);margin-top:6px;text-transform:uppercase;letter-spacing:.8px;font-weight:600}
 .c1{color:#8BC53F}.c2{color:#60a5fa}.c3{color:#facc15}.c4{color:#f472b6}
-.link{background:rgba(7,9,13,.6);border:1px solid rgba(139,197,63,.06);border-radius:14px;padding:12px 14px;font-family:'SF Mono',monospace;font-size:10px;word-break:break-all;color:rgba(139,197,63,.6);line-height:1.6;margin-bottom:12px}
-.btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;font-family:'Inter',sans-serif;font-size:13px;font-weight:700;padding:14px;border-radius:16px;border:none;cursor:pointer;transition:all .15s;text-decoration:none}
+
+/* Link box */
+.link-box{background:rgba(7,9,13,.5);border:1px solid rgba(139,197,63,.06);border-radius:12px;padding:10px 12px;display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.link-text{flex:1;font-family:monospace;font-size:10px;color:rgba(139,197,63,.5);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.link-copy{width:32px;height:32px;border-radius:10px;background:rgba(139,197,63,.1);border:none;display:flex;align-items:center;justify-content:center;font-size:14px;cursor:pointer;flex-shrink:0}
+
+/* Buttons */
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;font-family:'Inter',sans-serif;font-size:13px;font-weight:700;padding:14px;border-radius:16px;border:none;cursor:pointer;transition:all .12s;text-decoration:none}
 .btn:active{transform:scale(.97);opacity:.85}
-.btn-p{background:linear-gradient(135deg,#8BC53F,#6B9E2F);color:#07090D;box-shadow:0 4px 24px rgba(139,197,63,.2)}
-.btn-g{background:rgba(139,197,63,.06);color:rgba(255,255,255,.6);border:1px solid rgba(139,197,63,.1)}
+.btn-g{background:#8BC53F;color:#07090D;box-shadow:0 4px 20px rgba(139,197,63,.2)}
+.btn-o{background:rgba(139,197,63,.06);color:#8BC53F;border:1px solid rgba(139,197,63,.12)}
 .btn-row{display:flex;gap:8px}
 .btn-row .btn{flex:1}
-.srv{display:flex;align-items:center;gap:10px;padding:12px 14px;background:rgba(17,28,45,.4);border:1px solid rgba(139,197,63,.04);border-radius:14px;margin-bottom:6px}
-.srv-dot{width:6px;height:6px;border-radius:50%;background:#8BC53F;flex-shrink:0;box-shadow:0 0 8px rgba(139,197,63,.4)}
-.srv-info{flex:1;min-width:0}
-.srv-name{font-size:12px;font-weight:600}
-.srv-meta{font-size:10px;color:rgba(255,255,255,.2);margin-top:1px}
-.srv-ms{font-size:10px;font-weight:700;color:#8BC53F;flex-shrink:0}
-.ref{background:rgba(7,9,13,.5);border:1px dashed rgba(139,197,63,.12);border-radius:12px;padding:10px;text-align:center;font-family:monospace;font-size:11px;color:#8BC53F;margin:10px 0}
-.faq-q{font-size:12px;font-weight:700;color:#8BC53F;margin-bottom:6px}
-.faq-a{font-size:12px;color:rgba(255,255,255,.3);line-height:1.6;margin-bottom:14px}
-.app-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.app-c{background:rgba(17,28,45,.4);border:1px solid rgba(139,197,63,.06);border-radius:16px;padding:16px;text-align:center;text-decoration:none;color:#fff;transition:transform .15s}
-.app-c:active{transform:scale(.97)}
-.app-c .ico{font-size:26px;margin-bottom:6px}
-.app-c .nm{font-size:12px;font-weight:700;color:#8BC53F}
-.app-c .ds{font-size:10px;color:rgba(255,255,255,.2);margin-top:2px}
-.nav{position:fixed;bottom:0;left:0;right:0;background:rgba(7,9,13,.92);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border-top:1px solid rgba(139,197,63,.06);display:flex;justify-content:space-around;padding:6px 0 max(6px,env(safe-area-inset-bottom));z-index:50}
-.nav-i{display:flex;flex-direction:column;align-items:center;gap:2px;padding:5px 8px;border:none;background:none;color:rgba(255,255,255,.15);font-family:'Inter',sans-serif;font-size:9px;font-weight:600;cursor:pointer;transition:color .2s;border-radius:8px;position:relative}
+
+/* Promo */
+.promo-row{display:flex;gap:8px;align-items:center}
+.promo-input{flex:1;background:rgba(7,9,13,.5);border:1px solid rgba(139,197,63,.08);border-radius:12px;padding:12px 14px;font-family:'Inter',sans-serif;font-size:12px;color:#fff;outline:none}
+.promo-input::placeholder{color:rgba(255,255,255,.2)}
+.promo-btn{padding:12px 20px;border-radius:12px;background:#8BC53F;color:#07090D;font-family:'Inter',sans-serif;font-size:12px;font-weight:700;border:none;cursor:pointer;white-space:nowrap}
+
+/* Payment */
+.pay-card{background:rgba(17,28,45,.4);border:1px solid rgba(139,197,63,.06);border-radius:14px;padding:14px;margin-bottom:8px;display:flex;align-items:center;gap:10px}
+.pay-icon{font-size:20px;flex-shrink:0}
+.pay-info{flex:1}
+.pay-name{font-size:12px;font-weight:700}
+.pay-desc{font-size:10px;color:rgba(255,255,255,.25);margin-top:2px}
+.pay-range{font-size:10px;color:rgba(255,255,255,.15);margin-top:2px}
+
+/* Ref */
+.ref-stats{display:flex;gap:8px;margin-bottom:12px}
+.ref-stat{flex:1;background:rgba(17,28,45,.4);border:1px solid rgba(139,197,63,.06);border-radius:16px;padding:14px}
+.ref-stat-l{font-size:10px;color:rgba(255,255,255,.25);margin-bottom:4px}
+.ref-stat-v{font-size:18px;font-weight:800}
+.ref-stat-sub{font-size:10px;color:#8BC53F;margin-top:2px}
+
+/* FAQ */
+.faq-q{font-size:12px;font-weight:700;color:#8BC53F;margin-bottom:4px}
+.faq-a{font-size:11px;color:rgba(255,255,255,.3);line-height:1.5;margin-bottom:12px}
+
+/* Support */
+.ticket-empty{text-align:center;padding:24px}
+.ticket-empty .ico{font-size:40px;margin-bottom:8px;opacity:.3}
+.ticket-empty .txt{font-size:13px;color:rgba(255,255,255,.3)}
+
+/* Bottom nav */
+.nav{position:fixed;bottom:0;left:0;right:0;background:rgba(7,9,13,.95);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-top:1px solid rgba(139,197,63,.06);display:flex;justify-content:space-around;padding:6px 0 max(6px,env(safe-area-inset-bottom));z-index:50}
+.nav-i{display:flex;flex-direction:column;align-items:center;gap:2px;padding:5px 6px;border:none;background:none;color:rgba(255,255,255,.18);font-family:'Inter',sans-serif;font-size:8px;font-weight:600;cursor:pointer;transition:color .2s;border-radius:10px;position:relative}
 .nav-i.on{color:#8BC53F}
-.nav-i .ic{font-size:18px;transition:transform .2s cubic-bezier(.4,0,.2,1)}
-.nav-i.on .ic{transform:scale(1.1) translateY(-1px)}
-.nav-i::after{content:'';position:absolute;top:0;left:50%;width:0;height:2px;background:#8BC53F;border-radius:1px;transition:width .25s,left .25s}
-.nav-i.on::after{width:18px;left:calc(50% - 9px)}
-.toast{position:fixed;bottom:84px;left:50%;transform:translateX(-50%) translateY(16px);background:linear-gradient(135deg,#8BC53F,#6B9E2F);color:#07090D;padding:10px 22px;border-radius:14px;font-size:12px;font-weight:700;box-shadow:0 8px 24px rgba(139,197,63,.3);opacity:0;transition:opacity .25s,transform .25s;z-index:60;pointer-events:none;white-space:nowrap}
+.nav-i .ic{font-size:20px;transition:transform .2s}
+.nav-i.on .ic{transform:scale(1.08) translateY(-1px)}
+
+/* Toast */
+.toast{position:fixed;bottom:88px;left:50%;transform:translateX(-50%) translateY(16px);background:linear-gradient(135deg,#8BC53F,#6B9E2F);color:#07090D;padding:10px 22px;border-radius:14px;font-size:12px;font-weight:700;box-shadow:0 8px 24px rgba(139,197,63,.3);opacity:0;transition:opacity .2s,transform .2s;z-index:60;pointer-events:none;white-space:nowrap}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* Loading */
 .ld{text-align:center;padding:80px 20px}
 .ld-ring{width:28px;height:28px;border:2px solid rgba(139,197,63,.1);border-top-color:#8BC53F;border-radius:50%;animation:spin .6s linear infinite;margin:0 auto 10px}
 @keyframes spin{to{transform:rotate(360deg)}}
-.ld-txt{font-size:11px;color:rgba(255,255,255,.15)}
-.anim>*{opacity:0;transform:translateY(8px);animation:rise .35s ease forwards}
-.anim>*:nth-child(1){animation-delay:.03s}
-.anim>*:nth-child(2){animation-delay:.06s}
-.anim>*:nth-child(3){animation-delay:.09s}
-.anim>*:nth-child(4){animation-delay:.12s}
-.anim>*:nth-child(5){animation-delay:.15s}
-.anim>*:nth-child(6){animation-delay:.18s}
-.anim>*:nth-child(7){animation-delay:.21s}
+
+/* Animate */
+.anim>*{opacity:0;transform:translateY(6px);animation:rise .3s ease forwards}
+.anim>*:nth-child(1){animation-delay:.02s}.anim>*:nth-child(2){animation-delay:.04s}.anim>*:nth-child(3){animation-delay:.06s}.anim>*:nth-child(4){animation-delay:.08s}.anim>*:nth-child(5){animation-delay:.1s}.anim>*:nth-child(6){animation-delay:.12s}.anim>*:nth-child(7){animation-delay:.14s}.anim>*:nth-child(8){animation-delay:.16s}.anim>*:nth-child(9){animation-delay:.18s}.anim>*:nth-child(10){animation-delay:.2s}
 @keyframes rise{to{opacity:1;transform:none}}
 </style>
 </head>
 <body>
 <canvas id="particles"></canvas>
-<div class="shell" id="S"><div class="ld"><div class="ld-ring"></div><div class="ld-txt">Загрузка...</div></div></div>
+<div class="shell" id="S"><div class="ld"><div class="ld-ring"></div></div></div>
 <div class="toast" id="T"></div>
 <div class="nav" id="N" style="display:none">
-<button class="nav-i on" data-p="home"><span class="ic">🏠</span>Главная</button>
-<button class="nav-i" data-p="sub"><span class="ic">🔑</span>Ключ</button>
-<button class="nav-i" data-p="srv"><span class="ic">🌐</span>Серверы</button>
-<button class="nav-i" data-p="me"><span class="ic">👤</span>Профиль</button>
-<button class="nav-i" data-p="faq"><span class="ic">💬</span>Помощь</button>
+<button class="nav-i on" data-p="home"><span class="ic">&#127968;</span>Главная</button>
+<button class="nav-i" data-p="sub"><span class="ic">&#128273;</span>Подписка</button>
+<button class="nav-i" data-p="bal"><span class="ic">&#128179;</span>Баланс</button>
+<button class="nav-i" data-p="ref"><span class="ic">&#128101;</span>Рефералы</button>
+<button class="nav-i" data-p="sup"><span class="ic">&#128172;</span>Поддержка</button>
 </div>
 <script>
-(function(){var c=document.getElementById('particles'),x=c.getContext('2d');function resize(){c.width=window.innerWidth;c.height=window.innerHeight}resize();window.addEventListener('resize',resize);var pts=[];for(var i=0;i<40;i++){pts.push({x:Math.random()*c.width,y:Math.random()*c.height,r:Math.random()*2+.5,dx:(Math.random()-.5)*.3,dy:(Math.random()-.5)*.3,o:Math.random()*.3+.1})}function draw(){x.clearRect(0,0,c.width,c.height);for(var i=0;i<pts.length;i++){var p=pts[i];p.x+=p.dx;p.y+=p.dy;if(p.x<0||p.x>c.width)p.dx*=-1;if(p.y<0||p.y>c.height)p.dy*=-1;x.beginPath();x.arc(p.x,p.y,p.r,0,Math.PI*2);x.fillStyle='rgba(139,197,63,'+p.o+')';x.fill()}requestAnimationFrame(draw)}draw()})();
+/* Particles */
+(function(){var c=document.getElementById('particles'),x=c.getContext('2d');function r(){c.width=window.innerWidth;c.height=window.innerHeight}r();window.addEventListener('resize',r);var p=[];for(var i=0;i<50;i++)p.push({x:Math.random()*c.width,y:Math.random()*c.height,r:Math.random()*1.5+.4,dx:(Math.random()-.5)*.25,dy:(Math.random()-.5)*.25,o:Math.random()*.25+.05});function d(){x.clearRect(0,0,c.width,c.height);for(var i=0;i<p.length;i++){var v=p[i];v.x+=v.dx;v.y+=v.dy;if(v.x<0||v.x>c.width)v.dx*=-1;if(v.y<0||v.y>c.height)v.dy*=-1;x.beginPath();x.arc(v.x,v.y,v.r,0,6.28);x.fillStyle='rgba(139,197,63,'+v.o+')';x.fill()}requestAnimationFrame(d)}d()})();
+
 var Tg=window.Telegram&&window.Telegram.WebApp;
-if(Tg){Tg.ready();Tg.expand();Tg.setHeaderColor('#07090D');Tg.setBackgroundColor('#07090D');}
+if(Tg){Tg.ready();Tg.expand();Tg.setHeaderColor('#07090D');Tg.setBackgroundColor('#07090D')}
 var uid=Tg&&Tg.initDataUnsafe&&Tg.initDataUnsafe.user&&Tg.initDataUnsafe.user.id;
-var E={};var cur='home';
+var E={},cur='home',D={};
 function $(s){return document.querySelector(s)}
 function toast(m){var t=$('#T');t.textContent=m;t.classList.add('show');setTimeout(function(){t.classList.remove('show')},1800)}
-function go(p){if(p===cur)return;var o=E[cur],n=E[p];if(o){o.classList.remove('on');o.style.display='none';}if(n){n.style.display='';requestAnimationFrame(function(){requestAnimationFrame(function(){n.classList.add('on')})});}document.querySelectorAll('.nav-i').forEach(function(b){b.classList.toggle('on',b.dataset.p===p)});cur=p;}
+function go(p){if(p===cur)return;var o=E[cur],n=E[p];if(o){o.classList.remove('on');o.style.display='none'}if(n){n.style.display='';requestAnimationFrame(function(){requestAnimationFrame(function(){n.classList.add('on')})})}document.querySelectorAll('.nav-i').forEach(function(b){b.classList.toggle('on',b.dataset.p===p)});cur=p}
+function cpy(id){var el=$('#'+id);if(!el)return;navigator.clipboard.writeText(el.textContent).then(function(){if(Tg)Tg.HapticFeedback.notificationOccurred('success');toast('Скопировано!')})}
 document.querySelectorAll('.nav-i').forEach(function(b){b.addEventListener('click',function(){go(b.dataset.p)})});
-document.addEventListener('click',function(e){var b=e.target.closest('[data-copy]');if(!b)return;var el=$('#'+b.dataset.copy);if(!el)return;navigator.clipboard.writeText(el.innerText).then(function(){if(Tg)Tg.HapticFeedback.notificationOccurred('success');toast('Скопировано!')})});
-if(!uid){document.getElementById('S').innerHTML='<div class="c" style="text-align:center;margin-top:40px"><div style="font-size:36px;margin-bottom:10px">🔒</div><div style="font-size:16px;font-weight:800">Откройте из Telegram</div><div style="font-size:11px;color:rgba(255,255,255,.2);margin-top:6px">Мини-приложение работает только внутри Telegram</div></div>';}
+document.addEventListener('click',function(e){var b=e.target.closest('[data-copy]');if(b)cpy(b.dataset.copy)});
+
+if(!uid){document.getElementById('S').innerHTML='<div class="c" style="text-align:center;margin-top:40px"><div style="font-size:36px;margin-bottom:10px">&#128274;</div><div style="font-size:16px;font-weight:800">Откройте из Telegram</div></div>';}
 else{
 fetch('/api/profile/'+uid).then(function(r){return r.json()}).then(function(d){
-var N=d.name||'Пользователь',U=d.username||'',H=d.hasActiveSub,D=d.daysLeft||0,Ta=d.tariff||'',SL=d.subLink||'',SC=d.serverCount||0,RC=d.refCount||0,TP=d.totalPaid||0,BL=d.balance||0,ED=d.expireDate||'',SRV=d.servers||[];
+D=d;var N=d.name||'Пользователь',U=d.username||'',H=d.hasActiveSub,DY=d.daysLeft||0,Ta=d.tariff||'',SL=d.subLink||'',SC=d.serverCount||0,RC=d.refCount||0,TP=d.totalPaid||0,BL=d.balance||0,ED=d.expireDate||'',SRV=d.servers||[];
 var h='';
-h+='<div class="page on" id="p-home" style="display:block"><div class="hdr"><div class="hdr-logo">LAENFAER VPN</div><div class="hdr-sub">Безопасный интернет</div></div><div class="anim">';
-h+='<div class="c hero"><div class="hero-icon">⚡</div><div class="hero-name">'+N+'</div><div class="hero-id">'+(U?'@'+U:'ID '+uid)+'</div>';
-h+='<div style="margin-top:12px">'+(H?'<span class="badge badge-on"><span class="badge-dot"></span>Активна · '+Ta+'</span>':'<span class="badge badge-off"><span class="badge-dot"></span>Не активна</span>')+'</div></div>';
-if(H){h+='<div class="c c-glow"><div class="days"><div class="days-num">'+D+'</div><div class="days-lbl">дней осталось</div>'+(ED?'<div class="days-exp">до '+ED+'</div>':'')+'</div></div>';}
-h+='<div class="stats"><div class="stat"><div class="stat-v c1">'+D+'</div><div class="stat-l">Дней</div></div><div class="stat"><div class="stat-v c2">'+SC+'</div><div class="stat-l">Серв.</div></div><div class="stat"><div class="stat-v c3">'+RC+'</div><div class="stat-l">Рефер.</div></div><div class="stat"><div class="stat-v c4">'+TP+'₽</div><div class="stat-l">Оплачено</div></div></div>';
-if(H&&SL){h+='<div class="c"><div class="st">Подписка</div><button class="btn btn-p" data-copy="sl">Копировать подписку</button></div>';}
+
+/* HOME */
+h+='<div class="page on" id="p-home" style="display:block"><div class="anim">';
+h+='<div class="hbar"><div class="hbar-logo">&#9889;</div><div class="hbar-name">LAENFAER VPN</div><div class="hbar-bell">&#128276;</div><div class="hbar-lang">&#127479;&#127482; RU</div></div>';
+h+='<div style="margin-bottom:18px"><div class="hero-title">Добро пожаловать,<br>'+N+'!</div><div class="hero-sub">Ваша подписка</div><span class="badge">'+(H?Ta:'Нет подписки')+'</span></div>';
+
+/* Status + Traffic */
+h+='<div class="c">';
+h+='<div class="status-row"><div class="status-dot"></div><div class="status-text">'+(H?'НОРМА':'НЕТ АКТИВА'))+'</div><div class="status-badge">'+(H?Ta:'ПРОБНЫЙ ПЕРИОД')+'</div></div>';
+h+='<div class="traffic-header"><div><div class="traffic-title">Расход трафика</div><div class="traffic-sub">0 МБ /无限 ГБ</div></div><div class="traffic-pct">0%</div></div>';
+h+='<div class="progress"><div class="progress-fill" style="width:0%"></div></div>';
+h+='<div class="progress-labels"><span>0 МБ</span><span>2.5 ГБ</span><span>5.0 ГБ</span><span>7.5 ГБ</span><span>10.0 ГБ</span></div>';
+h+='</div>';
+
+/* Device */
+h+='<div class="c-sm"><div class="device-card"><div class="device-icon">&#128187;</div><div class="device-info"><div class="device-title">Подключить устройство</div><div class="device-sub">'+(H?'1 из 1 подключено':'Нет устройств')+'</div></div><div class="device-status"></div></div></div>';
+
+/* Tariff + Days */
+h+='<div class="tariff-row">';
+h+='<div class="tariff-box"><div class="tariff-label">&#127873; Тариф</div><div class="tariff-value">'+(H?Ta:'Нет')+'</div><div class="tariff-sub">'+ED+'</div></div>';
+h+='<div class="tariff-box"><div class="tariff-label">&#128197; Осталось</div><div class="tariff-value" style="color:#8BC53F">'+DY+' <span style="font-size:11px;color:rgba(255,255,255,.3)">дн.</span></div><div class="tariff-sub">до '+ED+'</div></div>';
+h+='</div>';
+
+/* Timer */
+h+='<div class="timer-card"><div class="timer-label">&#9201; Осталось</div><div class="timer-digits"><div class="timer-d" id="td">00</div><div class="timer-sep">:</div><div class="timer-d" id="th">00</div><div class="timer-sep">:</div><div class="timer-d" id="tm">00</div><div class="timer-sep">:</div><div class="timer-d" id="ts">00</div></div><div class="timer-exp">Действует до: '+ED+'</div></div>';
+
+if(SL){h+='<div class="link-box"><div class="link-text" id="sl">'+SL+'</div><button class="link-copy" data-copy="sl">&#128203;</button></div>';}
+if(H&&SL){h+='<a class="btn btn-o" href="'+SL+'" target="_blank">Управление подпиской &#8594;</a>';}
 h+='</div></div>';
-h+='<div class="page" id="p-sub" style="display:none"><div class="hdr"><div class="hdr-logo">ПОДПИСКА</div></div><div class="anim">';
-if(H){h+='<div class="c c-glow"><div class="badge badge-on" style="margin-bottom:14px"><span class="badge-dot"></span>'+Ta+' · '+D+' дн.</div><div class="link" id="sl">'+SL+'</div><div class="btn-row"><button class="btn btn-p" data-copy="sl">Копировать</button><a class="btn btn-g" href="'+SL+'" target="_blank">Открыть</a></div></div>';}
-else{h+='<div class="c" style="text-align:center;padding:32px"><div style="font-size:36px;margin-bottom:8px">🔒</div><div style="font-size:15px;font-weight:800;color:#f87171">Нет подписки</div></div>';}
+
+/* SUBSCRIPTION */
+h+='<div class="page" id="p-sub" style="display:none"><div class="hbar"><div class="hbar-logo">&#9889;</div><div class="hbar-name">LAENFAER VPN</div><div class="hbar-bell">&#128276;</div><div class="hbar-lang">&#127479;&#127482; RU</div></div><div class="anim">';
+h+='<div style="font-size:22px;font-weight:900;margin-bottom:16px">Подписка</div>';
+if(H){
+h+='<div class="c"><div class="status-row"><div class="status-dot"></div><div class="status-text">НОРМА</div><div class="status-badge">'+Ta+'</div></div>';
+h+='<div style="font-size:16px;font-weight:800;margin-bottom:10px">'+Ta+'</div>';
+h+='<div class="c-sm" style="background:rgba(139,197,63,.04);border-color:rgba(139,197,63,.1)"><div style="font-size:13px;font-weight:700;color:#8BC53F;margin-bottom:4px">Текущий план</div><div style="font-size:11px;color:rgba(255,255,255,.35);line-height:1.5">Действует до '+ED+'. Автобновление подписки каждые 12 часов.</div><div style="margin-top:8px;font-size:12px;font-weight:700;color:#8BC53F">'+DY+' дн. осталось</div></div>';
+h+='<div class="traffic-header" style="margin-top:10px"><div class="traffic-title">Трафик</div><div>0 МБ /无限 ГБ <span style="color:#8BC53F;cursor:pointer">&#128260; Обновить</span></div></div>';
+h+='<div class="progress"><div class="progress-fill" style="width:0%"></div></div>';
+if(SL){h+='<div class="link-box"><div class="link-text" id="sl2">'+SL+'</div><button class="link-copy" data-copy="sl2">&#128203;</button></div>';}
+h+='</div>';
+
+/* Timer */
+h+='<div class="timer-card"><div class="timer-label">&#9201; Осталось</div><div class="timer-digits"><div class="timer-d" id="td2">00</div><div class="timer-sep">:</div><div class="timer-d" id="th2">00</div><div class="timer-sep">:</div><div class="timer-d" id="tm2">00</div><div class="timer-sep">:</div><div class="timer-d" id="ts2">00</div></div><div class="timer-exp">Действует до: '+ED+'</div></div>';
+
+h+='<a class="btn btn-g" href="'+(SL||'#')+'" target="_blank">Выберите тариф для продолжения &#8594;</a>';
+}else{
+h+='<div class="c" style="text-align:center;padding:32px"><div style="font-size:36px;margin-bottom:8px">&#128274;</div><div style="font-size:15px;font-weight:800;color:#f87171">Нет активной подписки</div><div style="font-size:11px;color:rgba(255,255,255,.25);margin-top:4px">Напишите /start в боте</div></div>';
+}
 h+='</div></div>';
-h+='<div class="page" id="p-srv" style="display:none"><div class="hdr"><div class="hdr-logo">СЕРВЕРЫ</div></div><div class="anim"><div class="c"><div class="st">Доступные · '+SC+'</div>';
-SRV.forEach(function(s,i){h+='<div class="srv"><div class="srv-dot" style="animation-delay:'+(i*.15)+'s"></div><div class="srv-info"><div class="srv-name">'+s.name+'</div><div class="srv-meta">'+s.country+'</div></div><div class="srv-ms">'+s.ping+'</div></div>';});
-h+='</div><div class="c"><div class="st">Приложения</div><div class="app-grid"><a class="app-c" href="https://play.google.com/store/apps/details?id=com.happproxy"><div class="ico">🤖</div><div class="nm">HappProxy</div><div class="ds">Android</div></a><a class="app-c" href="https://apps.apple.com/ru/app/happ-proxy-utility-plus/id6746188973"><div class="ico">📱</div><div class="nm">Happ iOS</div><div class="ds">iPhone / iPad</div></a></div></div></div></div>';
-h+='<div class="page" id="p-me" style="display:none"><div class="hdr"><div class="hdr-logo">ПРОФИЛЬ</div></div><div class="anim"><div class="c hero"><div class="hero-icon">👤</div><div class="hero-name">'+N+'</div><div class="hero-id">'+(U?'@'+U:'ID '+uid)+'</div></div>';
-h+='<div class="stats"><div class="stat"><div class="stat-v c4">'+TP+'₽</div><div class="stat-l">Оплачено</div></div><div class="stat"><div class="stat-v c1">'+BL+'₽</div><div class="stat-l">Баланс</div></div><div class="stat"><div class="stat-v c3">'+RC+'</div><div class="stat-l">Рефералы</div></div><div class="stat"><div class="stat-v c2">'+D+'</div><div class="stat-l">Дней</div></div></div>';
-h+='<div class="c"><div class="st">Реферальная программа</div><div style="font-size:11px;color:rgba(255,255,255,.2);margin-bottom:8px">Приглашайте друзей</div><div class="ref" id="rc">https://t.me/laenfaer_vpn_bot?start='+uid+'</div><button class="btn btn-g" data-copy="rc">Копировать ссылку</button></div></div></div>';
-h+='<div class="page" id="p-faq" style="display:none"><div class="hdr"><div class="hdr-logo">ПОМОЩЬ</div></div><div class="anim"><div class="c"><div class="st">Как подключиться</div><div class="faq-q">1. Скачайте приложение</div><div class="faq-a">Android — HappProxy<br>iPhone — Happ / INCY</div><div class="faq-q">2. Добавьте подписку</div><div class="faq-a">Скопируйте ссылку из вкладки «Ключ»</div><div class="faq-q">3. Подключитесь</div><div class="faq-a">Сервер выбирается автоматически</div></div><div class="c"><div class="st">Поддержка</div><a class="btn btn-g" href="https://t.me/laenfaer_vpn_bot" style="text-decoration:none">Написать в бот</a></div></div></div>';
+
+/* BALANCE */
+h+='<div class="page" id="p-bal" style="display:none"><div class="hbar"><div class="hbar-logo">&#9889;</div><div class="hbar-name">LAENFAER VPN</div><div class="hbar-bell">&#128276;</div><div class="hbar-lang">&#127479;&#127482; RU</div></div><div class="anim">';
+h+='<div style="font-size:22px;font-weight:900;margin-bottom:16px">Баланс</div>';
+h+='<div class="c"><div class="tariff-label">Текущий баланс</div><div style="font-size:32px;font-weight:900;color:#8BC53F">'+BL+'.00 &#8381;</div></div>';
+
+h+='<div class="c"><div class="st">Промокод</div><div class="promo-row"><input class="promo-input" placeholder="Введите промокод" id="promoInput"><button class="promo-btn" id="promoBtn">Активировать</button></div></div>';
+
+h+='<div class="c"><div class="st">Пополнение баланса</div>';
+h+='<div class="pay-card"><div class="pay-icon">&#127974;</div><div class="pay-info"><div class="pay-name">СБП - ЮKacca</div><div class="pay-desc">Оплата через ЮKacca</div><div class="pay-range">50 - 10000 &#8381;</div></div></div>';
+h+='<div class="pay-card"><div class="pay-icon">&#128176;</div><div class="pay-info"><div class="pay-name">СБП и Криптовалюта</div><div class="pay-desc">Оплата через Platega</div><div class="pay-range">1 - 1000000 &#8381;</div></div></div>';
+h+='</div>';
+h+='<div class="c" style="cursor:pointer"><div class="st" style="display:flex;justify-content:space-between">История операций <span style="color:rgba(255,255,255,.2)">&#9660;</span></div></div>';
+h+='</div></div>';
+
+/* REFERRALS */
+h+='<div class="page" id="p-ref" style="display:none"><div class="hbar"><div class="hbar-logo">&#9889;</div><div class="hbar-name">LAENFAER VPN</div><div class="hbar-bell">&#128276;</div><div class="hbar-lang">&#127479;&#127482; RU</div></div><div class="anim">';
+h+='<div style="font-size:22px;font-weight:900;margin-bottom:16px">Реферальная программа</div>';
+h+='<div class="ref-stats"><div class="ref-stat" style="flex:1.5"><div class="ref-stat-l">Всего рефералов</div><div class="ref-stat-v">'+RC+'</div><div class="ref-stat-sub">0 активных</div></div></div>';
+h+='<div class="stats"><div class="stat"><div class="stat-v c1">'+TP+'&#8381;</div><div class="stat-l">Заработок</div></div><div class="stat"><div class="stat-v" style="color:#8BC53F">25%</div><div class="stat-l">Комиссия</div></div></div>';
+
+h+='<div class="c"><div class="st">Ваши реферальные ссылки</div>';
+h+='<div class="link-box"><div class="link-text" id="rl1">https://t.me/laenfaer_vpn_bot?start='+uid+'</div><button class="link-copy" data-copy="rl1">&#128203;</button></div>';
+h+='<a class="btn btn-g" href="https://t.me/share/url?url=https://t.me/laenfaer_vpn_bot?start='+uid+'" target="_blank">Поделиться &#128228;</a></div>';
+
+h+='<div class="c"><div class="st">Условия программы</div><div class="stats"><div class="stat"><div class="stat-v" style="color:#8BC53F">25%</div><div class="stat-l">Комиссия</div></div><div class="stat"><div class="stat-v" style="color:rgba(255,255,255,.5)">100 &#8381;</div><div class="stat-l">Мин. пополнение</div></div></div></div>';
+h+='</div></div>';
+
+/* SUPPORT */
+h+='<div class="page" id="p-sup" style="display:none"><div class="hbar"><div class="hbar-logo">&#9889;</div><div class="hbar-name">LAENFAER VPN</div><div class="hbar-bell">&#128276;</div><div class="hbar-lang">&#127479;&#127482; RU</div></div><div class="anim">';
+h+='<div style="font-size:22px;font-weight:900;margin-bottom:16px">Поддержка</div>';
+h+='<button class="btn btn-g" style="margin-bottom:12px">+ Новый тикет</button>';
+h+='<div class="c"><a class="btn btn-o" href="https://t.me/laenfaer_vpn_bot" style="text-decoration:none">Связаться с поддержкой &#128172;</a></div>';
+h+='<div class="c"><div class="st">Ваши обращения</div><div class="ticket-empty"><div class="ico">&#128172;</div><div class="txt">Нет обращений</div></div></div>';
+h+='</div></div>';
+
 document.getElementById('S').innerHTML=h;document.getElementById('N').style.display='flex';
-['home','sub','srv','me','faq'].forEach(function(p){E[p]=$('#p-'+p)});
+['home','sub','bal','ref','sup'].forEach(function(p){E[p]=$('#p-'+p)});
+
+/* Timer countdown */
+function updateTimers(){var el=document.getElementById('td');if(!el)return;if(!D.expireDate)return;var exp=new Date(D.expireDate).getTime();var now=Date.now();var diff=exp-now;if(diff<0)diff=0;var dd=Math.floor(diff/86400000);var hh=Math.floor((diff%86400000)/3600000);var mm=Math.floor((diff%3600000)/60000);var ss=Math.floor((diff%60000)/1000);['td','td2'].forEach(function(id){var el2=document.getElementById(id);if(el2)el2.textContent=String(dd).padStart(2,'0')});['th','th2'].forEach(function(id){var el2=document.getElementById(id);if(el2)el2.textContent=String(hh).padStart(2,'0')});['tm','tm2'].forEach(function(id){var el2=document.getElementById(id);if(el2)el2.textContent=String(mm).padStart(2,'0')});['ts','ts2'].forEach(function(id){var el2=document.getElementById(id);if(el2)el2.textContent=String(ss).padStart(2,'0')})}
+updateTimers();setInterval(updateTimers,1000);
+
+/* Promo button */
+var pb=document.getElementById('promoBtn');if(pb)pb.addEventListener('click',function(){var v=document.getElementById('promoInput');if(v&&v.value.trim())toast('Промокод "'+v.value.trim()+'" отправлен!')});
+
 }).catch(function(){document.getElementById('S').innerHTML='<div class="c" style="text-align:center;margin-top:40px"><div style="font-size:15px;font-weight:800;color:#f87171">Ошибка загрузки</div></div>'});
 }
 </script>
