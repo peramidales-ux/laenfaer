@@ -56642,6 +56642,8 @@ function subRequiredKb() {
   return new InlineKeyboard().url("\u{1F4E2} \u041F\u043E\u0434\u043F\u0438\u0441\u0430\u0442\u044C\u0441\u044F \u043D\u0430 \u043A\u0430\u043D\u0430\u043B", CHANNEL_URL).row().text("\u2705 \u041F\u0440\u043E\u0432\u0435\u0440\u0438\u0442\u044C \u043F\u043E\u0434\u043F\u0438\u0441\u043A\u0443", "check_sub_again");
 }
 function getSubDomain() {
+  const renderUrl = process.env.RENDER_EXTERNAL_URL;
+  if (renderUrl) return renderUrl.replace(/\/$/, "");
   const domains = (process.env.REPLIT_DOMAINS ?? "").split(",").map((d) => d.trim()).filter(Boolean);
   return domains[0] ? `https://${domains[0]}` : "";
 }
@@ -57119,7 +57121,7 @@ userBot.callbackQuery("show_key", async (ctx) => {
     return;
   }
   await ctx.answerCallbackQuery();
-  const domain = getSubDomain(); const subLink = domain ? `${domain}/sub/${userId}` : `https://vpn2-bot-tcg2.onrender.com/sub/${userId}`;
+  const domain = getSubDomain(); const subLink = domain ? `${domain}/sub/${userId}` : `https://laenfaer.onrender.com/sub/${userId}`;
   await ctx.reply(
     `\u{1F511} <b>\u0412\u0430\u0448\u0430 \u043F\u043E\u0434\u043F\u0438\u0441\u043A\u0430</b>
 
@@ -57138,7 +57140,7 @@ async function getUserKey(userId) {
 }
 userBot.callbackQuery("connect_android", async (ctx) => {
   const userId = String(ctx.from.id);
-  const domain = getSubDomain(); const subLink = domain ? `${domain}/sub/${userId}` : `https://vpn2-bot-tcg2.onrender.com/sub/${userId}`;
+  const domain = getSubDomain(); const subLink = domain ? `${domain}/sub/${userId}` : `https://laenfaer.onrender.com/sub/${userId}`;
   const happUrl = "happ://add/" + encodeURIComponent(subLink);
   const redirectUrl = "https://laenfaer-redirect.vercel.app/r?url=" + encodeURIComponent(happUrl);
   const kb = new InlineKeyboard2().url("\u{1F916} HappProxy", redirectUrl).row().text("\u{1F519} \u041D\u0430\u0437\u0430\u0434", "connect_back");
@@ -57150,7 +57152,7 @@ userBot.callbackQuery("connect_android", async (ctx) => {
 });
 userBot.callbackQuery("connect_iphone", async (ctx) => {
   const userId = String(ctx.from.id);
-  const domain = getSubDomain(); const subLink = domain ? `${domain}/sub/${userId}` : `https://vpn2-bot-tcg2.onrender.com/sub/${userId}`;
+  const domain = getSubDomain(); const subLink = domain ? `${domain}/sub/${userId}` : `https://laenfaer.onrender.com/sub/${userId}`;
   const happUrl = "happ://add/" + encodeURIComponent(subLink);
   const redirectUrl = "https://laenfaer-redirect.vercel.app/r?url=" + encodeURIComponent(happUrl);
   const kb = new InlineKeyboard2().url("\u{1F4F1} Happ iOS", redirectUrl).row().text("\u{1F519} \u041D\u0430\u0437\u0430\u0434", "connect_back");
@@ -58326,7 +58328,7 @@ ${escapeHtml(text2)}`,
       }
       const tariff = isPrem ? "30days" : "free_3days";
       await setSubscription(uid, tariff, days, key);
-      const domain = getSubDomain(); const subLink = domain ? `${domain}/sub/${uid}` : `https://vpn2-bot.onrender.com/sub/${uid}`;
+      const domain = getSubDomain(); const subLink = domain ? `${domain}/sub/${uid}` : `https://laenfaer.onrender.com/sub/${uid}`;
       const label = isPrem ? "Premium" : "\u0431\u0435\u0441\u043F\u043B\u0430\u0442\u043D\u0430\u044F";
       const emoji = isPrem ? "\u2B50" : "\u{1F381}";
       try {
