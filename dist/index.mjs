@@ -37968,6 +37968,114 @@ function copyKey() {
   }
 });
 
+// Mini App endpoint
+app.get("/app", async (req, res) => {
+  res.setHeader("Content-Type", "text/html; charset=utf-8");
+  res.send(`<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<title>LAENFAER VPN</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0f0c29;--card:rgba(255,255,255,.07);--border:rgba(255,255,255,.12);--accent:#00f260;--text:#fff;--muted:#9ca3af;--red:#ef4444}
+html,body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overscroll-behavior:none}
+.wrap{max-width:480px;margin:0 auto;padding:16px}
+.header{text-align:center;margin-bottom:20px}
+.header h1{font-size:24px;font-weight:800;background:linear-gradient(90deg,#00f260,#0575e6);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.header .user{color:var(--muted);font-size:13px;margin-top:4px}
+.card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px;text-align:center;margin-bottom:14px}
+.card .label{font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:6px}
+.card .value{font-size:28px;font-weight:700}
+.green{color:var(--accent)}.red{color:var(--red)}
+.card .sub{font-size:13px;color:var(--muted);margin-top:4px}
+.section{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:14px}
+.section h3{font-size:15px;margin-bottom:12px;color:var(--accent)}
+.key-box{background:rgba(0,0,0,.3);border-radius:10px;padding:12px;font-family:monospace;font-size:11px;word-break:break-all;color:#d1d5db;margin-bottom:12px}
+.btn{display:block;width:100%;text-align:center;background:var(--accent);color:#0f0c29;font-size:14px;font-weight:700;padding:13px;border-radius:10px;text-decoration:none;border:none;cursor:pointer;margin-bottom:8px}
+.btn:active{opacity:.8}
+.btn-outline{background:rgba(255,255,255,.1);color:#fff;border:1px solid var(--border)}
+.qr-wrap{text-align:center;margin-bottom:12px}
+.qr-wrap svg{max-width:180px;height:auto}
+.tariff-tag{display:inline-block;background:rgba(0,242,96,.15);color:var(--accent);padding:3px 10px;border-radius:20px;font-size:12px;font-weight:600}
+.app-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
+.app-btn{background:rgba(255,255,255,.08);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center;text-decoration:none;color:#fff;font-size:12px}
+.app-btn strong{display:block;font-size:14px;margin-bottom:2px;color:var(--accent)}
+#loading{text-align:center;padding:40px;color:var(--muted)}
+</style>
+</head>
+<body>
+<div class="wrap" id="app"><div id="loading">Загрузка...</div></div>
+<script>
+const tg = window.Telegram?.WebApp;
+if(tg){tg.ready();tg.expand();tg.setHeaderColor('#0f0c29');tg.setBackgroundColor('#0f0c29');}
+const uid = tg?.initDataUnsafe?.user?.id;
+if(!uid){document.getElementById('app').innerHTML='<div class="card"><div class="value red">Откройте из Telegram</div><div class="sub">Мини-приложение работает только внутри Telegram</div></div>';}
+else{
+fetch('/api/profile/'+uid).then(r=>r.json()).then(d=>{
+const app=document.getElementById('app');
+const hasSub=d.hasActiveSub;
+const days=d.daysLeft;
+const key=d.key||'';
+const tariff=d.tariff||'нет';
+const name=d.name||'Пользователь';
+const username=d.username||'';
+const qrSvg=d.qrSvg||'';
+const subLink=d.subLink||'';
+let html=\`<div class="header"><h1>LAENFAER VPN</h1><p class="user">\${name}\${username?' (@'+username+')':''}</p></div>
+<div class="card"><div class="label">Статус подписки</div><div class="value \${hasSub?'green':'red'}">\${hasSub?'Активна':'Истекла'}</div>\${hasSub?\`<div class="sub">Тариф: <span class="tariff-tag">\${tariff}</span> &middot; Осталось \${days} дн.</div>\`:''}</div>\`;
+if(hasSub&&key){
+html+=\`<div class="section"><h3>🔑 Ваш ключ</h3><div class="qr-wrap">\${qrSvg}</div><div class="key-box" id="keyBox">\${key}</div><button class="btn" onclick="copyKey()">📋 Скопировать ключ</button>\${subLink?\`<a class="btn btn-outline" href="\${subLink}">🔗 Subscription Link</a>\`:''}</div>\`;}
+else if(!hasSub){html+=\`<div class="card"><div class="value red">Нет активной подписки</div><div class="sub">Напишите боту /start</div></div>\`;}
+html+=\`<div class="section"><h3>📱 Приложения</h3><div class="app-row"><a class="app-btn" href="https://apps.apple.com/ru/app/happ-proxy-utility-plus/id6746188973"><strong>Happ iOS</strong>iPhone / iPad</a><a class="app-btn" href="https://play.google.com/store/apps/details?id=com.happproxy"><strong>Happ Android</strong>Android</a></div></div>\`;
+app.innerHTML=html;
+if(tg&&tg.MainButton){tg.MainButton.setText('Показать ключ');tg.MainButton.show();tg.MainButton.onClick(()=>{copyKey();});}
+}).catch(()=>{document.getElementById('app').innerHTML='<div class="card"><div class="value red">Ошибка загрузки</div></div>';});
+}
+function copyKey(){const k=document.getElementById('keyBox');if(k){navigator.clipboard.writeText(k.innerText);if(tg)tg.HapticFeedback.notificationOccurred('success');}}
+</script>
+</body>
+</html>`);
+});
+
+// API for mini app
+app.get("/api/profile/:userId", async (req, res) => {
+  try {
+    const userId = String(req.params.userId);
+    const user = await db.select().from(usersTable).where(eq(usersTable.telegramId, userId)).limit(1);
+    const sub = await db.select().from(subscriptionsTable).where(eq(subscriptionsTable.telegramId, userId)).limit(1);
+    const u = user[0];
+    const s = sub[0];
+    const now = new Date();
+    const hasActiveSub = s && new Date(s.expiresAt) > now;
+    const daysLeft = hasActiveSub ? Math.ceil((new Date(s.expiresAt) - now) / 86400000) : 0;
+    const key = hasActiveSub ? s.key : "";
+    const tariff = hasActiveSub ? s.tariff : "";
+    let qrSvg = "";
+    if (key) {
+      const QRCode = await import("qrcode");
+      qrSvg = await QRCode.toString(key, { type: "svg", margin: 2, width: 180, color: { dark: "#00f260", light: "#ffffff00" } });
+    }
+    const domain = getSubDomain();
+    const subLink = domain ? domain + "/sub/" + userId : "";
+    res.json({
+      name: u?.name || "Пользователь",
+      username: u?.username || "",
+      hasActiveSub,
+      daysLeft,
+      key,
+      tariff,
+      qrSvg,
+      subLink,
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Internal error" });
+  }
+});
+
 var app_default = app;
 
 // src/bots/userBot.ts
@@ -58939,6 +59047,22 @@ async function registerCommands() {
     { command: "broadcast", description: "\u{1F4E2} \u0420\u0430\u0441\u0441\u044B\u043B\u043A\u0430" }
   ]);
   logger.info("Bot commands registered");
+  // Register Mini App menu button
+  try {
+    const domain = getSubDomain();
+    const miniAppUrl = domain ? domain + "/app" : "";
+    if (miniAppUrl) {
+      await userBot.api.setChatMenuButton({
+        menu_button: {
+          type: "web_app",
+          text: "\uD83C\uDF10 LAENFAER VPN"
+        }
+      });
+      logger.info("Mini App menu button registered");
+    }
+  } catch (e) {
+    logger.error({ err: e }, "Failed to register menu button");
+  }
 }
 
 userBot.command("withdraw", async (ctx) => {
