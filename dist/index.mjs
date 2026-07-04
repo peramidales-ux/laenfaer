@@ -37680,108 +37680,45 @@ app.get("/sub/:userId", async (req, res) => {
 });
 
 app.get("/", async (_req, res) => {
-  try {
-    const usersRows = await db.select().from(usersTable);
-    const subsRows = await db.select().from(subscriptionsTable).where(gt(subscriptionsTable.expiresAt, new Date()));
-    const uCount = usersRows.length;
-    const sCount = subsRows.length;
-    const subs30days = await db.select().from(subscriptionsTable).where(and(gt(subscriptionsTable.expiresAt, new Date()), eq(subscriptionsTable.tariff, "30days")));
-    const subs180days = await db.select().from(subscriptionsTable).where(and(gt(subscriptionsTable.expiresAt, new Date()), eq(subscriptionsTable.tariff, "180days")));
-    const subs30 = subs30days.length;
-    const subs180 = subs180days.length;
-    const totalRevenue = subs30 * 200 + subs180 * 1000;
-
-    res.setHeader("Content-Type", "text/html; charset=utf-8");
-    res.send(`<!DOCTYPE html>
+  res.setHeader("Content-Type", "text/html; charset=utf-8");
+  res.send(`<!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>LAENFAER VPN Dashboard</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>LAENFAER VPN</title>
 <style>
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  html, body {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
-    color: #fff;
-    min-height: 100vh;
-  }
-  .wrap { max-width: 960px; margin: 0 auto; padding: 40px 20px; }
-  h1 { font-size: 36px; font-weight: 800; text-align: center; margin-bottom: 8px; background: linear-gradient(90deg, #00f260, #0575e6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-  .subtitle { text-align: center; color: #9ca3af; font-size: 16px; margin-bottom: 40px; }
-  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; margin-bottom: 40px; }
-  .card {
-    background: rgba(255,255,255,0.07);
-    border: 1px solid rgba(255,255,255,0.12);
-    border-radius: 16px;
-    padding: 24px;
-    text-align: center;
-    backdrop-filter: blur(10px);
-  }
-  .card .label { font-size: 13px; text-transform: uppercase; letter-spacing: 1px; color: #9ca3af; margin-bottom: 10px; }
-  .card .value { font-size: 36px; font-weight: 700; color: #00f260; }
-  .card .unit { font-size: 13px; color: #9ca3af; margin-top: 4px; }
-  .section { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; padding: 28px; margin-bottom: 20px; }
-  .section h2 { font-size: 20px; margin-bottom: 16px; color: #00f260; }
-  table { width: 100%; border-collapse: collapse; font-size: 14px; }
-  th { text-align: left; padding: 10px 8px; border-bottom: 1px solid rgba(255,255,255,0.12); color: #9ca3af; font-weight: 500; }
-  td { text-align: left; padding: 10px 8px; border-bottom: 1px solid rgba(255,255,255,0.06); }
-  tr:last-child td { border-bottom: none; }
-  .status-green { color: #22c55e; font-weight: 600; }
-  .status-red { color: #ef4444; font-weight: 600; }
-  .footer { text-align: center; color: #6b7280; font-size: 12px; margin-top: 40px; }
-  a { color: #00f260; }
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,sans-serif;background:#07090D;color:#fff;min-height:100vh;display:flex;align-items:center;justify-content:center;text-align:center}
+.wrap{max-width:400px;padding:40px 20px}
+.logo{font-size:48px;margin-bottom:16px}
+.title{font-size:28px;font-weight:900;color:#8BC53F;margin-bottom:8px}
+.sub{font-size:14px;color:rgba(255,255,255,.4);margin-bottom:32px;line-height:1.6}
+.btn{display:inline-block;background:#8BC53F;color:#07090D;font-size:16px;font-weight:700;padding:14px 32px;border-radius:14px;text-decoration:none;margin-bottom:16px;transition:transform .15s}
+.btn:active{transform:scale(.97)}
+.feat{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:32px}
+.feat div{background:rgba(17,28,45,.5);border:1px solid rgba(139,197,63,.08);border-radius:14px;padding:16px}
+.feat .ico{font-size:24px;margin-bottom:6px}
+.feat .txt{font-size:12px;color:rgba(255,255,255,.4)}
+.footer{margin-top:40px;font-size:11px;color:rgba(255,255,255,.15)}
 </style>
 </head>
 <body>
 <div class="wrap">
-  <h1>LAENFAER VPN</h1>
-  <p class="subtitle">Дашборд администратора</p>
-
-  <div class="cards">
-    <div class="card">
-      <div class="label">Пользователей</div>
-      <div class="value">${uCount}</div>
-    </div>
-    <div class="card">
-      <div class="label">Активных подписок</div>
-      <div class="value">${sCount}</div>
-    </div>
-    <div class="card">
-      <div class="label">Выручка (оценочная)</div>
-      <div class="value">${totalRevenue} ₽</div>
-    </div>
-  </div>
-
-  <div class="section">
-    <h2>Свежие подписки</h2>
-    <table>
-      <tr><th>Telegram ID</th><th>Тариф</th><th>До</th><th>Статус</th></tr>
-      ${(await db.select().from(subscriptionsTable).where(gt(subscriptionsTable.expiresAt, new Date())).limit(20)).map(s => {
-        const days = Math.ceil((new Date(s.expiresAt) - new Date()) / 86400000);
-        return `<tr><td>${s.telegramId}</td><td>${s.tariff}</td><td>${days} дн.</td><td class="status-green">Активна</td></tr>`;
-      }).join("")}
-    </table>
-  </div>
-
-  <div class="section">
-    <h2>Последние пользователи</h2>
-    <table>
-      <tr><th>ID</th><th>Имя</th><th>Username</th><th>Дата</th></tr>
-      ${(await db.select().from(usersTable).orderBy(desc(usersTable.createdAt)).limit(15)).map(u => `<tr><td>${u.telegramId}</td><td>${u.name}</td><td>${u.username || "-"}</td><td>${new Date(u.createdAt).toLocaleDateString("ru-RU")}</td></tr>`).join("")}
-    </table>
-  </div>
-
-  <div class="footer">
-    <a href="https://t.me/laenfaer_vpn_bot">@laenfaer_vpn_bot</a> &middot; LAENFAER VPN © 2026
-  </div>
+<div class="logo">&#9889;</div>
+<div class="title">LAENFAER VPN</div>
+<div class="sub">Быстрый, надёжный VPN без ограничений<br>Подключись через Telegram-бот</div>
+<a class="btn" href="https://t.me/laenfaer_vpn_bot">Открыть бот &#10132;</a>
+<div class="feat">
+<div><div class="ico">&#127760;</div><div class="txt">50+ серверов</div></div>
+<div><div class="ico">&#9889;</div><div class="txt">Высокая скорость</div></div>
+<div><div class="ico">&#128274;</div><div class="txt">Безопасность</div></div>
+<div><div class="ico">&#128176;</div><div class="txt">От 10&#8381;/день</div></div>
+</div>
+<div class="footer">LAENFAER VPN &copy; 2026</div>
 </div>
 </body>
 </html>`);
-  } catch (err) {
-    console.error(err);
-    res.status(500).send("Internal error");
-  }
 });
 
 app.get("/profile/:userId", async (req, res) => {
