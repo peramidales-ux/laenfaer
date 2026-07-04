@@ -31107,15 +31107,13 @@ app.get("/api/profile/:userId", async (req, res) => {
     const userId = String(req.params.userId);
     const now = Date.now();
     const cached = profileCache.get(userId);
-    if (cached && now - cached.ts < 30000) {
+    if (cached && now - cached.ts < 60000) {
       return res.json(cached.data);
     }
     const domain = getSubDomain();
-    const [user, sub, freeCount, premCount] = await Promise.all([
+    const [user, sub] = await Promise.all([
       db.select().from(usersTable).where(eq(usersTable.telegramId, userId)).limit(1),
       db.select().from(subscriptionsTable).where(eq(subscriptionsTable.telegramId, userId)).limit(1),
-      db.select({ count: sql`count(*)` }).from(freeKeysTable),
-      db.select({ count: sql`count(*)` }).from(premiumKeysTable),
     ]);
     const u = user[0];
     const s = sub[0];
@@ -31129,8 +31127,6 @@ app.get("/api/profile/:userId", async (req, res) => {
       const QRCode = await import("qrcode");
       qrSvg = await QRCode.toString(subLink, { type: "svg", margin: 2, width: 150, color: { dark: "#a78bfa", light: "#ffffff00" } });
     }
-    const refCountQ = await db.select({ count: sql`count(*)` }).from(referralsTable).where(eq(referralsTable.inviterId, userId));
-    const serverCount = (Number(freeCount[0]?.count || 0) + Number(premCount[0]?.count || 0));
     const data = {
       name: u?.name || "Пользователь",
       username: u?.username || "",
@@ -31140,8 +31136,8 @@ app.get("/api/profile/:userId", async (req, res) => {
       expireDate,
       qrSvg,
       subLink,
-      serverCount,
-      refCount: Number(refCountQ[0]?.count || 0),
+      serverCount: 50,
+      refCount: u?.refBalance || 0,
       refCode: userId,
       totalPaid: u?.totalPaid || 0,
       balance: u?.balance || 0,
