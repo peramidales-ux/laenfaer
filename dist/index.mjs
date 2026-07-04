@@ -31059,14 +31059,13 @@ h+='<div class="c hero"><span class="hero-emoji">⚡</span><div class="hero-name
 h+='<div style="margin-top:12px">'+(H?'<span class="badge badge-on"><span class="badge-dot"></span>Активна · '+Ta+'</span>':'<span class="badge badge-off"><span class="badge-dot"></span>Не активна</span>')+'</div></div>';
 if(H){h+='<div class="c c-accent"><div class="days-box"><div class="days-num">'+D+'</div><div class="days-label">дней осталось</div>'+(ED?'<div class="days-exp">до '+ED+'</div>':'')+'</div></div>';}
 h+='<div class="stats"><div class="stat"><div class="stat-v c1">'+D+'</div><div class="stat-l">Дней</div></div><div class="stat"><div class="stat-v c2">'+SC+'</div><div class="stat-l">Серв.</div></div><div class="stat"><div class="stat-v c3">'+RC+'</div><div class="stat-l">Рефер.</div></div><div class="stat"><div class="stat-v c4">'+TP+'₽</div><div class="stat-l">Оплачено</div></div></div>';
-if(H&&SL){h+='<div class="c"><div class="st">Подписка</div><div class="qr">'+QR+'</div><button class="btn btn-p" onclick="cpy(\'sl\',\'Скопировано!\')">📋 Копировать подписку</button></div>';}
+if(H&&SL){h+='<div class="c"><div class="st">Подписка</div><button class="btn btn-p" data-copy="sl">Копировать подписку</button></div>';}
 h+='</div></div>';
 // SUB
 h+='<div class="page" id="p-sub" style="display:none"><div class="hdr"><div class="hdr-logo">ПОДПИСКА</div></div><div class="anim">';
 if(H){
 h+='<div class="c c-accent"><div class="badge badge-on" style="margin-bottom:14px"><span class="badge-dot"></span>'+Ta+' · '+D+' дн.</div>';
-if(QR)h+='<div class="qr">'+QR+'</div>';
-h+='<div class="link" id="sl">'+SL+'</div><div class="btn-row"><button class="btn btn-p" onclick="cpy(\'sl\',\'Скопировано!\')">📋 Копировать</button><a class="btn btn-g" href="'+SL+'" target="_blank">🌐 Открыть</a></div></div>';
+h+='<div class="link" id="sl">'+SL+'</div><div class="btn-row"><button class="btn btn-p" data-copy="sl">Копировать</button><a class="btn btn-g" href="'+SL+'" target="_blank">Открыть</a></div></div>';
 }else{h+='<div class="c" style="text-align:center;padding:32px"><div style="font-size:36px;margin-bottom:8px">🔒</div><div style="font-size:15px;font-weight:800;color:#f87171">Нет подписки</div><div style="font-size:11px;color:rgba(255,255,255,.25);margin-top:4px">Напишите /start в боте</div></div>';}
 h+='</div></div>';
 // SERVERS
@@ -31080,7 +31079,7 @@ h+='</div></div>';
 h+='<div class="page" id="p-me" style="display:none"><div class="hdr"><div class="hdr-logo">ПРОФИЛЬ</div></div><div class="anim">';
 h+='<div class="c hero"><span class="hero-emoji">👤</span><div class="hero-name">'+N+'</div><div class="hero-id">'+(U?'@'+U:'ID '+uid)+'</div></div>';
 h+='<div class="stats"><div class="stat"><div class="stat-v c4">'+TP+'₽</div><div class="stat-l">Оплачено</div></div><div class="stat"><div class="stat-v c1">'+BL+'₽</div><div class="stat-l">Баланс</div></div><div class="stat"><div class="stat-v c3">'+RC+'</div><div class="stat-l">Рефералы</div></div><div class="stat"><div class="stat-v c2">'+D+'</div><div class="stat-l">Дней</div></div></div>';
-h+='<div class="c"><div class="st">Реферальная программа</div><div style="font-size:11px;color:rgba(255,255,255,.3);margin-bottom:8px">Приглашайте друзей — получайте 25% от оплаты</div><div class="ref-link" id="rc">https://t.me/laenfaer_vpn_bot?start='+uid+'</div><button class="btn btn-g" onclick="cpy(\'rc\',\'Скопировано!\')">📋 Копировать ссылку</button></div>';
+h+='<div class="c"><div class="st">Реферальная программа</div><div style="font-size:11px;color:rgba(255,255,255,.3);margin-bottom:8px">Приглашайте друзей — получайте 25% от оплаты</div><div class="ref-link" id="rc">https://t.me/laenfaer_vpn_bot?start='+uid+'</div><button class="btn btn-g" data-copy="rc">Копировать ссылку</button></div>';
 h+='</div></div>';
 // FAQ
 h+='<div class="page" id="p-faq" style="display:none"><div class="hdr"><div class="hdr-logo">ПОМОЩЬ</div></div><div class="anim">';
@@ -31089,10 +31088,11 @@ h+='<div class="faq-q">1. Скачайте приложение</div><div class=
 h+='<div class="faq-q">2. Добавьте подписку</div><div class="faq-a">Скопируйте ссылку из вкладки «Ключ» и вставьте в приложение</div>';
 h+='<div class="faq-q">3. Подключитесь</div><div class="faq-a">Нажмите кнопку подключения. Сервер выбирается автоматически</div>';
 h+='</div>';
-h+='<div class="c"><div class="st">Поддержка</div><a class="btn btn-g" href="https://t.me/laenfaer_vpn_bot" style="text-decoration:none">💬 Написать в бот</a></div>';
+h+='<div class="c"><div class="st">Поддержка</div><a class="btn btn-g" href="https://t.me/laenfaer_vpn_bot" style="text-decoration:none">Написать в бот</a></div>';
 h+='</div></div>';
 $('#S').innerHTML=h;$('#N').style.display='flex';
 ['home','sub','srv','me','faq'].forEach(p=>{E[p]=$('#p-'+p);});
+document.addEventListener('click',e=>{const b=e.target.closest('[data-copy]');if(!b)return;const el=$('#'+b.dataset.copy);if(!el)return;navigator.clipboard.writeText(el.innerText).then(()=>{if(Tg)Tg.HapticFeedback.notificationOccurred('success');toast('Скопировано!');});});
 }).catch(()=>{$('#S').innerHTML='<div class="c" style="text-align:center;margin-top:40px"><div style="font-size:15px;font-weight:800;color:#f87171">Ошибка загрузки</div></div>';});
 }
 </script>
@@ -31122,11 +31122,6 @@ app.get("/api/profile/:userId", async (req, res) => {
     const tariff = hasActiveSub ? s.tariff : "";
     const expireDate = hasActiveSub ? new Date(s.expiresAt).toLocaleDateString("ru-RU") : "";
     const subLink = hasActiveSub && domain ? domain + "/sub/" + userId : "";
-    let qrSvg = "";
-    if (subLink) {
-      const QRCode = await import("qrcode");
-      qrSvg = await QRCode.toString(subLink, { type: "svg", margin: 2, width: 150, color: { dark: "#a78bfa", light: "#ffffff00" } });
-    }
     const data = {
       name: u?.name || "Пользователь",
       username: u?.username || "",
@@ -31134,7 +31129,6 @@ app.get("/api/profile/:userId", async (req, res) => {
       daysLeft,
       tariff,
       expireDate,
-      qrSvg,
       subLink,
       serverCount: 50,
       refCount: u?.refBalance || 0,
