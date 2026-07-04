@@ -57231,7 +57231,7 @@ function closedSupportKb() {
   return new InlineKeyboard().text("\u{1F195} \u041D\u043E\u0432\u044B\u0439 \u0447\u0430\u0442", "new_support_chat").row().text("\u{1F3E0} \u0412 \u0433\u043B\u0430\u0432\u043D\u043E\u0435 \u043C\u0435\u043D\u044E", "to_main");
 }
 function adminMainKb() {
-  return new InlineKeyboard().text("\u{1F465} \u041F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u0435\u043B\u0438", "admin_get_users").text("\u{1F4CA} \u0421\u0442\u0430\u0442\u0438\u0441\u0442\u0438\u043A\u0430", "admin_stats").row().text("\u{1F511} \u041A\u043B\u044E\u0447\u0438", "admin_keys_mngr").text("\u{1F4AC} \u041F\u043E\u0434\u0434\u0435\u0440\u0436\u043A\u0430", "admin_support_chats").row().text("\u{1F4E2} \u0420\u0430\u0441\u0441\u044B\u043B\u043A\u0430", "admin_start_broadcast").row().text("\u{1F4BE} \u0421\u043A\u0430\u0447\u0430\u0442\u044C \u0431\u044D\u043A\u0430\u043F", "admin_backup");
+  return new InlineKeyboard().text("\u{1F465} \u041F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u0435\u043B\u0438", "admin_get_users").text("\u{1F4CA} \u0421\u0442\u0430\u0442\u0438\u0441\u0442\u0438\u043A\u0430", "admin_stats").row().text("\u{1F4CB} \u041F\u043E\u0434\u043F\u0438\u0441\u043A\u0438", "admin_get_subs").text("\u{1F511} \u041A\u043B\u044E\u0447\u0438", "admin_keys_mngr").row().text("\u{1F4AC} \u041F\u043E\u0434\u0434\u0435\u0440\u0436\u043A\u0430", "admin_support_chats").text("\u{1F4E2} \u0420\u0430\u0441\u0441\u044B\u043B\u043A\u0430", "admin_start_broadcast").row().text("\u{1F4BE} \u0421\u043A\u0430\u0447\u0430\u0442\u044C \u0431\u044D\u043A\u0430\u043F", "admin_backup");
 }
 function adminBackKb() {
   return new InlineKeyboard().text("\u{1F519} \u0412 \u043C\u0435\u043D\u044E \u0443\u043F\u0440\u0430\u0432\u043B\u0435\u043D\u0438\u044F", "to_admin_menu");
@@ -58374,6 +58374,15 @@ adminBot.callbackQuery(/.*/, async (ctx) => {
     await showUsersList(ctx, 0);
     return;
   }
+  if (data === "admin_get_subs") {
+    await showSubscriptionsList(ctx, 0);
+    return;
+  }
+  if (data.startsWith("subs_page_")) {
+    const page = Number(data.replace("subs_page_", ""));
+    await showSubscriptionsList(ctx, page);
+    return;
+  }
   if (data.startsWith("users_page_")) {
     const page = Number(data.replace("users_page_", ""));
     await showUsersList(ctx, page);
@@ -59157,6 +59166,38 @@ async function showUsersList(ctx, page = 0) {
   const nav = [];
   if (safePage > 0) nav.push(["\u25C0\uFE0F \u041D\u0430\u0437\u0430\u0434", `users_page_${safePage - 1}`]);
   if (safePage + 1 < totalPages) nav.push(["\u0412\u043F\u0435\u0440\u0451\u0434 \u25B6\uFE0F", `users_page_${safePage + 1}`]);
+  if (nav.length > 0) {
+    for (const [label, cb] of nav) kb.text(label, cb);
+    kb.row();
+  }
+  kb.text("\u{1F519} \u0412 \u043C\u0435\u043D\u044E \u0443\u043F\u0440\u0430\u0432\u043B\u0435\u043D\u0438\u044F", "to_admin_menu");
+  await ctx.editMessageText(text2, { parse_mode: "HTML", reply_markup: kb });
+}
+async function showSubscriptionsList(ctx, page = 0) {
+  const allSubs = await db.select().from(subscriptionsTable);
+  if (!allSubs.length) {
+    await ctx.editMessageText("\u{1F4CB} \u041F\u043E\u0434\u043F\u0438\u0441\u043E\u043A \u043F\u043E\u043A\u0430 \u043D\u0435\u0442.", { reply_markup: adminBackKb() });
+    return;
+  }
+  const now = new Date();
+  const active = allSubs.filter(s => new Date(s.expiresAt) > now);
+  const expired = allSubs.filter(s => new Date(s.expiresAt) <= now);
+  const perPage = 8;
+  const totalPages = Math.ceil(allSubs.length / perPage);
+  const safePage = Math.max(0, Math.min(page, totalPages - 1));
+  const slice = allSubs.slice(safePage * perPage, (safePage + 1) * perPage);
+  let text2 = `\u{1F4CB} <b>\u041F\u043E\u0434\u043F\u0438\u0441\u043A\u0438</b>\n\n\u2705 \u0410\u043A\u0442\u0438\u0432\u043D\u044B\u0445: <b>${active.length}</b> | \u274C \u0418\u0441\u0442\u0435\u043A\u0448\u0438\u0445: <b>${expired.length}</b> | \u0412\u0441\u0435\u0433\u043E: <b>${allSubs.length}</b>\n\u{1F4C4} \u0421\u0442\u0440\u0430\u043D\u0438\u0446\u0430 <b>${safePage + 1}/${totalPages}</b>\n\n`;
+  const kb = new InlineKeyboard3();
+  for (const s of slice) {
+    const isActive = new Date(s.expiresAt) > now;
+    const daysLeft = isActive ? Math.ceil((new Date(s.expiresAt) - now) / 86400000) : 0;
+    const status = isActive ? `\u2705 ${daysLeft}\u0434` : "\u274C \u0438\u0441\u0442\u0435\u043A";
+    text2 += `${isActive ? "\u{1F7E2}" : "\u{1F534}"} <b>${s.telegramId}</b> | ${s.tariff} | ${status}\n`;
+    kb.text(`\u{1F464} ${s.telegramId}`, `manage_user_${s.telegramId}`).row();
+  }
+  const nav = [];
+  if (safePage > 0) nav.push(["\u25C0\uFE0F \u041D\u0430\u0437\u0430\u0434", `subs_page_${safePage - 1}`]);
+  if (safePage + 1 < totalPages) nav.push(["\u0412\u043F\u0435\u0440\u0451\u0434 \u25B6\uFE0F", `subs_page_${safePage + 1}`]);
   if (nav.length > 0) {
     for (const [label, cb] of nav) kb.text(label, cb);
     kb.row();
