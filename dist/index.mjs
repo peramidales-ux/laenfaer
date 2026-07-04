@@ -37679,46 +37679,305 @@ app.get("/sub/:userId", async (req, res) => {
   }
 });
 
-app.get("/", async (_req, res) => {
-  res.setHeader("Content-Type", "text/html; charset=utf-8");
-  res.send(`<!DOCTYPE html>
+const SEO = {
+  title: "LAENFAER VPN - быстрый и надёжный VPN без ограничений",
+  description: "LAENFAER VPN - сервис для подключения VPN через Telegram-бот. 50+ серверов в Европе и CIS, скорость до 1 Гбит/с, шифрование данных. Подключись за 2 минуты.",
+  keywords: "VPN, VPN сервис, обход блокировок, Telegram VPN, быстрый VPN, безопасный интернет, HappProxy, INCY, VLESS, Reality",
+  url: "https://laenfaer.onrender.com",
+  image: "https://laenfaer.onrender.com/og.png"
+};
+
+var faqLD = JSON.stringify({"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"Какие приложения поддерживаются?","acceptedAnswer":{"@type":"Answer","text":"HappProxy (Android), Happ (iPhone/iPad), INCY (все платформы), v2rayTun и другие клиенты с поддержкой VLESS Reality."}},{"@type":"Question","name":"Безопасен ли VPN?","acceptedAnswer":{"@type":"Answer","text":"Да. Мы используем протокол VLESS с технологией Reality."}},{"@type":"Question","name":"Сколько устройств можно подключить?","acceptedAnswer":{"@type":"Answer","text":"Зависит от тарифа. На бесплатном - 1 устройство. На платных - от 1 до 5."}},{"@type":"Question","name":"Как оплатить подписку?","acceptedAnswer":{"@type":"Answer","text":"Оплата через СБП, банковские карты или криптовалюту."}},{"@type":"Question","name":"Есть ли реферальная программа?","acceptedAnswer":{"@type":"Answer","text":"Да! 25% от оплаты приглашённых друзей на ваш баланс."}}]});
+var prodLD = JSON.stringify({"@context":"https://schema.org","@type":"Product","name":"LAENFAER VPN 30 дней","description":"VPN-подписка на 30 дней","offers":{"@type":"Offer","price":"249","priceCurrency":"RUB","priceValidUntil":"2026-12-31","availability":"https://schema.org/InStock"}});
+var svcLD = JSON.stringify({"@context":"https://schema.org","@type":"Service","name":"LAENFAER VPN","description":SEO.description,"url":SEO.url,"serviceType":"VPN","areaServed":"RU","offers":{"@type":"Offer","price":"10","priceCurrency":"RUB"}});
+
+function pageShell(title, desc, body, extra) {
+  return `<!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>LAENFAER VPN</title>
-<style>
-*{margin:0;padding:0;box-sizing:border-box}
-body{font-family:-apple-system,sans-serif;background:#07090D;color:#fff;min-height:100vh;display:flex;align-items:center;justify-content:center;text-align:center}
-.wrap{max-width:400px;padding:40px 20px}
-.logo{font-size:48px;margin-bottom:16px}
-.title{font-size:28px;font-weight:900;color:#8BC53F;margin-bottom:8px}
-.sub{font-size:14px;color:rgba(255,255,255,.4);margin-bottom:32px;line-height:1.6}
-.btn{display:inline-block;background:#8BC53F;color:#07090D;font-size:16px;font-weight:700;padding:14px 32px;border-radius:14px;text-decoration:none;margin-bottom:16px;transition:transform .15s}
-.btn:active{transform:scale(.97)}
-.feat{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:32px}
-.feat div{background:rgba(17,28,45,.5);border:1px solid rgba(139,197,63,.08);border-radius:14px;padding:16px}
-.feat .ico{font-size:24px;margin-bottom:6px}
-.feat .txt{font-size:12px;color:rgba(255,255,255,.4)}
-.footer{margin-top:40px;font-size:11px;color:rgba(255,255,255,.15)}
-</style>
+<title>${title}</title>
+<meta name="description" content="${desc}">
+<meta name="keywords" content="${SEO.keywords}">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="${SEO.url}">
+<meta property="og:type" content="website">
+<meta property="og:title" content="${title}">
+<meta property="og:description" content="${desc}">
+<meta property="og:url" content="${SEO.url}">
+<meta property="og:site_name" content="LAENFAER VPN">
+<meta property="og:locale" content="ru_RU">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="${title}">
+<meta name="twitter:description" content="${desc}">
+<script type="application/ld+json">${svcLD}</script>
+${extra||''}
 </head>
-<body>
-<div class="wrap">
-<div class="logo">&#9889;</div>
-<div class="title">LAENFAER VPN</div>
-<div class="sub">Быстрый, надёжный VPN без ограничений<br>Подключись через Telegram-бот</div>
-<a class="btn" href="https://t.me/laenfaer_vpn_bot">Открыть бот &#10132;</a>
-<div class="feat">
-<div><div class="ico">&#127760;</div><div class="txt">50+ серверов</div></div>
-<div><div class="ico">&#9889;</div><div class="txt">Высокая скорость</div></div>
-<div><div class="ico">&#128274;</div><div class="txt">Безопасность</div></div>
-<div><div class="ico">&#128176;</div><div class="txt">От 10&#8381;/день</div></div>
-</div>
-<div class="footer">LAENFAER VPN &copy; 2026</div>
-</div>
+<body style="font-family:-apple-system,sans-serif;background:#07090D;color:#fff;margin:0">
+<nav style="background:#0a0c12;border-bottom:1px solid rgba(139,197,63,.1);padding:12px 20px;display:flex;align-items:center;justify-content:center;gap:24px;position:sticky;top:0;z-index:100">
+<a href="/" style="color:#8BC53F;font-weight:900;font-size:15px;text-decoration:none;letter-spacing:1px">&#9889; LAENFAER</a>
+<a href="/tariffs" style="color:rgba(255,255,255,.5);text-decoration:none;font-size:13px">Тарифы</a>
+<a href="/support" style="color:rgba(255,255,255,.5);text-decoration:none;font-size:13px">Поддержка</a>
+<a href="https://t.me/laenfaer_vpn_bot" style="background:#8BC53F;color:#07090D;font-size:12px;font-weight:700;padding:8px 16px;border-radius:10px;text-decoration:none">Бот</a>
+</nav>
+${body}
+<footer style="background:#0a0c12;border-top:1px solid rgba(139,197,63,.06);padding:24px 20px;text-align:center;font-size:11px;color:rgba(255,255,255,.15);margin-top:60px">
+<p>LAENFAER VPN &copy; 2026. Все права защищены.</p>
+<p style="margin-top:8px">
+<a href="/" style="color:rgba(255,255,255,.25);text-decoration:none;margin:0 8px">Главная</a>
+<a href="/tariffs" style="color:rgba(255,255,255,.25);text-decoration:none;margin:0 8px">Тарифы</a>
+<a href="/support" style="color:rgba(255,255,255,.25);text-decoration:none;margin:0 8px">Поддержка</a>
+<a href="https://t.me/laenfaer_vpn_bot" style="color:rgba(255,255,255,.25);text-decoration:none;margin:0 8px">Telegram</a>
+</p>
+</footer>
 </body>
-</html>`);
+</html>`;
+}
+
+// === Landing page ===
+app.get("/", async (_req, res) => {
+  res.setHeader("Content-Type", "text/html; charset=utf-8");
+  res.send(pageShell(SEO.title, SEO.description, `
+<div style="max-width:800px;margin:0 auto;padding:60px 20px;text-align:center">
+<div style="font-size:64px;margin-bottom:16px">&#9889;</div>
+<h1 style="font-size:42px;font-weight:900;color:#8BC53F;margin-bottom:12px;line-height:1.1">LAENFAER VPN</h1>
+<p style="font-size:18px;color:rgba(255,255,255,.5);margin-bottom:32px;line-height:1.6">Быстрый, надёжный VPN без ограничений.<br>Подключись за 2 минуты через Telegram.</p>
+<a href="https://t.me/laenfaer_vpn_bot" style="display:inline-block;background:#8BC53F;color:#07090D;font-size:18px;font-weight:700;padding:16px 40px;border-radius:16px;text-decoration:none;margin-bottom:16px">Подключиться к боту →</a>
+
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin:48px 0;text-align:left">
+<div style="background:rgba(17,28,45,.5);border:1px solid rgba(139,197,63,.08);border-radius:16px;padding:24px">
+<div style="font-size:32px;margin-bottom:8px">&#127760;</div>
+<h3 style="font-size:16px;color:#8BC53F;margin-bottom:4px">50+ серверов</h3>
+<p style="font-size:13px;color:rgba(255,255,255,.35);line-height:1.5">Серверы в Германии, Нидерландах, Финляндии, России и других странах. Автоматический выбор оптимального сервера.</p>
+</div>
+<div style="background:rgba(17,28,45,.5);border:1px solid rgba(139,197,63,.08);border-radius:16px;padding:24px">
+<div style="font-size:32px;margin-bottom:8px">&#9889;</div>
+<h3 style="font-size:16px;color:#8BC53F;margin-bottom:4px">Высокая скорость</h3>
+<p style="font-size:13px;color:rgba(255,255,255,.35);line-height:1.5">Серверы с пропускной способностью до 1 Гбит/с. Стриминг, загрузки, игры — без задержек и буферизации.</p>
+</div>
+<div style="background:rgba(17,28,45,.5);border:1px solid rgba(139,197,63,.08);border-radius:16px;padding:24px">
+<div style="font-size:32px;margin-bottom:8px">&#128274;</div>
+<h3 style="font-size:16px;color:#8BC53F;margin-bottom:4px">Безопасность</h3>
+<p style="font-size:13px;color:rgba(255,255,255,.35);line-height:1.5">Шифрование VLESS Reality. Никто не сможет перехватить ваш трафик. Полная анонимность в интернете.</p>
+</div>
+<div style="background:rgba(17,28,45,.5);border:1px solid rgba(139,197,63,.08);border-radius:16px;padding:24px">
+<div style="font-size:32px;margin-bottom:8px">&#128176;</div>
+<h3 style="font-size:16px;color:#8BC53F;margin-bottom:4px">Доступные цены</h3>
+<p style="font-size:13px;color:rgba(255,255,255,.35);line-height:1.5">От 10 рублей за день. Бесплатный пробный период 3 дня. Скидки при покупке на 90 и 180 дней.</p>
+</div>
+</div>
+
+<section style="margin:48px 0">
+<h2 style="font-size:28px;font-weight:900;color:#8BC53F;margin-bottom:24px">Как это работает</h2>
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:20px;text-align:center">
+<div style="background:rgba(17,28,45,.4);border:1px solid rgba(139,197,63,.06);border-radius:16px;padding:24px">
+<div style="font-size:36px;font-weight:900;color:#8BC53F;margin-bottom:8px">1</div>
+<h3 style="font-size:15px;margin-bottom:4px">Открой бота</h3>
+<p style="font-size:12px;color:rgba(255,255,255,.3)">Нажми кнопку ниже и получи бесплатный ключ</p>
+</div>
+<div style="background:rgba(17,28,45,.4);border:1px solid rgba(139,197,63,.06);border-radius:16px;padding:24px">
+<div style="font-size:36px;font-weight:900;color:#8BC53F;margin-bottom:8px">2</div>
+<h3 style="font-size:15px;margin-bottom:4px">Скачай приложение</h3>
+<p style="font-size:12px;color:rgba(255,255,255,.3)">HappProxy (Android) или Happ (iPhone)</p>
+</div>
+<div style="background:rgba(17,28,45,.4);border:1px solid rgba(139,197,63,.06);border-radius:16px;padding:24px">
+<div style="font-size:36px;font-weight:900;color:#8BC53F;margin-bottom:8px">3</div>
+<h3 style="font-size:15px;margin-bottom:4px">Вставь подписку</h3>
+<p style="font-size:12px;color:rgba(255,255,255,.3)">Скопируй ссылку из бота и вставь в приложение</p>
+</div>
+<div style="background:rgba(17,28,45,.4);border:1px solid rgba(139,197,63,.06);border-radius:16px;padding:24px">
+<div style="font-size:36px;font-weight:900;color:#8BC53F;margin-bottom:8px">4</div>
+<h3 style="font-size:15px;margin-bottom:4px">Подключись</h3>
+<p style="font-size:12px;color:rgba(255,255,255,.3)">Нажми кнопку подключения — сервер выбирается автоматически</p>
+</div>
+</div>
+</section>
+
+<section style="margin:48px 0;background:rgba(17,28,45,.4);border:1px solid rgba(139,197,63,.06);border-radius:20px;padding:32px;text-align:center">
+<h2 style="font-size:24px;font-weight:900;color:#8BC53F;margin-bottom:8px">Бесплатный пробный период</h2>
+<p style="font-size:14px;color:rgba(255,255,255,.4);margin-bottom:20px">Попробуй LAENFAER VPN бесплатно на 3 дня. Без привязки карты.</p>
+<a href="https://t.me/laenfaer_vpn_bot?start=free" style="display:inline-block;background:#8BC53F;color:#07090D;font-size:16px;font-weight:700;padding:14px 32px;border-radius:14px;text-decoration:none">Попробовать бесплатно →</a>
+</section>
+
+<section style="margin:48px 0">
+<h2 style="font-size:28px;font-weight:900;color:#8BC53F;margin-bottom:24px;text-align:center">Часто задаваемые вопросы</h2>
+<details style="background:rgba(17,28,45,.4);border:1px solid rgba(139,197,63,.06);border-radius:14px;padding:16px;margin-bottom:8px">
+<summary style="font-weight:700;cursor:pointer;font-size:14px">Какие приложения поддерживаются?</summary>
+<p style="font-size:13px;color:rgba(255,255,255,.35);margin-top:10px;line-height:1.5">HappProxy (Android), Happ (iPhone/iPad), INCY (все платформы), v2rayTun и другие клиенты с поддержкой VLESS Reality.</p>
+</details>
+<details style="background:rgba(17,28,45,.4);border:1px solid rgba(139,197,63,.06);border-radius:14px;padding:16px;margin-bottom:8px">
+<summary style="font-weight:700;cursor:pointer;font-size:14px">Безопасен ли VPN?</summary>
+<p style="font-size:13px;color:rgba(255,255,255,.35);margin-top:10px;line-height:1.5">Да. Мы используем протокол VLESS с технологией Reality, который маскирует VPN-трафик под обычное HTTPS-соединение. Ваш провайдер не сможет определить использование VPN.</p>
+</details>
+<details style="background:rgba(17,28,45,.4);border:1px solid rgba(139,197,63,.06);border-radius:14px;padding:16px;margin-bottom:8px">
+<summary style="font-weight:700;cursor:pointer;font-size:14px">Сколько устройств можно подключить?</summary>
+<p style="font-size:13px;color:rgba(255,255,255,.35);margin-top:10px;line-height:1.5">Зависит от тарифа. На бесплатном пробном — 1 устройство. На платных тарифах — от 1 до 5 устройств одновременно.</p>
+</details>
+<details style="background:rgba(17,28,45,.4);border:1px solid rgba(139,197,63,.06);border-radius:14px;padding:16px;margin-bottom:8px">
+<summary style="font-weight:700;cursor:pointer;font-size:14px">Как оплатить подписку?</summary>
+<p style="font-size:13px;color:rgba(255,255,255,.35);margin-top:10px;line-height:1.5">Оплата через СБП, банковские карты или криптовалюту. Оплата проходит через защищённые платёжные шлюзы.</p>
+</details>
+<details style="background:rgba(17,28,45,.4);border:1px solid rgba(139,197,63,.06);border-radius:14px;padding:16px;margin-bottom:8px">
+<summary style="font-weight:700;cursor:pointer;font-size:14px">Есть ли реферальная программа?</summary>
+<p style="font-size:13px;color:rgba(255,255,255,.35);margin-top:10px;line-height:1.5">Да! Приглашайте друзей и получайте 25% от их оплаты на свой баланс. Баланс можно использовать для оплаты VPN или вывести деньгами.</p>
+</details>
+</section>
+
+<section style="text-align:center;margin:48px 0">
+<h2 style="font-size:28px;font-weight:900;color:#8BC53F;margin-bottom:12px">Готов подключиться?</h2>
+<p style="font-size:14px;color:rgba(255,255,255,.4);margin-bottom:20px">Бесплатный пробный период — 3 дня без ограничений</p>
+<a href="https://t.me/laenfaer_vpn_bot" style="display:inline-block;background:#8BC53F;color:#07090D;font-size:18px;font-weight:700;padding:16px 40px;border-radius:16px;text-decoration:none">Начать сейчас →</a>
+</section>
+</div>
+`, `<script type="application/ld+json">${faqLD}</script>`));
+});
+
+// === Tariffs page ===
+app.get("/tariffs", async (_req, res) => {
+  res.setHeader("Content-Type", "text/html; charset=utf-8");
+  res.send(pageShell("Тарифы LAENFAER VPN — цены и планы", "Тарифы VPN-сервиса LAENFAER VPN. Бесплатный пробный период, тарифы от 10 рублей в день со скидками до 15%.", `
+<div style="max-width:800px;margin:0 auto;padding:48px 20px">
+<h1 style="font-size:36px;font-weight:900;color:#8BC53F;margin-bottom:8px;text-align:center">Тарифы</h1>
+<p style="font-size:14px;color:rgba(255,255,255,.4);text-align:center;margin-bottom:40px">Выбери подходящий план для себя</p>
+
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;margin-bottom:40px">
+<div style="background:rgba(17,28,45,.5);border:1px solid rgba(139,197,63,.08);border-radius:20px;padding:28px;text-align:center">
+<div style="font-size:12px;font-weight:700;color:rgba(255,255,255,.3);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Пробный</div>
+<div style="font-size:36px;font-weight:900;color:#8BC53F">Бесплатно</div>
+<div style="font-size:13px;color:rgba(255,255,255,.3);margin:8px 0 16px">3 дня / 1 устройство</div>
+<ul style="list-style:none;text-align:left;font-size:13px;color:rgba(255,255,255,.4);line-height:2">
+<li>&#10003; Все серверы</li>
+<li>&#10003; Без ограничений скорости</li>
+<li>&#10003; 1 подключение</li>
+</ul>
+<a href="https://t.me/laenfaer_vpn_bot?start=free" style="display:block;background:rgba(139,197,63,.1);color:#8BC53F;font-weight:700;padding:14px;border-radius:14px;text-decoration:none;margin-top:16px;text-align:center;border:1px solid rgba(139,197,63,.15)">Попробовать</a>
+</div>
+<div style="background:rgba(17,28,45,.5);border:2px solid rgba(139,197,63,.3);border-radius:20px;padding:28px;text-align:center;position:relative">
+<div style="position:absolute;top:-12px;left:50%;transform:translateX(-50%);background:#8BC53F;color:#07090D;font-size:11px;font-weight:700;padding:4px 12px;border-radius:8px">ПОПУЛЯРНЫЙ</div>
+<div style="font-size:12px;font-weight:700;color:rgba(255,255,255,.3);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">30 дней</div>
+<div style="font-size:36px;font-weight:900;color:#fff">249&#8381;</div>
+<div style="font-size:13px;color:rgba(255,255,255,.3);margin:8px 0 16px">8.3&#8381;/день / 1 устройство</div>
+<ul style="list-style:none;text-align:left;font-size:13px;color:rgba(255,255,255,.4);line-height:2">
+<li>&#10003; Все серверы</li>
+<li>&#10003; Без ограничений скорости</li>
+<li>&#10003; 1 подключение</li>
+</ul>
+<a href="https://t.me/laenfaer_vpn_bot" style="display:block;background:#8BC53F;color:#07090D;font-weight:700;padding:14px;border-radius:14px;text-decoration:none;margin-top:16px;text-align:center">Купить</a>
+</div>
+<div style="background:rgba(17,28,45,.5);border:1px solid rgba(139,197,63,.08);border-radius:20px;padding:28px;text-align:center">
+<div style="font-size:12px;font-weight:700;color:rgba(255,255,255,.3);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">180 дней</div>
+<div style="font-size:36px;font-weight:900;color:#fff">1270&#8381;</div>
+<div style="font-size:13px;color:rgba(255,255,255,.3);margin:8px 0 16px">7&#8381;/день &#8212; скидка 15%</div>
+<ul style="list-style:none;text-align:left;font-size:13px;color:rgba(255,255,255,.4);line-height:2">
+<li>&#10003; Все серверы</li>
+<li>&#10003; Без ограничений скорости</li>
+<li>&#10003; 1 подключение</li>
+</ul>
+<a href="https://t.me/laenfaer_vpn_bot" style="display:block;background:rgba(139,197,63,.1);color:#8BC53F;font-weight:700;padding:14px;border-radius:14px;text-decoration:none;margin-top:16px;text-align:center;border:1px solid rgba(139,197,63,.15)">Купить</a>
+</div>
+</div>
+
+<div style="background:rgba(17,28,45,.4);border:1px solid rgba(139,197,63,.06);border-radius:16px;padding:24px;text-align:center">
+<p style="font-size:13px;color:rgba(255,255,255,.3)">Оплата: СБП, банковские карты, криптовалюта. Все платежи защищены.</p>
+</div>
+</div>
+`, `<script type="application/ld+json">${prodLD}</script>`));
+});
+
+// === Support page ===
+app.get("/support", async (_req, res) => {
+  res.setHeader("Content-Type", "text/html; charset=utf-8");
+  res.send(pageShell("Поддержка LAENFAER VPN — справка и помощь", "Центр поддержки VPN-сервиса LAENFAER VPN. Инструкции по подключению, ответы на вопросы, связь с поддержкой.", `
+<div style="max-width:800px;margin:0 auto;padding:48px 20px">
+<h1 style="font-size:36px;font-weight:900;color:#8BC53F;margin-bottom:8px;text-align:center">Поддержка</h1>
+<p style="font-size:14px;color:rgba(255,255,255,.4);text-align:center;margin-bottom:40px">Нужна помощь? Мы всегда на связи</p>
+
+<section style="margin-bottom:40px">
+<h2 style="font-size:22px;font-weight:800;color:#fff;margin-bottom:16px">&#128295; Инструкция по подключению</h2>
+<div style="display:grid;gap:12px">
+<div style="background:rgba(17,28,45,.4);border:1px solid rgba(139,197,63,.06);border-radius:14px;padding:18px;display:flex;gap:12px;align-items:start">
+<div style="background:rgba(139,197,63,.1);color:#8BC53F;width:32px;height:32px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-weight:800;flex-shrink:0">1</div>
+<div><h3 style="font-size:14px;margin-bottom:4px">Открой Telegram-бота</h3><p style="font-size:13px;color:rgba(255,255,255,.3);line-height:1.5">Нажми кнопку ниже или найди <a href="https://t.me/laenfaer_vpn_bot" style="color:#8BC53F">@laenfaer_vpn_bot</a></p></div>
+</div>
+<div style="background:rgba(17,28,45,.4);border:1px solid rgba(139,197,63,.06);border-radius:14px;padding:18px;display:flex;gap:12px;align-items:start">
+<div style="background:rgba(139,197,63,.1);color:#8BC53F;width:32px;height:32px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-weight:800;flex-shrink:0">2</div>
+<div><h3 style="font-size:14px;margin-bottom:4px">Получи ключ подписки</h3><p style="font-size:13px;color:rgba(255,255,255,.3);line-height:1.5">Нажми /start и получи бесплатный пробный ключ на 3 дня</p></div>
+</div>
+<div style="background:rgba(17,28,45,.4);border:1px solid rgba(139,197,63,.06);border-radius:14px;padding:18px;display:flex;gap:12px;align-items:start">
+<div style="background:rgba(139,197,63,.1);color:#8BC53F;width:32px;height:32px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-weight:800;flex-shrink:0">3</div>
+<div><h3 style="font-size:14px;margin-bottom:4px">Скачай приложение</h3><p style="font-size:13px;color:rgba(255,255,255,.3);line-height:1.5">Android: <a href="https://play.google.com/store/apps/details?id=com.happproxy" style="color:#8BC53F">HappProxy</a> | iPhone: <a href="https://apps.apple.com/ru/app/happ-proxy-utility-plus/id6746188973" style="color:#8BC53F">Happ</a> | Все платформы: <a href="https://github.com/nicknisley/InCY" style="color:#8BC53F">INCY</a></p></div>
+</div>
+<div style="background:rgba(17,28,45,.4);border:1px solid rgba(139,197,63,.06);border-radius:14px;padding:18px;display:flex;gap:12px;align-items:start">
+<div style="background:rgba(139,197,63,.1);color:#8BC53F;width:32px;height:32px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-weight:800;flex-shrink:0">4</div>
+<div><h3 style="font-size:14px;margin-bottom:4px">Вставь ссылку подписки</h3><p style="font-size:13px;color:rgba(255,255,255,.3);line-height:1.5">Скопируй ссылку из бота и вставь в приложение. Сервер выберется автоматически.</p></div>
+</div>
+</div>
+</section>
+
+<section style="margin-bottom:40px">
+<h2 style="font-size:22px;font-weight:800;color:#fff;margin-bottom:16px">&#128172; Связаться с поддержкой</h2>
+<div style="background:rgba(17,28,45,.4);border:1px solid rgba(139,197,63,.06);border-radius:14px;padding:20px;text-align:center">
+<p style="font-size:14px;color:rgba(255,255,255,.4);margin-bottom:16px">Напиши нам в Telegram — ответим в течение часа</p>
+<a href="https://t.me/laenfaer_vpn_bot" style="display:inline-block;background:#8BC53F;color:#07090D;font-weight:700;padding:12px 24px;border-radius:12px;text-decoration:none">Написать в поддержку →</a>
+</div>
+</section>
+
+<section>
+<h2 style="font-size:22px;font-weight:800;color:#fff;margin-bottom:16px">&#10067; Часто задаваемые вопросы</h2>
+<details style="background:rgba(17,28,45,.4);border:1px solid rgba(139,197,63,.06);border-radius:14px;padding:16px;margin-bottom:8px" open>
+<summary style="font-weight:700;cursor:pointer;font-size:14px">Приложение не подключается к серверу</summary>
+<p style="font-size:13px;color:rgba(255,255,255,.35);margin-top:10px;line-height:1.5">Попробуй перезапустить приложение. Убедись, что интернет-соединение стабильное. Если проблема сохраняется, нажми кнопку обновления серверов в приложении.</p>
+</details>
+<details style="background:rgba(17,28,45,.4);border:1px solid rgba(139,197,63,.06);border-radius:14px;padding:16px;margin-bottom:8px">
+<summary style="font-weight:700;cursor:pointer;font-size:14px">Скорость низкая</summary>
+<p style="font-size:13px;color:rgba(255,255,255,.35);margin-top:10px;line-height:1.5">Выбери другой сервер вручную или используй режим «Автовыбор». Проверь скорость без VPN для сравнения.</p>
+</details>
+<details style="background:rgba(17,28,45,.4);border:1px solid rgba(139,197,63,.06);border-radius:14px;padding:16px;margin-bottom:8px">
+<summary style="font-weight:700;cursor:pointer;font-size:14px">Как продлить подписку?</summary>
+<p style="font-size:13px;color:rgba(255,255,255,.35);margin-top:10px;line-height:1.5">Открой бота и нажми «Магазин». Выбери нужный тариф и оплати. Подписка продлится автоматически.</p>
+</details>
+<details style="background:rgba(17,28,45,.4);border:1px solid rgba(139,197,63,.06);border-radius:14px;padding:16px;margin-bottom:8px">
+<summary style="font-weight:700;cursor:pointer;font-size:14px">Как получить реферальный бонус?</summary>
+<p style="font-size:13px;color:rgba(255,255,255,.35);margin-top:10px;line-height:1.5">Поделись ссылкой из бота с друзьями. Когда они оплатят подписку, 25% от суммы поступит на твой баланс.</p>
+</details>
+</section>
+</div>
+`));
+});
+
+// === Sitemap ===
+app.get("/sitemap.xml", async (_req, res) => {
+  res.setHeader("Content-Type", "application/xml; charset=utf-8");
+  res.send(`<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+<url><loc>${SEO.url}/</loc><changefreq>weekly</changefreq><priority>1.0</priority></url>
+<url><loc>${SEO.url}/tariffs</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+<url><loc>${SEO.url}/support</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+</urlset>`);
+});
+
+// === Robots.txt ===
+app.get("/robots.txt", async (_req, res) => {
+  res.setHeader("Content-Type", "text/plain; charset=utf-8");
+  res.send(`User-agent: *
+Allow: /
+Sitemap: ${SEO.url}/sitemap.xml
+
+User-agent: GPTBot
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: CCBot
+Allow: /
+
+User-agent: anthropic-ai
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /`);
 });
 
 app.get("/profile/:userId", async (req, res) => {
