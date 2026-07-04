@@ -37978,63 +37978,129 @@ app.get("/app", async (req, res) => {
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <title>LAENFAER VPN</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-:root{--bg:#0f0c29;--card:rgba(255,255,255,.07);--border:rgba(255,255,255,.12);--accent:#00f260;--text:#fff;--muted:#9ca3af;--red:#ef4444}
-html,body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overscroll-behavior:none}
-.wrap{max-width:480px;margin:0 auto;padding:16px}
-.header{text-align:center;margin-bottom:20px}
-.header h1{font-size:24px;font-weight:800;background:linear-gradient(90deg,#00f260,#0575e6);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
-.header .user{color:var(--muted);font-size:13px;margin-top:4px}
-.card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px;text-align:center;margin-bottom:14px}
-.card .label{font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:6px}
-.card .value{font-size:28px;font-weight:700}
-.green{color:var(--accent)}.red{color:var(--red)}
-.card .sub{font-size:13px;color:var(--muted);margin-top:4px}
-.section{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:14px}
-.section h3{font-size:15px;margin-bottom:12px;color:var(--accent)}
-.key-box{background:rgba(0,0,0,.3);border-radius:10px;padding:12px;font-family:monospace;font-size:11px;word-break:break-all;color:#d1d5db;margin-bottom:12px}
-.btn{display:block;width:100%;text-align:center;background:var(--accent);color:#0f0c29;font-size:14px;font-weight:700;padding:13px;border-radius:10px;text-decoration:none;border:none;cursor:pointer;margin-bottom:8px}
-.btn:active{opacity:.8}
-.btn-outline{background:rgba(255,255,255,.1);color:#fff;border:1px solid var(--border)}
-.qr-wrap{text-align:center;margin-bottom:12px}
-.qr-wrap svg{max-width:180px;height:auto}
-.tariff-tag{display:inline-block;background:rgba(0,242,96,.15);color:var(--accent);padding:3px 10px;border-radius:20px;font-size:12px;font-weight:600}
-.app-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
-.app-btn{background:rgba(255,255,255,.08);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center;text-decoration:none;color:#fff;font-size:12px}
-.app-btn strong{display:block;font-size:14px;margin-bottom:2px;color:var(--accent)}
-#loading{text-align:center;padding:40px;color:var(--muted)}
+:root{
+  --glass:rgba(255,255,255,.08);
+  --glass-border:rgba(255,255,255,.15);
+  --glass-shadow:0 8px 32px rgba(0,0,0,.3);
+  --accent:#a855f7;
+  --accent2:#6366f1;
+  --green:#22c55e;
+  --red:#ef4444;
+  --text:#fff;
+  --muted:rgba(255,255,255,.5)
+}
+html,body{font-family:'Inter',-apple-system,sans-serif;background:#0a0015;color:var(--text);min-height:100vh;overscroll-behavior:none;overflow-x:hidden}
+body{background:linear-gradient(135deg,#0a0015 0%,#1a0a3e 30%,#0f0524 60%,#0a0015 100%)}
+body::before{content:'';position:fixed;top:-50%;left:-50%;width:200%;height:200%;background:radial-gradient(circle at 30% 20%,rgba(139,92,246,.15) 0%,transparent 50%),radial-gradient(circle at 70% 80%,rgba(99,102,241,.1) 0%,transparent 50%);pointer-events:none;z-index:0}
+.wrap{max-width:420px;margin:0 auto;padding:16px;position:relative;z-index:1}
+.header{text-align:center;margin-bottom:24px;padding-top:8px}
+.logo{font-size:32px;font-weight:800;background:linear-gradient(135deg,#a855f7,#6366f1,#818cf8);-webkit-background-clip:text;-webkit-text-fill-color:transparent;letter-spacing:-.5px}
+.user{color:var(--muted);font-size:13px;margin-top:6px;font-weight:500}
+.glass{background:var(--glass);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:1px solid var(--glass-border);border-radius:20px;padding:20px;margin-bottom:16px;box-shadow:var(--glass-shadow);position:relative;overflow:hidden}
+.glass::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.2),transparent)}
+.status-card{text-align:center;padding:24px 20px}
+.status-label{font-size:11px;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);margin-bottom:10px;font-weight:600}
+.status-value{font-size:30px;font-weight:800}
+.status-value.active{color:var(--green)}
+.status-value.expired{color:var(--red)}
+.status-sub{font-size:13px;color:var(--muted);margin-top:8px;display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap}
+.tariff{display:inline-block;background:linear-gradient(135deg,rgba(168,85,247,.25),rgba(99,102,241,.25));border:1px solid rgba(168,85,247,.3);color:#c084fc;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:600}
+.section-title{font-size:14px;font-weight:700;color:#c084fc;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.qr-wrap{text-align:center;margin:16px 0}
+.qr-wrap svg{max-width:160px;height:auto;border-radius:16px;padding:12px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08)}
+.sub-link-box{background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:14px;font-family:'Inter',monospace;font-size:11px;word-break:break-all;color:#c4b5fd;line-height:1.6;margin-bottom:14px}
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;font-family:'Inter',sans-serif;font-size:14px;font-weight:700;padding:14px;border-radius:14px;border:none;cursor:pointer;transition:all .2s;text-decoration:none}
+.btn:active{transform:scale(.97)}
+.btn-primary{background:linear-gradient(135deg,#a855f7,#6366f1);color:#fff;box-shadow:0 4px 20px rgba(168,85,247,.3)}
+.btn-secondary{background:rgba(255,255,255,.06);color:#fff;border:1px solid rgba(255,255,255,.12)}
+.btn-gap{margin-top:8px}
+.app-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.app-card{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:16px;text-align:center;text-decoration:none;color:#fff;transition:all .2s}
+.app-card:active{background:rgba(255,255,255,.08)}
+.app-card .icon{font-size:28px;margin-bottom:8px}
+.app-card .name{font-size:13px;font-weight:700;color:#c084fc}
+.app-card .desc{font-size:11px;color:var(--muted);margin-top:2px}
+.no-sub{text-align:center;padding:32px 20px}
+.no-sub .icon{font-size:40px;margin-bottom:12px}
+.no-sub .text{font-size:16px;font-weight:700;color:var(--red)}
+.no-sub .hint{font-size:13px;color:var(--muted);margin-top:8px}
+#loading{text-align:center;padding:60px 20px;color:var(--muted)}
+.spinner{width:24px;height:24px;border:3px solid rgba(168,85,247,.2);border-top-color:#a855f7;border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 12px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.copied-toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#a855f7,#6366f1);color:#fff;padding:12px 24px;border-radius:12px;font-size:13px;font-weight:600;box-shadow:0 4px 20px rgba(168,85,247,.4);opacity:0;transition:opacity .3s;z-index:100;pointer-events:none}
+.copied-toast.show{opacity:1}
 </style>
 </head>
 <body>
-<div class="wrap" id="app"><div id="loading">Загрузка...</div></div>
+<div class="wrap" id="app">
+  <div id="loading">
+    <div class="spinner"></div>
+    Загрузка...
+  </div>
+</div>
+<div class="copied-toast" id="toast">Скопировано!</div>
 <script>
 const tg = window.Telegram?.WebApp;
-if(tg){tg.ready();tg.expand();tg.setHeaderColor('#0f0c29');tg.setBackgroundColor('#0f0c29');}
-const uid = tg?.initDataUnsafe?.user?.id;
-if(!uid){document.getElementById('app').innerHTML='<div class="card"><div class="value red">Откройте из Telegram</div><div class="sub">Мини-приложение работает только внутри Telegram</div></div>';}
-else{
-fetch('/api/profile/'+uid).then(r=>r.json()).then(d=>{
-const app=document.getElementById('app');
-const hasSub=d.hasActiveSub;
-const days=d.daysLeft;
-const key=d.key||'';
-const tariff=d.tariff||'нет';
-const name=d.name||'Пользователь';
-const username=d.username||'';
-const qrSvg=d.qrSvg||'';
-const subLink=d.subLink||'';
-let html=\`<div class="header"><h1>LAENFAER VPN</h1><p class="user">\${name}\${username?' (@'+username+')':''}</p></div>
-<div class="card"><div class="label">Статус подписки</div><div class="value \${hasSub?'green':'red'}">\${hasSub?'Активна':'Истекла'}</div>\${hasSub?\`<div class="sub">Тариф: <span class="tariff-tag">\${tariff}</span> &middot; Осталось \${days} дн.</div>\`:''}</div>\`;
-if(hasSub&&key){
-html+=\`<div class="section"><h3>🔑 Ваш ключ</h3><div class="qr-wrap">\${qrSvg}</div><div class="key-box" id="keyBox">\${key}</div><button class="btn" onclick="copyKey()">📋 Скопировать ключ</button>\${subLink?\`<a class="btn btn-outline" href="\${subLink}">🔗 Subscription Link</a>\`:''}</div>\`;}
-else if(!hasSub){html+=\`<div class="card"><div class="value red">Нет активной подписки</div><div class="sub">Напишите боту /start</div></div>\`;}
-html+=\`<div class="section"><h3>📱 Приложения</h3><div class="app-row"><a class="app-btn" href="https://apps.apple.com/ru/app/happ-proxy-utility-plus/id6746188973"><strong>Happ iOS</strong>iPhone / iPad</a><a class="app-btn" href="https://play.google.com/store/apps/details?id=com.happproxy"><strong>Happ Android</strong>Android</a></div></div>\`;
-app.innerHTML=html;
-if(tg&&tg.MainButton){tg.MainButton.setText('Показать ключ');tg.MainButton.show();tg.MainButton.onClick(()=>{copyKey();});}
-}).catch(()=>{document.getElementById('app').innerHTML='<div class="card"><div class="value red">Ошибка загрузки</div></div>';});
+if(tg){
+  tg.ready();tg.expand();
+  tg.setHeaderColor('#0a0015');
+  tg.setBackgroundColor('#0a0015');
+  if(tg.colorScheme==='dark'){
+    document.body.style.background='#0a0015';
+  }
 }
-function copyKey(){const k=document.getElementById('keyBox');if(k){navigator.clipboard.writeText(k.innerText);if(tg)tg.HapticFeedback.notificationOccurred('success');}}
+const uid = tg?.initDataUnsafe?.user?.id;
+if(!uid){
+  document.getElementById('app').innerHTML='<div class="glass" style="text-align:center;padding:40px"><div style="font-size:32px;margin-bottom:12px">🔒</div><div style="font-size:16px;font-weight:700;color:var(--red)">Откройте из Telegram</div><div style="font-size:13px;color:var(--muted);margin-top:8px">Мини-приложение работает только внутри Telegram</div></div>';
+}else{
+  fetch('/api/profile/'+uid).then(r=>r.json()).then(d=>{
+    const app=document.getElementById('app');
+    const has=d.hasActiveSub;
+    const days=d.daysLeft;
+    const tariff=d.tariff||'';
+    const name=d.name||'Пользователь';
+    const username=d.username||'';
+    const qrSvg=d.qrSvg||'';
+    const subLink=d.subLink||'';
+    let h='<div class="header"><div class="logo">LAENFAER VPN</div><div class="user">'+name+(username?' (@'+username+')':'')+'</div></div>';
+    if(has){
+      h+='<div class="glass status-card"><div class="status-label">Статус подписки</div><div class="status-value active">Активна</div><div class="status-sub"><span class="tariff">'+tariff+'</span><span>·</span><span>'+days+' дн.</span></div></div>';
+      if(subLink){
+        h+='<div class="glass"><div class="section-title">🔗 Подписка</div>';
+        if(qrSvg){h+='<div class="qr-wrap">'+qrSvg+'</div>';}
+        h+='<div class="sub-link-box" id="subLink">'+subLink+'</div>';
+        h+='<button class="btn btn-primary" onclick="copySub()">📋 Скопировать ссылку</button>';
+        h+='<a class="btn btn-secondary btn-gap" href="'+subLink+'" target="_blank">🌐 Открыть подписку</a></div>';
+      }
+      h+='<div class="glass"><div class="section-title">📱 Приложения</div><div class="app-grid">';
+      h+='<a class="app-card" href="https://play.google.com/store/apps/details?id=com.happproxy"><div class="icon">🤖</div><div class="name">HappProxy</div><div class="desc">Android</div></a>';
+      h+='<a class="app-card" href="https://apps.apple.com/ru/app/happ-proxy-utility-plus/id6746188973"><div class="icon">📱</div><div class="name">Happ iOS</div><div class="desc">iPhone / iPad</div></a>';
+      h+='</div></div>';
+    }else{
+      h+='<div class="glass no-sub"><div class="icon">🔒</div><div class="text">Нет активной подписки</div><div class="hint">Напишите боту /start для покупки</div></div>';
+      h+='<div class="glass"><div class="section-title">📱 Приложения</div><div class="app-grid">';
+      h+='<a class="app-card" href="https://play.google.com/store/apps/details?id=com.happproxy"><div class="icon">🤖</div><div class="name">HappProxy</div><div class="desc">Android</div></a>';
+      h+='<a class="app-card" href="https://apps.apple.com/ru/app/happ-proxy-utility-plus/id6746188973"><div class="icon">📱</div><div class="name">Happ iOS</div><div class="desc">iPhone / iPad</div></a>';
+      h+='</div></div>';
+    }
+    app.innerHTML=h;
+  }).catch(()=>{document.getElementById('app').innerHTML='<div class="glass" style="text-align:center;padding:40px"><div style="font-size:16px;font-weight:700;color:var(--red)">Ошибка загрузки</div></div>';});
+}
+function copySub(){
+  const el=document.getElementById('subLink');
+  if(!el)return;
+  const text=el.innerText;
+  navigator.clipboard.writeText(text).then(()=>{
+    if(tg)tg.HapticFeedback.notificationOccurred('success');
+    const t=document.getElementById('toast');
+    t.classList.add('show');
+    setTimeout(()=>t.classList.remove('show'),2000);
+  });
+}
 </script>
 </body>
 </html>`);
@@ -38051,21 +38117,19 @@ app.get("/api/profile/:userId", async (req, res) => {
     const now = new Date();
     const hasActiveSub = s && new Date(s.expiresAt) > now;
     const daysLeft = hasActiveSub ? Math.ceil((new Date(s.expiresAt) - now) / 86400000) : 0;
-    const key = hasActiveSub ? s.key : "";
     const tariff = hasActiveSub ? s.tariff : "";
-    let qrSvg = "";
-    if (key) {
-      const QRCode = await import("qrcode");
-      qrSvg = await QRCode.toString(key, { type: "svg", margin: 2, width: 180, color: { dark: "#00f260", light: "#ffffff00" } });
-    }
     const domain = getSubDomain();
-    const subLink = domain ? domain + "/sub/" + userId : "";
+    const subLink = hasActiveSub && domain ? domain + "/sub/" + userId : "";
+    let qrSvg = "";
+    if (subLink) {
+      const QRCode = await import("qrcode");
+      qrSvg = await QRCode.toString(subLink, { type: "svg", margin: 2, width: 160, color: { dark: "#c084fc", light: "#ffffff00" } });
+    }
     res.json({
       name: u?.name || "Пользователь",
       username: u?.username || "",
       hasActiveSub,
       daysLeft,
-      key,
       tariff,
       qrSvg,
       subLink,
@@ -59055,7 +59119,7 @@ async function registerCommands() {
       await userBot.api.setChatMenuButton({
         menu_button: {
           type: "web_app",
-          text: "\uD83C\uDF10 LAENFAER VPN",
+          text: "\u{1F310} VPN",
           web_app: { url: miniAppUrl }
         }
       });
