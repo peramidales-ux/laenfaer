@@ -57071,6 +57071,54 @@ async function getSetting(key) {
 async function setSetting(key, value) {
   await db.insert(settingsTable).values({ key, value, updatedAt: /* @__PURE__ */ new Date() }).onConflictDoUpdate({ target: settingsTable.key, set: { value, updatedAt: /* @__PURE__ */ new Date() } });
 }
+async function savePromoCode(code, days, tariff, maxUses) {
+  const rows = await db.select().from(settingsTable).where(eq(settingsTable.key, "promo_codes"));
+  let codes = {};
+  if (rows.length > 0) {
+    try { codes = JSON.parse(rows[0].value); } catch { codes = {}; }
+  }
+  codes[code] = { days: Number(days), tariff, maxUses, used: 0, createdAt: Date.now() };
+  if (rows.length > 0) {
+    await db.update(settingsTable).set({ value: JSON.stringify(codes) }).where(eq(settingsTable.key, "promo_codes"));
+  } else {
+    await db.insert(settingsTable).values({ key: "promo_codes", value: JSON.stringify(codes) });
+  }
+}
+async function activatePromoCode(code) {
+  const rows = await db.select().from(settingsTable).where(eq(settingsTable.key, "promo_codes"));
+  if (!rows.length) return null;
+  let codes = {};
+  try { codes = JSON.parse(rows[0].value); } catch { return null; }
+  const promo = codes[code.toUpperCase()];
+  if (!promo) return null;
+  if (promo.used >= promo.maxUses) return null;
+  promo.used++;
+  await db.update(settingsTable).set({ value: JSON.stringify(codes) }).where(eq(settingsTable.key, "promo_codes"));
+  return promo;
+}
+async function deletePromoCode(code) {
+  const rows = await db.select().from(settingsTable).where(eq(settingsTable.key, "promo_codes"));
+  if (!rows.length) return;
+  let codes = {};
+  try { codes = JSON.parse(rows[0].value); } catch { return; }
+  delete codes[code];
+  await db.update(settingsTable).set({ value: JSON.stringify(codes) }).where(eq(settingsTable.key, "promo_codes"));
+}
+async function cleanBlockedUsers() {
+  const allUsers = await getAllUsers();
+  let removed = 0;
+  for (const u of allUsers) {
+    try {
+      await mainBotSender.api.getChat(Number(u.telegramId));
+    } catch (e) {
+      if (e.parameters && (e.parameters.retry_after || String(e).includes("bot was blocked") || String(e).includes("user is deactivated"))) {
+        await db.delete(usersTable).where(eq(usersTable.telegramId, u.telegramId));
+        removed++;
+      }
+    }
+  }
+  return removed;
+}
 async function getTestKey() {
   return await getSetting("test_key") ?? "";
 }
@@ -57194,7 +57242,7 @@ var YOOMONEY_URL = "https://yoomoney.ru/to/4100118805863911";
 function mainMenuKb() {
   const domain = getSubDomain();
   const appUrl = domain ? domain + "/app" : "https://laenfaer.onrender.com/app";
-  return new InlineKeyboard().text("\u{1F511} \u041F\u043E\u043B\u0443\u0447\u0438\u0442\u044C \u043A\u043B\u044E\u0447", "get_free_key_random").row().text("\u{1F6D2} \u041C\u0430\u0433\u0430\u0437\u0438\u043D", "open_shop").text("\u{1F464} \u041F\u0440\u043E\u0444\u0438\u043B\u044C", "open_profile").row().webApp("\u{1F310} \u041B\u0438\u0447\u043D\u044B\u0439 \u043A\u0430\u0431\u0438\u043D\u0435\u0442", appUrl).row().text("\u{1F4AC} \u041F\u043E\u0434\u0434\u0435\u0440\u0436\u043A\u0430", "open_support").text("\u{1F4CA} \u0421\u0435\u0440\u0432\u0435\u0440\u044B", "open_status").row().text("\u2753 \u041A\u0430\u043A \u043F\u043E\u0434\u043A\u043B\u044E\u0447\u0438\u0442\u044C\u0441\u044F", "how_to_connect").row();
+  return new InlineKeyboard().text("\u{1F511} \u041F\u043E\u043B\u0443\u0447\u0438\u0442\u044C \u043A\u043B\u044E\u0447", "get_free_key_random").text("\u{1F3AB} \u041F\u0440\u043E\u043C\u043E\u043A\u043E\u0434", "open_promo").row().text("\u{1F6D2} \u041C\u0430\u0433\u0430\u0437\u0438\u043D", "open_shop").text("\u{1F464} \u041F\u0440\u043E\u0444\u0438\u043B\u044C", "open_profile").row().webApp("\u{1F310} \u041B\u0438\u0447\u043D\u044B\u0439 \u043A\u0430\u0431\u0438\u043D\u0435\u0442", appUrl).row().text("\u{1F4AC} \u041F\u043E\u0434\u0434\u0435\u0440\u0436\u043A\u0430", "open_support").text("\u{1F4CA} \u0421\u0435\u0440\u0432\u0435\u0440\u044B", "open_status").row().text("\u2753 \u041A\u0430\u043A \u043F\u043E\u0434\u043A\u043B\u044E\u0447\u0438\u0442\u044C\u0441\u044F", "how_to_connect").row();
 }
 function profileKb() {
   return new InlineKeyboard().text("\u{1F511} \u041C\u043E\u0439 \u043A\u043B\u044E\u0447", "show_key").row().text("\u{1F4B8} \u0412\u044B\u0432\u0435\u0441\u0442\u0438 \u0447\u0435\u0440\u0435\u0437 \u0421\u0411\u041F", "open_withdraw").row().text("\u{1F381} \u0420\u0435\u0444\u0435\u0440\u0430\u043B\u044B", "open_ref").row().text("\u{1F4D6} \u0418\u043D\u0441\u0442\u0440\u0443\u043A\u0446\u0438\u044F", "open_info").row().text("\u{1F4AC} \u041F\u043E\u0434\u0434\u0435\u0440\u0436\u043A\u0430", "open_support").row().text("\u{1F3E0} \u0412 \u0433\u043B\u0430\u0432\u043D\u043E\u0435 \u043C\u0435\u043D\u044E", "to_main");
@@ -57231,7 +57279,7 @@ function closedSupportKb() {
   return new InlineKeyboard().text("\u{1F195} \u041D\u043E\u0432\u044B\u0439 \u0447\u0430\u0442", "new_support_chat").row().text("\u{1F3E0} \u0412 \u0433\u043B\u0430\u0432\u043D\u043E\u0435 \u043C\u0435\u043D\u044E", "to_main");
 }
 function adminMainKb() {
-  return new InlineKeyboard().text("\u{1F465} \u041F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u0435\u043B\u0438", "admin_get_users").text("\u{1F4CA} \u0421\u0442\u0430\u0442\u0438\u0441\u0442\u0438\u043A\u0430", "admin_stats").row().text("\u{1F4CB} \u041F\u043E\u0434\u043F\u0438\u0441\u043A\u0438", "admin_get_subs").text("\u{1F511} \u041A\u043B\u044E\u0447\u0438", "admin_keys_mngr").row().text("\u{1F4AC} \u041F\u043E\u0434\u0434\u0435\u0440\u0436\u043A\u0430", "admin_support_chats").text("\u{1F4E2} \u0420\u0430\u0441\u0441\u044B\u043B\u043A\u0430", "admin_start_broadcast").row().text("\u{1F4BE} \u0421\u043A\u0430\u0447\u0430\u0442\u044C \u0431\u044D\u043A\u0430\u043F", "admin_backup");
+  return new InlineKeyboard().text("\u{1F465} \u041F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u0435\u043B\u0438", "admin_get_users").text("\u{1F4CA} \u0421\u0442\u0430\u0442\u0438\u0441\u0442\u0438\u043A\u0430", "admin_stats").row().text("\u{1F4CB} \u041F\u043E\u0434\u043F\u0438\u0441\u043A\u0438", "admin_get_subs").text("\u{1F511} \u041A\u043B\u044E\u0447\u0438", "admin_keys_mngr").row().text("\u{1F3AB} \u041F\u0440\u043E\u043C\u043E\u043A\u043E\u0434\u044B", "admin_promo_menu").text("\u{1F4AC} \u041F\u043E\u0434\u0434\u0435\u0440\u0436\u043A\u0430", "admin_support_chats").row().text("\u{1F4E2} \u0420\u0430\u0441\u0441\u044B\u043B\u043A\u0430", "admin_start_broadcast").text("\u{1F9F9} \u041E\u0447\u0438\u0441\u0442\u043A\u0430", "admin_clean_blocked").row().text("\u{1F4BE} \u0421\u043A\u0430\u0447\u0430\u0442\u044C \u0431\u044D\u043A\u0430\u043F", "admin_backup").row();
 }
 function adminBackKb() {
   return new InlineKeyboard().text("\u{1F519} \u0412 \u043C\u0435\u043D\u044E \u0443\u043F\u0440\u0430\u0432\u043B\u0435\u043D\u0438\u044F", "to_admin_menu");
@@ -57925,6 +57973,11 @@ userBot.callbackQuery("open_miniapp", async (ctx) => {
   });
   await ctx.answerCallbackQuery();
 });
+userBot.callbackQuery("open_promo", async (ctx) => {
+  userStates.set(ctx.from.id, "waiting_promo_code");
+  await ctx.reply("\u{1F3AB} <b>\u0412\u0432\u0435\u0434\u0438\u0442\u0435 \u043F\u0440\u043E\u043C\u043E\u043A\u043E\u0434</b>\n\n\u0412\u0432\u0435\u0434\u0438\u0442\u0435 \u043A\u043E\u0434 \u043F\u0440\u043E\u043C\u043E\u043A\u043E\u0434\u0430, \u043F\u043E\u043B\u0443\u0447\u0435\u043D\u043D\u044B\u0439 \u043E\u0442 \u0430\u0434\u043C\u0438\u043D\u0438\u0441\u0442\u0440\u0430\u0442\u043E\u0440\u0430 \u0438\u043B\u0438 \u0438\u0437 \u0440\u0435\u043A\u043B\u0430\u043C\u043D\u043E\u0439 \u043A\u0430\u043C\u043F\u0430\u043D\u0438\u0438:", { parse_mode: "HTML", reply_markup: backToMainKb() });
+  await ctx.answerCallbackQuery();
+});
 userBot.on("message:photo", async (ctx) => {
   const userId = ctx.from.id;
   const state = userStates.get(userId);
@@ -58374,18 +58427,73 @@ adminBot.callbackQuery(/.*/, async (ctx) => {
     await showUsersList(ctx, 0);
     return;
   }
-  if (data === "admin_get_subs") {
-    await showSubscriptionsList(ctx, 0);
+  if (data === "admin_promo_menu") {
+    await showPromoMenu(ctx);
+    return;
+  }
+  if (data === "admin_create_promo") {
+    adminStates.set(ADMIN_ID2, "waiting_promo_code");
+    await ctx.editMessageText("\u{1F3AB} <b>\u0421\u043E\u0437\u0434\u0430\u043D\u0438\u0435 \u043F\u0440\u043E\u043C\u043E\u043A\u043E\u0434\u0430</b>\n\n\u0412\u0432\u0435\u0434\u0438\u0442\u0435 \u043A\u043E\u0434 \u043F\u0440\u043E\u043C\u043E\u043A\u043E\u0434\u0430 (\u043B\u0430\u0442\u0438\u043D\u0438\u0446\u0435\u0439, \u0431\u0435\u0437 \u043F\u0440\u043E\u0431\u0435\u043B\u043E\u0432):", { parse_mode: "HTML", reply_markup: adminBackKb() });
+    return;
+  }
+  if (data === "admin_list_promos") {
+    await showPromoList(ctx);
+    return;
+  }
+  if (data === "promo_set_free") {
+    const state = adminStates.get(ADMIN_ID2);
+    if (state && state.startsWith("promo_tariff_")) {
+      const parts = state.replace("promo_tariff_", "").split("_");
+      const code = parts[0];
+      const days = parts[1];
+      adminStates.set(ADMIN_ID2, `promo_max_${code}_${days}_free_3days`);
+      await ctx.editMessageText(`\u2705 \u0422\u0438\u043F: \u0411\u0435\u0441\u043F\u043B\u0430\u0442\u043D\u0430\u044F\n\n\u0412\u0432\u0435\u0434\u0438\u0442\u0435 \u043B\u0438\u043C\u0438\u0442 \u0438\u0441\u043F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u043D\u0438\u0439 (\u043F\u043E \u0443\u043C\u043E\u043B\u0447\u0430\u043D\u0438\u044E: 999):`, { reply_markup: adminBackKb() });
+      return;
+    }
+    await ctx.answerCallbackQuery({ text: "\u274C \u0421\u043E\u0441\u0442\u043E\u044F\u043D\u0438\u0435 \u043F\u043E\u0442\u0435\u0440\u044F\u043D\u043E", show_alert: true });
+    return;
+  }
+  if (data === "promo_set_prem") {
+    const state = adminStates.get(ADMIN_ID2);
+    if (state && state.startsWith("promo_tariff_")) {
+      const parts = state.replace("promo_tariff_", "").split("_");
+      const code = parts[0];
+      const days = parts[1];
+      adminStates.set(ADMIN_ID2, `promo_max_${code}_${days}_30days`);
+      await ctx.editMessageText(`\u2705 \u0422\u0438\u043F: Premium\n\n\u0412\u0432\u0435\u0434\u0438\u0442\u0435 \u043B\u0438\u043C\u0438\u0442 \u0438\u0441\u043F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u043D\u0438\u0439 (\u043F\u043E \u0443\u043C\u043E\u043B\u0447\u0430\u043D\u0438\u044E: 999):`, { reply_markup: adminBackKb() });
+      return;
+    }
+    await ctx.answerCallbackQuery({ text: "\u274C \u0421\u043E\u0441\u0442\u043E\u044F\u043D\u0438\u0435 \u043F\u043E\u0442\u0435\u0440\u044F\u043D\u043E", show_alert: true });
+    return;
+  }
+  if (data.startsWith("delete_promo_")) {
+    const code = data.replace("delete_promo_", "");
+    await deletePromoCode(code);
+    await ctx.answerCallbackQuery({ text: `\u2705 \u041F\u0440\u043E\u043C\u043E\u043A\u043E\u0434 ${code} \u0443\u0434\u0430\u043B\u0451\u043D`, show_alert: true });
+    await showPromoList(ctx);
+    return;
+  }
+  if (data.startsWith("subs_filter_")) {
+    const filter = data.replace("subs_filter_", "");
+    await showSubscriptionsList(ctx, 0, filter);
     return;
   }
   if (data.startsWith("subs_page_")) {
-    const page = Number(data.replace("subs_page_", ""));
-    await showSubscriptionsList(ctx, page);
+    const parts = data.replace("subs_page_", "").split("_");
+    const page = Number(parts[0]);
+    const filter = parts[1] || "all";
+    await showSubscriptionsList(ctx, page, filter);
     return;
   }
   if (data.startsWith("users_page_")) {
     const page = Number(data.replace("users_page_", ""));
     await showUsersList(ctx, page);
+    return;
+  }
+  if (data === "admin_clean_blocked") {
+    await ctx.editMessageText("\u{1F9F9} \u041E\u0447\u0438\u0449\u0430\u044E \u0431\u0430\u0437\u0443 \u043E\u0442 \u0437\u0430\u0431\u043B\u043E\u043A\u0438\u0440\u043E\u0432\u0430\u043D\u043D\u044B\u0445...", { reply_markup: adminBackKb() });
+    const removed = await cleanBlockedUsers();
+    await ctx.reply(`\u2705 \u041E\u0447\u0438\u0441\u0442\u043A\u0430 \u0437\u0430\u0432\u0435\u0440\u0448\u0435\u043D\u0430!\n\n\u{1F5D1} \u0423\u0434\u0430\u043B\u0435\u043D\u043E \u043F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u0435\u043B\u0435\u0439: <b>${removed}</b>`, { reply_markup: adminBackKb() });
     return;
   }
   if (data.startsWith("confirm_pay_")) {
@@ -58892,6 +59000,46 @@ ${escapeHtml(text2)}`,
   }
   const state = adminStates.get(ADMIN_ID2);
   if (!state) return;
+  if (state === "waiting_promo_code") {
+    adminStates.delete(ADMIN_ID2);
+    const code = text2.trim().toUpperCase();
+    if (!code || code.length < 2) {
+      await ctx.reply("\u274C \u041A\u043E\u0434 \u043C\u0438\u043D\u0438\u043C\u0443\u043C 2 \u0441\u0438\u043C\u0432\u043E\u043B\u0430.", { reply_markup: adminBackKb() });
+      return;
+    }
+    adminStates.set(ADMIN_ID2, `promo_days_${code}`);
+    await ctx.reply(`\u2705 \u041A\u043E\u0434: <code>${code}</code>\n\n\u0412\u0432\u0435\u0434\u0438\u0442\u0435 \u043A\u043E\u043B\u0438\u0447\u0435\u0441\u0442\u0432\u043E \u0434\u043D\u0435\u0439 \u043F\u043E\u0434\u043F\u0438\u0441\u043A\u0438 (\u043D\u0430\u043F\u0440\u0438\u043C\u0435\u0440: 3, 7, 30):`, { parse_mode: "HTML", reply_markup: adminBackKb() });
+    return;
+  }
+  if (state.startsWith("promo_days_")) {
+    const code = state.replace("promo_days_", "");
+    adminStates.delete(ADMIN_ID2);
+    const days = parseInt(text2.trim(), 10);
+    if (!Number.isInteger(days) || days <= 0) {
+      await ctx.reply("\u274C \u0412\u0432\u0435\u0434\u0438\u0442\u0435 \u043A\u043E\u0440\u0440\u0435\u043A\u0442\u043D\u043E\u0435 \u0447\u0438\u0441\u043B\u043E \u0434\u043D\u0435\u0439.", { reply_markup: adminBackKb() });
+      return;
+    }
+    adminStates.set(ADMIN_ID2, `promo_tariff_${code}_${days}`);
+    await ctx.reply(`\u2705 \u041A\u043E\u0434: <code>${code}</code> | \u0414\u043D\u0435\u0439: ${days}\n\n\u0412\u044B\u0431\u0435\u0440\u0438\u0442\u0435 \u0442\u0438\u043F \u043F\u043E\u0434\u043F\u0438\u0441\u043A\u0438:`, {
+      parse_mode: "HTML",
+      reply_markup: new InlineKeyboard3()
+        .text("\u{1F381} \u0411\u0435\u0441\u043F\u043B\u0430\u0442\u043D\u0430\u044F (free_3days)", "promo_set_free")
+        .text("\u2B50 Premium (30days)", "promo_set_prem").row()
+        .text("\u{1F519} \u041E\u0442\u043C\u0435\u043D\u0430", "admin_promo_menu")
+    });
+    return;
+  }
+  if (state.startsWith("promo_max_")) {
+    const parts = state.replace("promo_max_", "").split("_");
+    const code = parts[0];
+    const days = parts[1];
+    const tariff = parts[2];
+    adminStates.delete(ADMIN_ID2);
+    const maxUses = parseInt(text2.trim(), 10) || 999;
+    await savePromoCode(code, days, tariff, maxUses);
+    await ctx.reply(`\u2705 <b>\u041F\u0440\u043E\u043C\u043E\u043A\u043E\u0434 \u0441\u043E\u0437\u0434\u0430\u043D!</b>\n\n\u{1F511} \u041A\u043E\u0434: <code>${code}</code>\n\u{1F4C5} \u0414\u043D\u0435\u0439: ${days}\n\u{1F4CB} \u0422\u0430\u0440\u0438\u0444: ${tariff}\n\u{1F517} \u041B\u0438\u043C\u0438\u0442: ${maxUses} \u0438\u0441\u043F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u043D\u0438\u0439`, { parse_mode: "HTML", reply_markup: adminBackKb() });
+    return;
+  }
   if (state.startsWith("give_free_days_") || state.startsWith("give_prem_days_")) {
     const isPrem = state.startsWith("give_prem_days_");
     const uid = state.replace(isPrem ? "give_prem_days_" : "give_free_days_", "");
@@ -59173,10 +59321,51 @@ async function showUsersList(ctx, page = 0) {
   kb.text("\u{1F519} \u0412 \u043C\u0435\u043D\u044E \u0443\u043F\u0440\u0430\u0432\u043B\u0435\u043D\u0438\u044F", "to_admin_menu");
   await ctx.editMessageText(text2, { parse_mode: "HTML", reply_markup: kb });
 }
-async function showSubscriptionsList(ctx, page = 0) {
-  const allSubs = await db.select().from(subscriptionsTable);
+async function showPromoMenu(ctx) {
+  const kb = new InlineKeyboard3()
+    .text("\u2795 \u0421\u043E\u0437\u0434\u0430\u0442\u044C \u043F\u0440\u043E\u043C\u043E\u043A\u043E\u0434", "admin_create_promo").row()
+    .text("\u{1F4CB} \u0421\u043F\u0438\u0441\u043E\u043A \u043F\u0440\u043E\u043C\u043E\u043A\u043E\u0434\u043E\u0432", "admin_list_promos").row()
+    .text("\u{1F519} \u041D\u0430\u0437\u0430\u0434", "to_admin_menu");
+  await ctx.editMessageText("\u{1F3AB} <b>\u0423\u043F\u0440\u0430\u0432\u043B\u0435\u043D\u0438\u0435 \u043F\u0440\u043E\u043C\u043E\u043A\u043E\u0434\u0430\u043C\u0438</b>\n\n\u0412\u044B\u0431\u0435\u0440\u0438\u0442\u0435 \u0434\u0435\u0439\u0441\u0442\u0432\u0438\u0435:", { parse_mode: "HTML", reply_markup: kb });
+}
+async function showPromoList(ctx) {
+  const promos = await db.select().from(settingsTable).where(eq(settingsTable.key, "promo_codes"));
+  let text2 = "\u{1F3AB} <b>\u041F\u0440\u043E\u043C\u043E\u043A\u043E\u0434\u044B</b>\n\n";
+  const kb = new InlineKeyboard3();
+  if (promos.length > 0) {
+    try {
+      const codes = JSON.parse(promos[0].value);
+      const entries = Object.entries(codes);
+      if (entries.length > 0) {
+        for (const [code, info] of entries) {
+          const used = info.used || 0;
+          const max = info.maxUses || "\u221e";
+          const days = info.days || 0;
+          const tariff = info.tariff || "free";
+          text2 += `\u{1F511} <code>${code}</code> | ${days}\u0434 | ${tariff} | \u0418\u0441\u043F\u043E\u043B\u044C\u0437: ${used}/${max}\n`;
+          kb.text(`\u{1F5D1} ${code}`, `delete_promo_${code}`).row();
+        }
+      } else {
+        text2 += "\u{1F4ED} \u041F\u0440\u043E\u043C\u043E\u043A\u043E\u0434\u043E\u0432 \u043F\u043E\u043A\u0430 \u043D\u0435\u0442.";
+      }
+    } catch {
+      text2 += "\u{274C} \u041E\u0448\u0438\u0431\u043A\u0430 \u0447\u0442\u0435\u043D\u0438\u044F \u0434\u0430\u043D\u043D\u044B\u0445.";
+    }
+  } else {
+    text2 += "\u{1F4ED} \u041F\u0440\u043E\u043C\u043E\u043A\u043E\u0434\u043E\u0432 \u043F\u043E\u043A\u0430 \u043D\u0435\u0442.";
+  }
+  kb.text("\u{1F519} \u041D\u0430\u0437\u0430\u0434", "admin_promo_menu");
+  await ctx.editMessageText(text2, { parse_mode: "HTML", reply_markup: kb });
+}
+async function showSubscriptionsList(ctx, page = 0, filter = "all") {
+  let allSubs = await db.select().from(subscriptionsTable);
+  if (filter === "free") {
+    allSubs = allSubs.filter(s => s.tariff && (s.tariff.includes("free") || s.tariff.includes("trial")));
+  } else if (filter === "premium") {
+    allSubs = allSubs.filter(s => s.tariff && !s.tariff.includes("free") && !s.tariff.includes("trial"));
+  }
   if (!allSubs.length) {
-    await ctx.editMessageText("\u{1F4CB} \u041F\u043E\u0434\u043F\u0438\u0441\u043E\u043A \u043F\u043E\u043A\u0430 \u043D\u0435\u0442.", { reply_markup: adminBackKb() });
+    await ctx.editMessageText("\u{1F4CB} \u041F\u043E\u0434\u043F\u0438\u0441\u043E\u043A \u043F\u043E \u0444\u0438\u043B\u044C\u0442\u0440\u0443 \u043D\u0435\u0442.", { reply_markup: adminBackKb() });
     return;
   }
   const now = new Date();
@@ -59186,7 +59375,8 @@ async function showSubscriptionsList(ctx, page = 0) {
   const totalPages = Math.ceil(allSubs.length / perPage);
   const safePage = Math.max(0, Math.min(page, totalPages - 1));
   const slice = allSubs.slice(safePage * perPage, (safePage + 1) * perPage);
-  let text2 = `\u{1F4CB} <b>\u041F\u043E\u0434\u043F\u0438\u0441\u043A\u0438</b>\n\n\u2705 \u0410\u043A\u0442\u0438\u0432\u043D\u044B\u0445: <b>${active.length}</b> | \u274C \u0418\u0441\u0442\u0435\u043A\u0448\u0438\u0445: <b>${expired.length}</b> | \u0412\u0441\u0435\u0433\u043E: <b>${allSubs.length}</b>\n\u{1F4C4} \u0421\u0442\u0440\u0430\u043D\u0438\u0446\u0430 <b>${safePage + 1}/${totalPages}</b>\n\n`;
+  const filterLabel = filter === "free" ? "\u{1F381} \u0411\u0435\u0441\u043F\u043B\u0430\u0442\u043D\u044B\u0435" : filter === "premium" ? "\u2B50 Premium" : "\u{1F4CB} \u0412\u0441\u0435";
+  let text2 = `${filterLabel} \u041F\u043E\u0434\u043F\u0438\u0441\u043A\u0438\n\n\u2705 \u0410\u043A\u0442\u0438\u0432\u043D\u044B\u0445: <b>${active.length}</b> | \u274C \u0418\u0441\u0442\u0435\u043A\u0448\u0438\u0445: <b>${expired.length}</b> | \u0412\u0441\u0435\u0433\u043E: <b>${allSubs.length}</b>\n\u{1F4C4} \u0421\u0442\u0440\u0430\u043D\u0438\u0446\u0430 <b>${safePage + 1}/${totalPages}</b>\n\n`;
   const kb = new InlineKeyboard3();
   for (const s of slice) {
     const isActive = new Date(s.expiresAt) > now;
@@ -59195,9 +59385,10 @@ async function showSubscriptionsList(ctx, page = 0) {
     text2 += `${isActive ? "\u{1F7E2}" : "\u{1F534}"} <b>${s.telegramId}</b> | ${s.tariff} | ${status}\n`;
     kb.text(`\u{1F464} ${s.telegramId}`, `manage_user_${s.telegramId}`).row();
   }
+  kb.text("\u{1F381} \u0411\u0435\u0441\u043F\u043B\u0430\u0442\u043D\u044B\u0435", `subs_filter_free`).text("\u2B50 Premium", `subs_filter_premium`).text("\u{1F4CB} \u0412\u0441\u0435", `subs_filter_all`).row();
   const nav = [];
-  if (safePage > 0) nav.push(["\u25C0\uFE0F \u041D\u0430\u0437\u0430\u0434", `subs_page_${safePage - 1}`]);
-  if (safePage + 1 < totalPages) nav.push(["\u0412\u043F\u0435\u0440\u0451\u0434 \u25B6\uFE0F", `subs_page_${safePage + 1}`]);
+  if (safePage > 0) nav.push(["\u25C0\uFE0F \u041D\u0430\u0437\u0430\u0434", `subs_page_${safePage - 1}_${filter}`]);
+  if (safePage + 1 < totalPages) nav.push(["\u0412\u043F\u0435\u0440\u0451\u0434 \u25B6\uFE0F", `subs_page_${safePage + 1}_${filter}`]);
   if (nav.length > 0) {
     for (const [label, cb] of nav) kb.text(label, cb);
     kb.row();
@@ -59591,6 +59782,31 @@ const withdrawData = new Map();
 
 userBot.on("message:text", async (ctx, next) => {
   const uid = ctx.from.id;
+  const state = userStates.get(uid);
+  if (state === "waiting_promo_code") {
+    userStates.delete(uid);
+    const code = ctx.message.text.trim();
+    if (!code) {
+      await ctx.reply("\u274C \u0412\u0432\u0435\u0434\u0438\u0442\u0435 \u043A\u043E\u0434.", { reply_markup: backToMainKb() });
+      return;
+    }
+    const promo = await activatePromoCode(code);
+    if (!promo) {
+      await ctx.reply("\u274C \u041F\u0440\u043E\u043C\u043E\u043A\u043E\u0434 \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D \u0438\u043B\u0438 \u0443\u0436\u0435 \u0438\u0441\u043F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u043D.", { reply_markup: backToMainKb() });
+      return;
+    }
+    const key = promo.tariff.includes("free") ? await getRandomFreeKey() : await getRandomPremiumKey();
+    if (!key) {
+      await ctx.reply("\u274C \u041D\u0435\u0442 \u043A\u043B\u044E\u0447\u0435\u0439 \u0432 \u0431\u0430\u0437\u0435. \u041E\u0431\u0440\u0430\u0442\u0438\u0442\u0435\u0441\u044C \u043A \u043F\u043E\u0434\u0434\u0435\u0440\u0436\u043A\u0435.", { reply_markup: backToMainKb() });
+      return;
+    }
+    await setSubscription(String(uid), promo.tariff, promo.days, key);
+    const domain = getSubDomain();
+    const subLink = domain ? `${domain}/sub/${uid}` : `https://laenfaer.onrender.com/sub/${uid}`;
+    const tariffName = promo.tariff.includes("free") ? "\u0411\u0435\u0441\u043F\u043B\u0430\u0442\u043D\u0430\u044F" : "Premium";
+    await ctx.reply(`\u2705 <b>\u041F\u0440\u043E\u043C\u043E\u043A\u043E\u0434 \u0430\u043A\u0442\u0438\u0432\u0438\u0440\u043E\u0432\u0430\u043D!</b>\n\n\u{1F381} \u0412\u044B \u043F\u043E\u043B\u0443\u0447\u0438\u043B\u0438 <b>${tariffName} \u043F\u043E\u0434\u043F\u0438\u0441\u043A\u0443 \u043D\u0430 ${promo.days} \u0434\u043D.!</b>\n\n\u{1F517} \u0421\u0441\u044B\u043B\u043A\u0430 \u043D\u0430 \u043F\u043E\u0434\u043F\u0438\u0441\u043A\u0443:\n<code>${subLink}</code>\n\n\u0414\u043E\u0431\u0430\u0432\u044C\u0442\u0435 \u0435\u0451 \u0432 \u0441\u0432\u043E\u0451 \u043F\u0440\u0438\u043B\u043E\u0436\u0435\u043D\u0438\u0435 \u2014 \u043A\u043B\u044E\u0447 \u0431\u0443\u0434\u0435\u0442 \u043E\u0431\u043D\u043E\u0432\u043B\u044F\u0442\u044C\u0441\u044F \u0430\u0432\u0442\u043E\u043C\u0430\u0442\u0438\u0447\u0435\u0441\u043A\u0438.`, { parse_mode: "HTML", reply_markup: backToMainKb() });
+    return;
+  }
   if (!withdrawPending.has(uid)) return next();
   withdrawPending.delete(uid);
   const userId = String(uid);
