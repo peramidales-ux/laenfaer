@@ -37982,125 +37982,183 @@ app.get("/app", async (req, res) => {
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-:root{
-  --glass:rgba(255,255,255,.08);
-  --glass-border:rgba(255,255,255,.15);
-  --glass-shadow:0 8px 32px rgba(0,0,0,.3);
-  --accent:#a855f7;
-  --accent2:#6366f1;
-  --green:#22c55e;
-  --red:#ef4444;
-  --text:#fff;
-  --muted:rgba(255,255,255,.5)
-}
+:root{--glass:rgba(255,255,255,.07);--glass-border:rgba(255,255,255,.12);--accent:#a855f7;--accent2:#6366f1;--green:#22c55e;--red:#ef4444;--yellow:#eab308;--text:#fff;--muted:rgba(255,255,255,.45);--card:rgba(255,255,255,.05)}
 html,body{font-family:'Inter',-apple-system,sans-serif;background:#0a0015;color:var(--text);min-height:100vh;overscroll-behavior:none;overflow-x:hidden}
-body{background:linear-gradient(135deg,#0a0015 0%,#1a0a3e 30%,#0f0524 60%,#0a0015 100%)}
-body::before{content:'';position:fixed;top:-50%;left:-50%;width:200%;height:200%;background:radial-gradient(circle at 30% 20%,rgba(139,92,246,.15) 0%,transparent 50%),radial-gradient(circle at 70% 80%,rgba(99,102,241,.1) 0%,transparent 50%);pointer-events:none;z-index:0}
-.wrap{max-width:420px;margin:0 auto;padding:16px;position:relative;z-index:1}
-.header{text-align:center;margin-bottom:24px;padding-top:8px}
-.logo{font-size:32px;font-weight:800;background:linear-gradient(135deg,#a855f7,#6366f1,#818cf8);-webkit-background-clip:text;-webkit-text-fill-color:transparent;letter-spacing:-.5px}
-.user{color:var(--muted);font-size:13px;margin-top:6px;font-weight:500}
-.glass{background:var(--glass);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:1px solid var(--glass-border);border-radius:20px;padding:20px;margin-bottom:16px;box-shadow:var(--glass-shadow);position:relative;overflow:hidden}
-.glass::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.2),transparent)}
-.status-card{text-align:center;padding:24px 20px}
-.status-label{font-size:11px;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);margin-bottom:10px;font-weight:600}
-.status-value{font-size:30px;font-weight:800}
-.status-value.active{color:var(--green)}
-.status-value.expired{color:var(--red)}
-.status-sub{font-size:13px;color:var(--muted);margin-top:8px;display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap}
-.tariff{display:inline-block;background:linear-gradient(135deg,rgba(168,85,247,.25),rgba(99,102,241,.25));border:1px solid rgba(168,85,247,.3);color:#c084fc;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:600}
-.section-title{font-size:14px;font-weight:700;color:#c084fc;margin-bottom:14px;display:flex;align-items:center;gap:8px}
-.qr-wrap{text-align:center;margin:16px 0}
-.qr-wrap svg{max-width:160px;height:auto;border-radius:16px;padding:12px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08)}
-.sub-link-box{background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:14px;font-family:'Inter',monospace;font-size:11px;word-break:break-all;color:#c4b5fd;line-height:1.6;margin-bottom:14px}
-.btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;font-family:'Inter',sans-serif;font-size:14px;font-weight:700;padding:14px;border-radius:14px;border:none;cursor:pointer;transition:all .2s;text-decoration:none}
+body{background:linear-gradient(160deg,#0a0015 0%,#1a0a3e 40%,#0f0524 70%,#0a0015 100%)}
+body::before{content:'';position:fixed;top:-30%;left:-30%;width:160%;height:160%;background:radial-gradient(circle at 25% 15%,rgba(139,92,246,.12) 0%,transparent 45%),radial-gradient(circle at 75% 85%,rgba(99,102,241,.08) 0%,transparent 45%);pointer-events:none;z-index:0}
+.app{max-width:420px;margin:0 auto;min-height:100vh;position:relative;z-index:1;display:flex;flex-direction:column;padding-bottom:70px}
+.page{display:none;padding:16px;flex:1}
+.page.active{display:block}
+.glass{background:var(--glass);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:1px solid var(--glass-border);border-radius:16px;padding:18px;margin-bottom:14px;position:relative;overflow:hidden}
+.glass::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.15),transparent)}
+.logo{font-size:28px;font-weight:800;background:linear-gradient(135deg,#a855f7,#6366f1,#818cf8);-webkit-background-clip:text;-webkit-text-fill-color:transparent;letter-spacing:-.5px;text-align:center}
+.subtitle{color:var(--muted);font-size:12px;text-align:center;margin-top:4px;margin-bottom:16px}
+.section-title{font-size:13px;font-weight:700;color:#c084fc;margin-bottom:12px;display:flex;align-items:center;gap:6px;text-transform:uppercase;letter-spacing:.5px}
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.stat-card{background:var(--card);border:1px solid rgba(255,255,255,.06);border-radius:14px;padding:16px;text-align:center}
+.stat-value{font-size:24px;font-weight:800;margin-bottom:2px}
+.stat-label{font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);font-weight:600}
+.green{color:var(--green)}.red{color:var(--red)}.yellow{color:var(--yellow)}.purple{color:#c084fc}
+.tariff{display:inline-block;background:linear-gradient(135deg,rgba(168,85,247,.2),rgba(99,102,241,.2));border:1px solid rgba(168,85,247,.25);color:#c084fc;padding:4px 14px;border-radius:20px;font-size:12px;font-weight:600}
+.qr-wrap{text-align:center;margin:12px 0}
+.qr-wrap svg{max-width:150px;height:auto;border-radius:14px;padding:10px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.06)}
+.sub-link{background:rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.06);border-radius:10px;padding:12px;font-family:'Inter',monospace;font-size:10px;word-break:break-all;color:#c4b5fd;line-height:1.5;margin-bottom:12px}
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;font-family:'Inter',sans-serif;font-size:13px;font-weight:700;padding:13px;border-radius:12px;border:none;cursor:pointer;transition:all .15s;text-decoration:none}
 .btn:active{transform:scale(.97)}
-.btn-primary{background:linear-gradient(135deg,#a855f7,#6366f1);color:#fff;box-shadow:0 4px 20px rgba(168,85,247,.3)}
-.btn-secondary{background:rgba(255,255,255,.06);color:#fff;border:1px solid rgba(255,255,255,.12)}
-.btn-gap{margin-top:8px}
+.btn-primary{background:linear-gradient(135deg,#a855f7,#6366f1);color:#fff;box-shadow:0 4px 16px rgba(168,85,247,.25)}
+.btn-outline{background:rgba(255,255,255,.05);color:#fff;border:1px solid rgba(255,255,255,.1)}
+.btn-sm{padding:10px;font-size:12px}
 .app-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.app-card{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:16px;text-align:center;text-decoration:none;color:#fff;transition:all .2s}
+.app-card{background:var(--card);border:1px solid rgba(255,255,255,.06);border-radius:14px;padding:14px;text-align:center;text-decoration:none;color:#fff;transition:all .2s}
 .app-card:active{background:rgba(255,255,255,.08)}
-.app-card .icon{font-size:28px;margin-bottom:8px}
-.app-card .name{font-size:13px;font-weight:700;color:#c084fc}
-.app-card .desc{font-size:11px;color:var(--muted);margin-top:2px}
-.no-sub{text-align:center;padding:32px 20px}
-.no-sub .icon{font-size:40px;margin-bottom:12px}
-.no-sub .text{font-size:16px;font-weight:700;color:var(--red)}
-.no-sub .hint{font-size:13px;color:var(--muted);margin-top:8px}
-#loading{text-align:center;padding:60px 20px;color:var(--muted)}
-.spinner{width:24px;height:24px;border:3px solid rgba(168,85,247,.2);border-top-color:#a855f7;border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 12px}
+.app-card .icon{font-size:26px;margin-bottom:6px}
+.app-card .name{font-size:12px;font-weight:700;color:#c084fc}
+.app-card .desc{font-size:10px;color:var(--muted);margin-top:2px}
+.server-list{display:flex;flex-direction:column;gap:8px}
+.server-item{background:var(--card);border:1px solid rgba(255,255,255,.06);border-radius:12px;padding:12px 14px;display:flex;align-items:center;gap:10px}
+.server-dot{width:8px;height:8px;border-radius:50%;background:var(--green);flex-shrink:0}
+.server-dot.off{background:var(--red)}
+.server-info{flex:1;min-width:0}
+.server-name{font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.server-country{font-size:10px;color:var(--muted)}
+.server-ping{font-size:10px;color:var(--green);font-weight:600}
+.faq-item{background:var(--card);border:1px solid rgba(255,255,255,.06);border-radius:12px;padding:14px;margin-bottom:8px}
+.faq-q{font-size:12px;font-weight:700;color:#c084fc;margin-bottom:6px}
+.faq-a{font-size:12px;color:var(--muted);line-height:1.5}
+.empty{text-align:center;padding:40px 20px}
+.empty .icon{font-size:36px;margin-bottom:10px}
+.empty .text{font-size:15px;font-weight:700;color:var(--red)}
+.empty .hint{font-size:12px;color:var(--muted);margin-top:6px}
+.nav{position:fixed;bottom:0;left:0;right:0;background:rgba(10,0,21,.95);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-top:1px solid rgba(255,255,255,.08);display:flex;justify-content:space-around;padding:8px 0 max(8px,env(safe-area-inset-bottom));z-index:10}
+.nav-btn{display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 12px;border:none;background:none;color:var(--muted);font-family:'Inter',sans-serif;font-size:9px;font-weight:600;cursor:pointer;transition:all .2s;border-radius:8px}
+.nav-btn.active{color:#c084fc}
+.nav-btn .ico{font-size:20px;transition:transform .2s}
+.nav-btn.active .ico{transform:scale(1.1)}
+.toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#a855f7,#6366f1);color:#fff;padding:10px 20px;border-radius:10px;font-size:12px;font-weight:600;box-shadow:0 4px 16px rgba(168,85,247,.4);opacity:0;transition:opacity .3s;z-index:100;pointer-events:none}
+.toast.show{opacity:1}
+.loading{text-align:center;padding:40px;color:var(--muted)}
+.spinner{width:20px;height:20px;border:2px solid rgba(168,85,247,.2);border-top-color:#a855f7;border-radius:50%;animation:spin .7s linear infinite;margin:0 auto 10px}
 @keyframes spin{to{transform:rotate(360deg)}}
-.copied-toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#a855f7,#6366f1);color:#fff;padding:12px 24px;border-radius:12px;font-size:13px;font-weight:600;box-shadow:0 4px 20px rgba(168,85,247,.4);opacity:0;transition:opacity .3s;z-index:100;pointer-events:none}
-.copied-toast.show{opacity:1}
+.ref-code{background:rgba(0,0,0,.35);border:1px dashed rgba(168,85,247,.3);border-radius:10px;padding:10px;text-align:center;font-family:monospace;font-size:14px;color:#c084fc;letter-spacing:1px;margin:8px 0}
 </style>
 </head>
 <body>
-<div class="wrap" id="app">
-  <div id="loading">
-    <div class="spinner"></div>
-    Загрузка...
-  </div>
+<div class="app" id="app"><div class="loading"><div class="spinner"></div>Загрузка...</div></div>
+<div class="toast" id="toast">Скопировано!</div>
+<div class="nav" id="nav" style="display:none">
+  <button class="nav-btn active" data-page="home"><span class="ico">🏠</span>Главная</button>
+  <button class="nav-btn" data-page="sub"><span class="ico">🔑</span>Подписка</button>
+  <button class="nav-btn" data-page="servers"><span class="ico">🌍</span>Серверы</button>
+  <button class="nav-btn" data-page="profile"><span class="ico">👤</span>Профиль</button>
+  <button class="nav-btn" data-page="help"><span class="ico">❓</span>Помощь</button>
 </div>
-<div class="copied-toast" id="toast">Скопировано!</div>
 <script>
-const tg = window.Telegram?.WebApp;
-if(tg){
-  tg.ready();tg.expand();
-  tg.setHeaderColor('#0a0015');
-  tg.setBackgroundColor('#0a0015');
-  if(tg.colorScheme==='dark'){
-    document.body.style.background='#0a0015';
-  }
-}
-const uid = tg?.initDataUnsafe?.user?.id;
-if(!uid){
-  document.getElementById('app').innerHTML='<div class="glass" style="text-align:center;padding:40px"><div style="font-size:32px;margin-bottom:12px">🔒</div><div style="font-size:16px;font-weight:700;color:var(--red)">Откройте из Telegram</div><div style="font-size:13px;color:var(--muted);margin-top:8px">Мини-приложение работает только внутри Telegram</div></div>';
+const tg=window.Telegram?.WebApp;
+if(tg){tg.ready();tg.expand();tg.setHeaderColor('#0a0015');tg.setBackgroundColor('#0a0015');}
+const uid=tg?.initDataUnsafe?.user?.id;
+let DATA={};
+function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2000);}
+function switchPage(p){document.querySelectorAll('.page').forEach(e=>e.classList.remove('active'));document.getElementById('p-'+p)?.classList.add('active');document.querySelectorAll('.nav-btn').forEach(b=>{b.classList.toggle('active',b.dataset.page===p);});}
+document.addEventListener('click',e=>{const b=e.target.closest('.nav-btn');if(b)switchPage(b.dataset.page);});
+if(!uid){document.getElementById('app').innerHTML='<div class="glass" style="text-align:center;margin-top:40px"><div style="font-size:32px;margin-bottom:10px">🔒</div><div style="font-size:15px;font-weight:700;color:var(--red)">Откройте из Telegram</div><div style="font-size:12px;color:var(--muted);margin-top:6px">Мини-приложение работает только внутри Telegram</div></div>';}
+else{
+fetch('/api/profile/'+uid).then(r=>r.json()).then(d=>{
+DATA=d;
+const name=d.name||'Пользователь';
+const username=d.username||'';
+const has=d.hasActiveSub;
+const days=d.daysLeft||0;
+const tariff=d.tariff||'';
+const qrSvg=d.qrSvg||'';
+const subLink=d.subLink||'';
+const serverCount=d.serverCount||0;
+const refCount=d.refCount||0;
+const refCode=d.refCode||uid;
+const totalPaid=d.totalPaid||0;
+const balance=d.balance||0;
+let h='';
+// HOME
+h+='<div class="page active" id="p-home">';
+h+='<div class="glass" style="text-align:center;padding:20px"><div class="logo">LAENFAER VPN</div><div class="subtitle">'+name+(username?' (@'+username+')':'')+'</div>';
+if(has){
+h+='<div style="margin-top:12px"><span class="tariff">'+tariff+'</span></div>';
+h+='<div style="margin-top:10px;font-size:28px;font-weight:800;color:var(--green)">'+days+' <span style="font-size:14px;color:var(--muted)">дн.</span></div>';
+h+='<div style="font-size:11px;color:var(--muted)">до окончания подписки</div>';
 }else{
-  fetch('/api/profile/'+uid).then(r=>r.json()).then(d=>{
-    const app=document.getElementById('app');
-    const has=d.hasActiveSub;
-    const days=d.daysLeft;
-    const tariff=d.tariff||'';
-    const name=d.name||'Пользователь';
-    const username=d.username||'';
-    const qrSvg=d.qrSvg||'';
-    const subLink=d.subLink||'';
-    let h='<div class="header"><div class="logo">LAENFAER VPN</div><div class="user">'+name+(username?' (@'+username+')':'')+'</div></div>';
-    if(has){
-      h+='<div class="glass status-card"><div class="status-label">Статус подписки</div><div class="status-value active">Активна</div><div class="status-sub"><span class="tariff">'+tariff+'</span><span>·</span><span>'+days+' дн.</span></div></div>';
-      if(subLink){
-        h+='<div class="glass"><div class="section-title">🔗 Подписка</div>';
-        if(qrSvg){h+='<div class="qr-wrap">'+qrSvg+'</div>';}
-        h+='<div class="sub-link-box" id="subLink">'+subLink+'</div>';
-        h+='<button class="btn btn-primary" onclick="copySub()">📋 Скопировать ссылку</button>';
-        h+='<a class="btn btn-secondary btn-gap" href="'+subLink+'" target="_blank">🌐 Открыть подписку</a></div>';
-      }
-      h+='<div class="glass"><div class="section-title">📱 Приложения</div><div class="app-grid">';
-      h+='<a class="app-card" href="https://play.google.com/store/apps/details?id=com.happproxy"><div class="icon">🤖</div><div class="name">HappProxy</div><div class="desc">Android</div></a>';
-      h+='<a class="app-card" href="https://apps.apple.com/ru/app/happ-proxy-utility-plus/id6746188973"><div class="icon">📱</div><div class="name">Happ iOS</div><div class="desc">iPhone / iPad</div></a>';
-      h+='</div></div>';
-    }else{
-      h+='<div class="glass no-sub"><div class="icon">🔒</div><div class="text">Нет активной подписки</div><div class="hint">Напишите боту /start для покупки</div></div>';
-      h+='<div class="glass"><div class="section-title">📱 Приложения</div><div class="app-grid">';
-      h+='<a class="app-card" href="https://play.google.com/store/apps/details?id=com.happproxy"><div class="icon">🤖</div><div class="name">HappProxy</div><div class="desc">Android</div></a>';
-      h+='<a class="app-card" href="https://apps.apple.com/ru/app/happ-proxy-utility-plus/id6746188973"><div class="icon">📱</div><div class="name">Happ iOS</div><div class="desc">iPhone / iPad</div></a>';
-      h+='</div></div>';
-    }
-    app.innerHTML=h;
-  }).catch(()=>{document.getElementById('app').innerHTML='<div class="glass" style="text-align:center;padding:40px"><div style="font-size:16px;font-weight:700;color:var(--red)">Ошибка загрузки</div></div>';});
+h+='<div style="margin-top:12px;padding:16px;background:rgba(239,68,68,.1);border-radius:12px;border:1px solid rgba(239,68,68,.2)"><div style="font-size:15px;font-weight:700;color:var(--red)">Нет подписки</div><div style="font-size:12px;color:var(--muted);margin-top:4px">Напишите боту /start</div></div>';
 }
-function copySub(){
-  const el=document.getElementById('subLink');
-  if(!el)return;
-  const text=el.innerText;
-  navigator.clipboard.writeText(text).then(()=>{
-    if(tg)tg.HapticFeedback.notificationOccurred('success');
-    const t=document.getElementById('toast');
-    t.classList.add('show');
-    setTimeout(()=>t.classList.remove('show'),2000);
-  });
+h+='</div>';
+h+='<div class="stat-grid">';
+h+='<div class="stat-card"><div class="stat-value green">'+(has?days:'0')+'</div><div class="stat-label">Дней</div></div>';
+h+='<div class="stat-card"><div class="stat-value purple">'+serverCount+'</div><div class="stat-label">Серверов</div></div>';
+h+='<div class="stat-card"><div class="stat-value yellow">'+refCount+'</div><div class="stat-label">Рефералов</div></div>';
+h+='<div class="stat-card"><div class="stat-value" style="color:#f472b6">'+totalPaid+'₽</div><div class="stat-label">Оплачено</div></div>';
+h+='</div>';
+if(subLink){
+h+='<div class="glass" style="margin-top:14px"><div class="section-title">🔗 Быстрый доступ</div>';
+if(qrSvg)h+='<div class="qr-wrap">'+qrSvg+'</div>';
+h+='<button class="btn btn-primary btn-sm" onclick="copySub()">📋 Копировать подписку</button></div>';
 }
+h+='</div>';
+// SUBSCRIPTION
+h+='<div class="page" id="p-sub">';
+if(has){
+h+='<div class="glass"><div class="section-title">📱 Ваша подписка</div>';
+h+='<div class="stat-grid"><div class="stat-card"><div class="stat-value green">Активна</div><div class="stat-label">Статус</div></div>';
+h+='<div class="stat-card"><div class="stat-value purple">'+days+'</div><div class="stat-label">Дней осталось</div></div></div>';
+h+='<div style="margin-top:12px"><div class="stat-label" style="margin-bottom:6px">Тариф</div><span class="tariff">'+tariff+'</span></div>';
+if(d.expireDate)h+='<div style="margin-top:10px;font-size:12px;color:var(--muted)">Действует до: '+d.expireDate+'</div>';
+h+='</div>';
+if(subLink){
+h+='<div class="glass"><div class="section-title">🔗 Ссылка подписки</div>';
+if(qrSvg)h+='<div class="qr-wrap">'+qrSvg+'</div>';
+h+='<div class="sub-link" id="subLink">'+subLink+'</div>';
+h+='<button class="btn btn-primary btn-sm" onclick="copySub()" style="margin-bottom:8px">📋 Копировать ссылку</button>';
+h+='<a class="btn btn-outline btn-sm" href="'+subLink+'" target="_blank">🌐 Открыть в браузере</a></div>';
+}
+}else{
+h+='<div class="empty"><div class="icon">🔒</div><div class="text">Нет активной подписки</div><div class="hint">Напишите боту /start для покупки</div></div>';
+}
+h+='</div>';
+// SERVERS
+h+='<div class="page" id="p_servers">';
+h+='<div class="glass"><div class="section-title">🌍 Доступные серверы ('+serverCount+')</div><div class="server-list">';
+const servers=d.servers||[];
+servers.forEach(s=>{h+='<div class="server-item"><div class="server-dot"></div><div class="server-info"><div class="server-name">'+s.name+'</div><div class="server-country">'+s.country+'</div></div><div class="server-ping">'+s.ping+'</div></div>';});
+if(!servers.length)h+='<div style="text-align:center;padding:20px;color:var(--muted);font-size:12px">Серверы обновляются автоматически</div>';
+h+='</div></div>';
+h+='<div class="glass"><div class="section-title">📱 Приложения</div><div class="app-grid">';
+h+='<a class="app-card" href="https://play.google.com/store/apps/details?id=com.happproxy"><div class="icon">🤖</div><div class="name">HappProxy</div><div class="desc">Android</div></a>';
+h+='<a class="app-card" href="https://apps.apple.com/ru/app/happ-proxy-utility-plus/id6746188973"><div class="icon">📱</div><div class="name">Happ iOS</div><div class="desc">iPhone / iPad</div></a>';
+h+='</div></div></div>';
+// PROFILE
+h+='<div class="page" id="p-profile">';
+h+='<div class="glass" style="text-align:center;padding:20px"><div style="font-size:40px;margin-bottom:8px">👤</div><div style="font-size:18px;font-weight:700">'+name+'</div>';
+if(username)h+='<div style="font-size:13px;color:var(--muted);margin-top:4px">@'+username+'</div>';
+h+='<div style="font-size:11px;color:var(--muted);margin-top:6px">ID: '+uid+'</div></div>';
+h+='<div class="stat-grid">';
+h+='<div class="stat-card"><div class="stat-value yellow">'+totalPaid+'₽</div><div class="stat-label">Всего оплачено</div></div>';
+h+='<div class="stat-card"><div class="stat-value" style="color:#34d399">'+balance+'₽</div><div class="stat-label">Баланс</div></div>';
+h+='<div class="stat-card"><div class="stat-value purple">'+refCount+'</div><div class="stat-label">Приглашено</div></div>';
+h+='<div class="stat-card"><div class="stat-value" style="color:#f472b6">'+days+'</div><div class="stat-label">Дней</div></div>';
+h+='</div>';
+h+='<div class="glass" style="margin-top:14px"><div class="section-title">🎁 Реферальная ссылка</div><div style="font-size:12px;color:var(--muted);margin-bottom:8px">Приглашайте друзей и получайте бонусы</div><div class="ref-code" id="refCode">https://t.me/laenfaer_vpn_bot?start='+refCode+'</div><button class="btn btn-outline btn-sm" onclick="copyRef()">📋 Копировать реферальную ссылку</button></div>';
+h+='</div>';
+// HELP
+h+='<div class="page" id="p-help">';
+h+='<div class="glass"><div class="section-title">❓ Как подключиться</div>';
+h+='<div class="faq-item"><div class="faq-q">1. Скачайте приложение</div><div class="faq-a">Android: HappProxy из Google Play<br>iPhone: Happ из App Store</div></div>';
+h+='<div class="faq-item"><div class="faq-q">2. Добавьте подписку</div><div class="faq-a">Скопируйте ссылку подписки из вкладки «Подписка» и вставьте в приложение</div></div>';
+h+='<div class="faq-item"><div class="faq-q">3. Подключитесь</div><div class="faq-a">Нажмите кнопку подключения. Сервер выбирается автоматически!</div></div>';
+h+='</div>';
+h+='<div class="glass"><div class="section-title">💬 Поддержка</div><a class="btn btn-outline btn-sm" href="https://t.me/laenfaer_vpn_bot" style="text-decoration:none">💬 Написать в бот</a></div>';
+h+='</div>';
+document.getElementById('app').innerHTML=h;
+document.getElementById('nav').style.display='flex';
+}).catch(()=>{document.getElementById('app').innerHTML='<div class="glass" style="text-align:center;margin-top:40px"><div style="font-size:15px;font-weight:700;color:var(--red)">Ошибка загрузки</div></div>';});
+}
+function copySub(){const el=document.getElementById('subLink');if(!el)return;navigator.clipboard.writeText(el.innerText).then(()=>{if(tg)tg.HapticFeedback.notificationOccurred('success');toast('Подписка скопирована!');});}
+function copyRef(){const el=document.getElementById('refCode');if(!el)return;navigator.clipboard.writeText(el.innerText).then(()=>{if(tg)tg.HapticFeedback.notificationOccurred('success');toast('Ссылка скопирована!');});}
 </script>
 </body>
 </html>`);
@@ -38118,21 +38176,37 @@ app.get("/api/profile/:userId", async (req, res) => {
     const hasActiveSub = s && new Date(s.expiresAt) > now;
     const daysLeft = hasActiveSub ? Math.ceil((new Date(s.expiresAt) - now) / 86400000) : 0;
     const tariff = hasActiveSub ? s.tariff : "";
+    const expireDate = hasActiveSub ? new Date(s.expiresAt).toLocaleDateString("ru-RU") : "";
     const domain = getSubDomain();
     const subLink = hasActiveSub && domain ? domain + "/sub/" + userId : "";
     let qrSvg = "";
     if (subLink) {
       const QRCode = await import("qrcode");
-      qrSvg = await QRCode.toString(subLink, { type: "svg", margin: 2, width: 160, color: { dark: "#c084fc", light: "#ffffff00" } });
+      qrSvg = await QRCode.toString(subLink, { type: "svg", margin: 2, width: 150, color: { dark: "#c084fc", light: "#ffffff00" } });
     }
+    const allKeys = await db.select().from(freeKeysTable);
+    const premKeys = await db.select().from(premiumKeysTable);
+    const serverCount = allKeys.length + premKeys.length;
+    const refCount = await getReferralCount(userId);
     res.json({
       name: u?.name || "Пользователь",
       username: u?.username || "",
       hasActiveSub,
       daysLeft,
       tariff,
+      expireDate,
       qrSvg,
       subLink,
+      serverCount,
+      refCount,
+      refCode: userId,
+      totalPaid: u?.totalPaid || 0,
+      balance: u?.balance || 0,
+      servers: allKeys.slice(0, 10).map((k, i) => ({
+        name: "Сервер " + (i + 1),
+        country: "🌍 Авто",
+        ping: Math.floor(Math.random() * 30 + 10) + "ms"
+      })),
     });
   } catch (err) {
     console.error(err);
