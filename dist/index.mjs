@@ -37711,26 +37711,86 @@ function pageShell(title, desc, body, extra) {
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="${title}">
 <meta name="twitter:description" content="${desc}">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <script type="application/ld+json">${svcLD}</script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter',-apple-system,sans-serif;background:#07090D;color:#fff;min-height:100vh;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse at 50% 0%,rgba(139,197,63,.06) 0%,transparent 50%),radial-gradient(ellipse at 80% 100%,rgba(99,102,241,.05) 0%,transparent 50%);pointer-events:none;z-index:0}
+#particles{position:fixed;inset:0;z-index:0;pointer-events:none}
+.wrap{max-width:900px;margin:0 auto;padding:0 20px;position:relative;z-index:1}
+.glass{background:rgba(17,28,45,.5);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:1px solid rgba(139,197,63,.1);border-radius:24px;padding:32px;margin-bottom:24px;position:relative;overflow:hidden}
+.glass::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(139,197,63,.2),transparent)}
+.glass-sm{padding:24px;border-radius:20px}
+.glass:hover{border-color:rgba(139,197,63,.18);box-shadow:0 8px 32px rgba(139,197,63,.05)}
+.glow{box-shadow:0 0 60px rgba(139,197,63,.06),inset 0 0 60px rgba(139,197,63,.02)}
+h1{font-size:42px;font-weight:900;line-height:1.1;margin-bottom:12px}
+h2{font-size:28px;font-weight:800;margin-bottom:20px}
+h3{font-size:18px;font-weight:700;margin-bottom:8px}
+.accent{color:#8BC53F}
+.btn{display:inline-block;background:#8BC53F;color:#07090D;font-size:16px;font-weight:700;padding:14px 32px;border-radius:16px;text-decoration:none;transition:all .2s;border:none;cursor:pointer}
+.btn:hover{box-shadow:0 8px 32px rgba(139,197,63,.3);transform:translateY(-2px)}
+.btn:active{transform:scale(.97)}
+.btn-outline{background:rgba(139,197,63,.08);color:#8BC53F;border:1px solid rgba(139,197,63,.15)}
+.btn-outline:hover{background:rgba(139,197,63,.15)}
+.card-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px}
+.detail-box{background:rgba(7,9,13,.4);border:1px solid rgba(139,197,63,.06);border-radius:14px;padding:16px}
+.tag{display:inline-block;padding:4px 12px;border-radius:8px;font-size:11px;font-weight:700;background:rgba(139,197,63,.1);color:#8BC53F;border:1px solid rgba(139,197,63,.12)}
+.info-label{font-size:11px;font-weight:700;color:rgba(255,255,255,.25);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px}
+.info-value{font-size:14px;font-weight:600}
+.info-sub{font-size:12px;color:rgba(255,255,255,.3);margin-top:4px}
+.step{display:flex;gap:16px;align-items:start;padding:16px;background:rgba(17,28,45,.3);border:1px solid rgba(139,197,63,.05);border-radius:16px;margin-bottom:12px}
+.step-num{width:40px;height:40px;border-radius:12px;background:rgba(139,197,63,.1);color:#8BC53F;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:18px;flex-shrink:0}
+.step-text{flex:1}
+.step-title{font-size:15px;font-weight:700;margin-bottom:4px}
+.step-desc{font-size:13px;color:rgba(255,255,255,.35);line-height:1.5}
+.faq{margin-bottom:8px}
+.faq summary{font-weight:700;cursor:pointer;font-size:15px;padding:14px;background:rgba(17,28,45,.3);border:1px solid rgba(139,197,63,.06);border-radius:14px;transition:all .2s}
+.faq summary:hover{border-color:rgba(139,197,63,.15)}
+.faq[open] summary{border-radius:14px 14px 0 0;border-bottom-color:transparent}
+.faq-content{padding:14px;background:rgba(17,28,45,.2);border:1px solid rgba(139,197,63,.06);border-top:none;border-radius:0 0 14px 14px}
+.faq-content p{font-size:13px;color:rgba(255,255,255,.4);line-height:1.6}
+.app-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
+.app-card{background:rgba(17,28,45,.4);border:1px solid rgba(139,197,63,.06);border-radius:16px;padding:20px;text-align:center;text-decoration:none;color:#fff;transition:all .2s}
+.app-card:hover{border-color:rgba(139,197,63,.15);transform:translateY(-2px)}
+.app-icon{font-size:32px;margin-bottom:8px}
+.app-name{font-size:14px;font-weight:700;color:#8BC53F}
+.app-desc{font-size:11px;color:rgba(255,255,255,.3);margin-top:4px}
+@media(max-width:600px){
+  h1{font-size:28px}h2{font-size:22px}
+  .glass{padding:20px;border-radius:20px}
+  .card-grid{grid-template-columns:1fr}
+}
 ${extra||''}
+</style>
 </head>
-<body style="font-family:-apple-system,sans-serif;background:#07090D;color:#fff;margin:0">
-<nav style="background:#0a0c12;border-bottom:1px solid rgba(139,197,63,.1);padding:12px 20px;display:flex;align-items:center;justify-content:center;gap:24px;position:sticky;top:0;z-index:100">
-<a href="/" style="color:#8BC53F;font-weight:900;font-size:15px;text-decoration:none;letter-spacing:1px">&#9889; LAENFAER</a>
-<a href="/tariffs" style="color:rgba(255,255,255,.5);text-decoration:none;font-size:13px">Тарифы</a>
-<a href="/support" style="color:rgba(255,255,255,.5);text-decoration:none;font-size:13px">Поддержка</a>
-<a href="https://t.me/laenfaer_vpn_bot" style="background:#8BC53F;color:#07090D;font-size:12px;font-weight:700;padding:8px 16px;border-radius:10px;text-decoration:none">Бот</a>
+<body>
+<canvas id="particles" style="position:fixed;inset:0;z-index:0;pointer-events:none"></canvas>
+<nav style="position:sticky;top:0;z-index:100;background:rgba(7,9,13,.9);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-bottom:1px solid rgba(139,197,63,.08);padding:14px 0">
+<div class="wrap" style="display:flex;align-items:center;justify-content:space-between">
+<a href="/" style="color:#8BC53F;font-weight:900;font-size:16px;text-decoration:none;letter-spacing:1px">&#9889; LAENFAER</a>
+<div style="display:flex;gap:24px;align-items:center">
+<a href="/tariffs" style="color:rgba(255,255,255,.5);text-decoration:none;font-size:13px;font-weight:500;transition:color .2s" onmouseover="this.style.color='#8BC53F'" onmouseout="this.style.color='rgba(255,255,255,.5)'">Тарифы</a>
+<a href="/support" style="color:rgba(255,255,255,.5);text-decoration:none;font-size:13px;font-weight:500;transition:color .2s" onmouseover="this.style.color='#8BC53F'" onmouseout="this.style.color='rgba(255,255,255,.5)'">Поддержка</a>
+<a href="https://t.me/laenfaer_vpn_bot" class="btn" style="padding:10px 20px;font-size:13px">Подключиться</a>
+</div>
+</div>
 </nav>
 ${body}
-<footer style="background:#0a0c12;border-top:1px solid rgba(139,197,63,.06);padding:24px 20px;text-align:center;font-size:11px;color:rgba(255,255,255,.15);margin-top:60px">
-<p>LAENFAER VPN &copy; 2026. Все права защищены.</p>
-<p style="margin-top:8px">
-<a href="/" style="color:rgba(255,255,255,.25);text-decoration:none;margin:0 8px">Главная</a>
-<a href="/tariffs" style="color:rgba(255,255,255,.25);text-decoration:none;margin:0 8px">Тарифы</a>
-<a href="/support" style="color:rgba(255,255,255,.25);text-decoration:none;margin:0 8px">Поддержка</a>
-<a href="https://t.me/laenfaer_vpn_bot" style="color:rgba(255,255,255,.25);text-decoration:none;margin:0 8px">Telegram</a>
-</p>
+<footer style="background:rgba(10,12,18,.8);border-top:1px solid rgba(139,197,63,.06);padding:40px 20px;text-align:center;margin-top:80px;position:relative;z-index:1">
+<div class="wrap">
+<p style="font-size:12px;color:rgba(255,255,255,.2);margin-bottom:16px">&copy; 2026 LAENFAER VPN. Все права защищены.</p>
+<div style="display:flex;justify-content:center;gap:24px;flex-wrap:wrap">
+<a href="/" style="color:rgba(255,255,255,.25);text-decoration:none;font-size:12px">Главная</a>
+<a href="/tariffs" style="color:rgba(255,255,255,.25);text-decoration:none;font-size:12px">Тарифы</a>
+<a href="/support" style="color:rgba(255,255,255,.25);text-decoration:none;font-size:12px">Поддержка</a>
+<a href="https://t.me/laenfaer_vpn_bot" style="color:rgba(255,255,255,.25);text-decoration:none;font-size:12px">Telegram</a>
+</div>
+</div>
 </footer>
+<script>
+(function(){var c=document.getElementById('particles');if(!c)return;var x=c.getContext('2d');function r(){c.width=window.innerWidth;c.height=window.innerHeight}r();window.addEventListener('resize',r);var p=[];for(var i=0;i<50;i++)p.push({x:Math.random()*c.width,y:Math.random()*c.height,r:Math.random()*1.5+.3,dx:(Math.random()-.5)*.2,dy:(Math.random()-.5)*.2,o:Math.random()*.2+.05});function d(){x.clearRect(0,0,c.width,c.height);for(var i=0;i<p.length;i++){var v=p[i];v.x+=v.dx;v.y+=v.dy;if(v.x<0||v.x>c.width)v.dx*=-1;if(v.y<0||v.y>c.height)v.dy*=-1;x.beginPath();x.arc(v.x,v.y,v.r,0,6.28);x.fillStyle='rgba(139,197,63,'+v.o+')';x.fill()}requestAnimationFrame(d)}d()})();
+</script>
 </body>
 </html>`;
 }
@@ -38165,55 +38225,6 @@ function copyKey() {
 });
 
 // API for mini app
-app.get("/api/profile/:userId", async (req, res) => {
-  try {
-    const userId = String(req.params.userId);
-    const user = await db.select().from(usersTable).where(eq(usersTable.telegramId, userId)).limit(1);
-    const sub = await db.select().from(subscriptionsTable).where(eq(subscriptionsTable.telegramId, userId)).limit(1);
-    const u = user[0];
-    const s = sub[0];
-    const now = new Date();
-    const hasActiveSub = s && new Date(s.expiresAt) > now;
-    const daysLeft = hasActiveSub ? Math.ceil((new Date(s.expiresAt) - now) / 86400000) : 0;
-    const tariff = hasActiveSub ? s.tariff : "";
-    const expireDate = hasActiveSub ? new Date(s.expiresAt).toLocaleDateString("ru-RU") : "";
-    const domain = getSubDomain();
-    const subLink = hasActiveSub && domain ? domain + "/sub/" + userId : "";
-    let qrSvg = "";
-    if (subLink) {
-      const QRCode = await import("qrcode");
-      qrSvg = await QRCode.toString(subLink, { type: "svg", margin: 2, width: 150, color: { dark: "#c084fc", light: "#ffffff00" } });
-    }
-    const allKeys = await db.select().from(freeKeysTable);
-    const premKeys = await db.select().from(premiumKeysTable);
-    const serverCount = allKeys.length + premKeys.length;
-    const refCount = await getReferralCount(userId);
-    res.json({
-      name: u?.name || "Пользователь",
-      username: u?.username || "",
-      hasActiveSub,
-      daysLeft,
-      tariff,
-      expireDate,
-      qrSvg,
-      subLink,
-      serverCount,
-      refCount,
-      refCode: userId,
-      totalPaid: u?.totalPaid || 0,
-      balance: u?.balance || 0,
-      servers: allKeys.slice(0, 10).map((k, i) => ({
-        name: "Сервер " + (i + 1),
-        country: "🌍 Авто",
-        ping: Math.floor(Math.random() * 30 + 10) + "ms"
-      })),
-    });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Internal error" });
-  }
-});
-
 // Mini App endpoint
 app.get("/app", async (req, res) => {
   res.setHeader("Content-Type", "text/html; charset=utf-8");
@@ -57108,10 +57119,16 @@ async function cleanBlockedUsers() {
   const allUsers = await getAllUsers();
   let removed = 0;
   for (const u of allUsers) {
+    if (u.banned) {
+      await db.delete(usersTable).where(eq(usersTable.telegramId, u.telegramId));
+      removed++;
+      continue;
+    }
     try {
       await mainBotSender.api.getChat(Number(u.telegramId));
     } catch (e) {
-      if (e.parameters && (e.parameters.retry_after || String(e).includes("bot was blocked") || String(e).includes("user is deactivated"))) {
+      const errStr = String(e);
+      if (errStr.includes("bot was blocked") || errStr.includes("user is deactivated") || errStr.includes("Forbidden") || errStr.includes("chat not found") || errStr.includes("bot blocked")) {
         await db.delete(usersTable).where(eq(usersTable.telegramId, u.telegramId));
         removed++;
       }
@@ -58425,6 +58442,10 @@ adminBot.callbackQuery(/.*/, async (ctx) => {
   }
   if (data === "admin_get_users") {
     await showUsersList(ctx, 0);
+    return;
+  }
+  if (data === "admin_get_subs") {
+    await showSubscriptionsList(ctx, 0, "all");
     return;
   }
   if (data === "admin_promo_menu") {
