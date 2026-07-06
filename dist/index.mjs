@@ -37712,6 +37712,7 @@ function pageShell(title, desc, body, extra) {
 <meta name="twitter:title" content="${title}">
 <meta name="twitter:description" content="${desc}">
 <meta name="google-site-verification" content="fOFohOBeUZS71Ex91_MPXhUP0VvzwIJrzz_ZdH4Ues4">
+<link rel="icon" href="/favicon.ico" type="image/jpeg">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script type="application/ld+json">${svcLD}</script>
 <style>
@@ -37799,7 +37800,7 @@ ${extra||''}
 </head>
 <body>
 <div class="topnav"><div class="wrap">
-<a href="/" class="logo"><span class="mk"></span>LAENFAER</a>
+<a href="/" class="logo"><img src="/logo.jpg" alt="LAENFAER" style="width:32px;height:32px;border-radius:8px;object-fit:cover">LAENFAER</a>
 <nav class="nk">
 <a href="/pricing">Тарифы</a>
 <a href="/servers">Серверы</a>
@@ -37814,7 +37815,7 @@ ${body}
 <div class="wrap">
 <div class="fg">
 <div>
-<div class="logo" style="margin-bottom:12px"><span class="mk"></span>LAENFAER</div>
+<div class="logo" style="margin-bottom:12px"><img src="/logo.jpg" alt="LAENFAER" style="width:28px;height:28px;border-radius:6px;object-fit:cover">LAENFAER</div>
 <p style="font-size:.92rem">VPN на протоколе VLESS Reality. Трафик, который выглядит как обычный HTTPS &mdash; без блокировок и ограничений.</p>
 </div>
 <div><h4>Сервис</h4><ul><li><a href="/about">О сервисе</a></li><li><a href="/pricing">Тарифы</a></li><li><a href="/servers">Серверы</a></li><li><a href="/referral">Рефералы</a></li></ul></div>
@@ -38296,6 +38297,26 @@ Allow: /`);
 
 app.get("/google33238c7c022f9eee.html", async (req, res) => {
   res.setHeader("Content-Type","text/html; charset=utf-8").send("google-site-verification: google33238c7c022f9eee.html");
+});
+
+app.get("/logo.jpg", async (req, res) => {
+  const { readFileSync } = await import("fs");
+  const { join } = await import("path");
+  const img = readFileSync(join(process.cwd(), "logo.jpg"));
+  res.setHeader("Content-Type","image/jpeg");
+  res.setHeader("Cache-Control","public, max-age=86400");
+  res.send(img);
+});
+
+app.get("/favicon.ico", async (req, res) => {
+  const { readFileSync } = await import("fs");
+  const { join } = await import("path");
+  try {
+    const img = readFileSync(join(process.cwd(), "logo.jpg"));
+    res.setHeader("Content-Type","image/jpeg");
+    res.setHeader("Cache-Control","public, max-age=86400");
+    res.send(img);
+  } catch { res.status(404).end(); }
 });
 
 app.get("/profile/:userId", async (req, res) => {
