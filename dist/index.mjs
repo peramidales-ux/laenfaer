@@ -37711,6 +37711,7 @@ function pageShell(title, desc, body, extra) {
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="${title}">
 <meta name="twitter:description" content="${desc}">
+<meta name="google-site-verification" content="fOFohOBeUZS71Ex91_MPXhUP0VvzwIJrzz_ZdH4Ues4">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script type="application/ld+json">${svcLD}</script>
 <style>
