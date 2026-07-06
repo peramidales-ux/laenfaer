@@ -38649,7 +38649,7 @@ app.get("/api/profile/:userId", async (req, res) => {
     const hasActiveSub = s && new Date(s.expiresAt) > now;
     const daysLeft = hasActiveSub ? Math.ceil((new Date(s.expiresAt) - now) / 86400000) : 0;
     const tariff = hasActiveSub ? s.tariff : "";
-    const isFreeSub = hasActiveSub && s.tariff && (s.tariff.includes("free") || s.tariff === "free_3days" || s.tariff === "free_7days");
+    const isFreeSub = hasActiveSub && s.tariff && (s.tariff.includes("free") || /^free/i.test(s.tariff));
     const tariffLabel = hasActiveSub ? (isFreeSub ? `Бесплатный (${daysLeft} дн.)` : `Premium (${daysLeft} дн.)`) : "";
     const expireDate = hasActiveSub ? new Date(s.expiresAt).toISOString() : "";
     const expireDateDisplay = hasActiveSub ? new Date(s.expiresAt).toLocaleDateString("ru-RU") : "";
@@ -57599,7 +57599,7 @@ async function getSubscriptionStatus(telegramId) {
   const sub = await getSubscription(telegramId);
   if (sub) {
     const left = daysLeft(sub.expiresAt);
-    const isFree = sub.tariff && (sub.tariff.includes("free") || sub.tariff === "free_3days" || sub.tariff === "free_7days");
+    const isFree = sub.tariff && (sub.tariff.includes("free") || /^free/i.test(sub.tariff));
     const name = isFree ? `Бесплатный (${left} дн.)` : `Premium (${left} дн.)`;
     if (left > 0) {
       return `\u{1F7E2} \u0410\u041A\u0422\u0418\u0412\u041D\u0410
@@ -58242,7 +58242,7 @@ ${text2}`,
       await ctx.reply("\u274C \u041F\u0440\u043E\u043C\u043E\u043A\u043E\u0434 \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D \u0438\u043B\u0438 \u0443\u0436\u0435 \u0438\u0441\u043F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u043D.", { reply_markup: mainMenuKb() });
       return;
     }
-    const isFreeTariff = promo.tariff && (promo.tariff.includes("free") || promo.tariff === "free_3days" || promo.tariff === "free_7days");
+    const isFreeTariff = promo.tariff && (promo.tariff.includes("free") || /^free/i.test(promo.tariff));
     const key = isFreeTariff ? (await getRandomFreeKey() || await getRandomPremiumKey()) : (await getRandomPremiumKey() || await getRandomFreeKey());
     if (!key) {
       await ctx.reply("\u274C \u041D\u0435\u0442 \u0441\u0432\u043E\u0431\u043E\u0434\u043D\u044B\u0445 \u043A\u043B\u044E\u0447\u0435\u0439. \u041E\u0431\u0440\u0430\u0442\u0438\u0442\u0435\u0441\u044C \u0432 \u043F\u043E\u0434\u0434\u0435\u0440\u0436\u043A\u0443.", { reply_markup: mainMenuKb() });
@@ -58621,7 +58621,7 @@ adminBot.callbackQuery(/.*/, async (ctx) => {
       const lastUnderscore = rest.lastIndexOf("_");
       const code = rest.substring(0, lastUnderscore);
       const days = rest.substring(lastUnderscore + 1);
-      adminStates.set(ADMIN_ID2, `promo_max_${code}_${days}_free_3days`);
+      adminStates.set(ADMIN_ID2, `promo_max_${code}_${days}_free_${days}days`);
       await ctx.editMessageText(`\u2705 \u0422\u0438\u043F: \u0411\u0435\u0441\u043F\u043B\u0430\u0442\u043D\u0430\u044F\n\n\u0412\u0432\u0435\u0434\u0438\u0442\u0435 \u043B\u0438\u043C\u0438\u0442 \u0438\u0441\u043F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u043D\u0438\u0439 (\u043F\u043E \u0443\u043C\u043E\u043B\u0447\u0430\u043D\u0438\u044E: 999):`, { reply_markup: adminBackKb() });
       return;
     }
