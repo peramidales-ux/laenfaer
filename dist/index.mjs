@@ -38690,8 +38690,7 @@ app.get("/api/promo/:userId", async (req, res) => {
     if (!key) return res.json({ ok: false, message: "Нет свободных ключей, обратитесь в поддержку" });
     const days = promo.days || 30;
     const tariff = promo.tariff || "30days";
-    await db.update(usersTable).set({ balance: 0 }).where(eq(usersTable.telegramId, userId));
-    await setSubscription(userId, tariff, days, key);
+    await addDaysToSubscription(userId, tariff, days, key);
     const domain = getSubDomain();
     const subLink = domain ? domain + "/sub/" + userId : "";
     res.json({ ok: true, message: "Промокод применён! Подписка активирована на " + days + " дн.", subLink });
@@ -57181,9 +57180,26 @@ async function setSubscription(telegramId, tariff, days, key) {
   await db.update(usersTable).set({ balance: 0 }).where(eq(usersTable.telegramId, telegramId));
   return expiresAt;
 }
+async function addDaysToSubscription(telegramId, tariff, days, key) {
+  const sub = await getSubscription(telegramId);
+  const now = new Date();
+  let baseDate = now;
+  if (sub && new Date(sub.expiresAt) > now) {
+    baseDate = new Date(sub.expiresAt);
+  }
+  const expiresAt = new Date(baseDate.getTime() + days * 864e5);
+  const newTariff = tariff || (sub ? sub.tariff : "premium");
+  const newKey = key || (sub ? sub.key : null);
+  await db.insert(subscriptionsTable).values({ telegramId, tariff: newTariff, expiresAt, key: newKey, reminderSent: false, updatedAt: new Date() }).onConflictDoUpdate({
+    target: subscriptionsTable.telegramId,
+    set: { tariff: newTariff, expiresAt, key: newKey, reminderSent: false, updatedAt: new Date() }
+  });
+  await db.update(usersTable).set({ balance: 0 }).where(eq(usersTable.telegramId, telegramId));
+  return expiresAt;
+}
 async function hasHadFreeKey(telegramId) {
   const sub = await getSubscription(telegramId);
-  return sub?.tariff === "free_7days" || sub?.tariff === "free_3days";
+  return sub?.tariff === "free_7days" || sub?.tariff === "free_3days" || sub?.tariff === "free";
 }
 async function getSubscriptionsExpiringSoon() {
   const now = /* @__PURE__ */ new Date();
@@ -58250,7 +58266,7 @@ ${text2}`,
     }
     const days = promo.days || 30;
     const tariff = promo.tariff || "30days";
-    const expiresAt = await setSubscription(String(userId), tariff, days, key);
+    const expiresAt = await addDaysToSubscription(String(userId), tariff, days, key);
     userStates.set(userId, `key:${key}`);
     await ctx.reply(
       `\u2705 <b>\u041F\u0440\u043E\u043C\u043E\u043A\u043E\u0434 \u043F\u0440\u0438\u043C\u0435\u043D\u0451\u043D!</b>\n\n\u{1F389} \u041F\u043E\u0434\u043F\u0438\u0441\u043A\u0430 \u0430\u043A\u0442\u0438\u0432\u0438\u0440\u043E\u0432\u0430\u043D\u0430 \u043D\u0430 ${days} \u0434\u043D\u0435\u0439.\n\u{1F4C5} \u0414\u043E: ${formatDate(expiresAt)}\n\n\u{1F447} \u0412\u044B\u0431\u0435\u0440\u0438 \u0441\u0432\u043E\u044E \u043F\u043B\u0430\u0442\u0444\u043E\u0440\u043C\u0443:`,
@@ -58621,7 +58637,7 @@ adminBot.callbackQuery(/.*/, async (ctx) => {
       const lastUnderscore = rest.lastIndexOf("_");
       const code = rest.substring(0, lastUnderscore);
       const days = rest.substring(lastUnderscore + 1);
-      adminStates.set(ADMIN_ID2, `promo_fin|${code}|${days}|free_${days}days`);
+      adminStates.set(ADMIN_ID2, `promo_fin|${code}|${days}|free`);
       await ctx.editMessageText(`\u2705 \u0422\u0438\u043F: \u0411\u0435\u0441\u043F\u043B\u0430\u0442\u043D\u0430\u044F\n\n\u0412\u0432\u0435\u0434\u0438\u0442\u0435 \u043B\u0438\u043C\u0438\u0442 \u0438\u0441\u043F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u043D\u0438\u0439 (\u043F\u043E \u0443\u043C\u043E\u043B\u0447\u0430\u043D\u0438\u044E: 999):`, { reply_markup: adminBackKb() });
       return;
     }
@@ -58635,7 +58651,7 @@ adminBot.callbackQuery(/.*/, async (ctx) => {
       const lastUnderscore = rest.lastIndexOf("_");
       const code = rest.substring(0, lastUnderscore);
       const days = rest.substring(lastUnderscore + 1);
-      adminStates.set(ADMIN_ID2, `promo_fin|${code}|${days}|${days}days`);
+      adminStates.set(ADMIN_ID2, `promo_fin|${code}|${days}|premium`);
       await ctx.editMessageText(`\u2705 \u0422\u0438\u043F: Premium\n\n\u0412\u0432\u0435\u0434\u0438\u0442\u0435 \u043B\u0438\u043C\u0438\u0442 \u0438\u0441\u043F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u043D\u0438\u0439 (\u043F\u043E \u0443\u043C\u043E\u043B\u0447\u0430\u043D\u0438\u044E: 999):`, { reply_markup: adminBackKb() });
       return;
     }
@@ -59323,7 +59339,7 @@ ${escapeHtml(text2)}`,
     const subs = await getAllSubscriptions();
     let updated = 0;
     for (const sub of subs) {
-      if (sub.tariff === "free_7days" || sub.tariff === "free_3days") {
+      if ((sub.tariff === "free_7days" || sub.tariff === "free_3days" || sub.tariff === "free")) {
         const newKey = lines[0];
         await updateSubscriptionKeyOnly(sub.telegramId, newKey);
         updated++;
@@ -59430,7 +59446,7 @@ ${escapeHtml(text2)}`,
     const premTariffs = ["30days", "60days", "90days", "180days", "365days", "1day"];
     for (const sub of subs) {
       const newKey = lines[0];
-      if (sub.tariff === "free_3days" || sub.tariff === "free_7days") {
+      if ((sub.tariff === "free_3days" || sub.tariff === "free_7days" || sub.tariff === "free")) {
         await updateSubscriptionKeyOnly(sub.telegramId, newKey);
         updatedFree++;
       } else if (premTariffs.includes(sub.tariff)) {
@@ -59869,7 +59885,7 @@ adminBot.on("message:document", async (ctx) => {
       const subs = await getAllSubscriptions();
       let updated = 0;
       for (const sub of subs) {
-        if (sub.tariff === "free_7days" || sub.tariff === "free_3days") {
+        if ((sub.tariff === "free_7days" || sub.tariff === "free_3days" || sub.tariff === "free")) {
           await updateSubscriptionKeyOnly(sub.telegramId, lines[0]);
           updated++;
         }
@@ -59894,7 +59910,7 @@ adminBot.on("message:document", async (ctx) => {
       let uf = 0, up = 0;
       const pt2 = ["30days","60days","90days","180days","365days","1day"];
       for (const sub of subs) {
-        if (sub.tariff === "free_3days" || sub.tariff === "free_7days") { await updateSubscriptionKeyOnly(sub.telegramId, lines[0]); uf++; }
+        if ((sub.tariff === "free_3days" || sub.tariff === "free_7days" || sub.tariff === "free")) { await updateSubscriptionKeyOnly(sub.telegramId, lines[0]); uf++; }
         else if (pt2.includes(sub.tariff)) { await updateSubscriptionKeyOnly(sub.telegramId, lines[0]); up++; }
       }
       await ctx.reply(`\u2705 \u0412\u0441\u0435 \u043A\u043B\u044E\u0447\u0438 \u0437\u0430\u043C\u0435\u043D\u0435\u043D\u044B!\n\u041A\u043B\u044E\u0447\u0435\u0439: ${lines.length}\n\u0411\u0435\u0441\u043F\u043B: ${uf}\nPremium: ${up}`, { reply_markup: adminKeysMainKb() });
@@ -59951,8 +59967,7 @@ userBot.on("message:text", async (ctx, next) => {
       await ctx.reply("\u274C \u041D\u0435\u0442 \u043A\u043B\u044E\u0447\u0435\u0439 \u0432 \u0431\u0430\u0437\u0435. \u041E\u0431\u0440\u0430\u0442\u0438\u0442\u0435 \u043A \u043F\u043E\u0434\u0434\u0435\u0440\u0436\u043A\u0435.", { reply_markup: backToMainKb() });
       return;
     }
-    await db.update(usersTable).set({ balance: 0 }).where(eq(usersTable.telegramId, String(uid)));
-    await setSubscription(String(uid), promo.tariff, promo.days, key);
+    await addDaysToSubscription(String(uid), promo.tariff, promo.days, key);
     const domain = getSubDomain();
     const subLink = domain ? `${domain}/sub/${uid}` : `https://laenfaer.onrender.com/sub/${uid}`;
     const tariffName = promo.tariff.includes("free") ? "\u0411\u0435\u0441\u043F\u043B\u0430\u0442\u043D\u0430\u044F" : "Premium";
