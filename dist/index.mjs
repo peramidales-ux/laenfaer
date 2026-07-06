@@ -37731,47 +37731,46 @@ h3{font-size:1.25rem;margin-bottom:10px}
 p{color:var(--dim)}
 .eyebrow{font-family:var(--mono);font-size:.78rem;letter-spacing:.14em;text-transform:uppercase;color:var(--signal);display:inline-block;margin-bottom:14px}
 /* nav */
-.topnav{position:sticky;top:0;z-index:100;background:rgba(10,21,18,.85);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-bottom:1px solid var(--border);width:100%}
-.topnav .wrap{display:flex;align-items:center;justify-content:space-between;padding:16px 0;max-width:1120px;margin:0 auto;padding-left:24px;padding-right:24px}
-.logo{font-family:var(--serif);font-weight:700;font-size:1.15rem;display:flex;align-items:center;gap:8px;flex-shrink:0}
+.topnav{position:sticky;top:0;z-index:100;background:rgba(10,21,18,.95);border-bottom:1px solid var(--border);width:100%}
+.topnav .wrap{display:flex;align-items:center;justify-content:space-between;padding:14px 24px;max-width:1120px;margin:0 auto}
+.logo{font-family:var(--serif);font-weight:700;font-size:1.1rem;display:flex;align-items:center;gap:8px;flex-shrink:0}
 .logo .mk{width:9px;height:9px;border-radius:50%;background:var(--accent);box-shadow:0 0 12px var(--accent)}
-nav.nk{display:flex;gap:28px;font-size:.92rem;color:var(--dim);align-items:center}
+nav.nk{display:flex;gap:20px;font-size:.88rem;color:var(--dim);align-items:center}
 nav.nk a:hover{color:var(--text)}
-.nav-cta{background:var(--accent);color:#161006!important;padding:10px 20px;border-radius:999px;font-weight:600;font-size:.9rem;white-space:nowrap}
+.nav-cta{background:var(--accent);color:#161006!important;padding:9px 18px;border-radius:999px;font-weight:600;font-size:.85rem;white-space:nowrap}
 .mtoggle{display:none;background:none;border:none;color:var(--text);font-size:1.4rem;cursor:pointer;padding:8px;flex-shrink:0}
-@media(max-width:820px){nav.nk{position:fixed;top:56px;left:0;right:0;background:var(--bg-el);flex-direction:column;padding:20px 24px;gap:16px;border-bottom:1px solid var(--border);display:none;z-index:99;max-height:calc(100vh - 56px);overflow-y:auto}nav.nk.open{display:flex}.mtoggle{display:block}}
+@media(max-width:820px){nav.nk{position:fixed;top:52px;left:0;right:0;background:var(--bg-el);flex-direction:column;padding:16px 20px;gap:14px;border-bottom:1px solid var(--border);display:none;z-index:99;max-height:calc(100vh - 52px);overflow-y:auto}nav.nk.open{display:flex}.mtoggle{display:block}}
 /* glass cards */
-.glass{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:28px;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);position:relative;overflow:hidden;transition:border-color .2s,box-shadow .2s}
-.glass::before{content:"";position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(232,179,76,.15),transparent)}
-.glass:hover{border-color:rgba(232,179,76,.18);box-shadow:0 8px 32px rgba(232,179,76,.05)}
-.glass-glow{box-shadow:0 0 60px rgba(45,212,191,.04),inset 0 0 60px rgba(45,212,191,.02)}
+.glass{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:24px;position:relative;overflow:hidden}
+.glass::before{content:"";position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(232,179,76,.12),transparent)}
+.glass:hover{border-color:rgba(232,179,76,.15)}
+.glass-glow{border-color:rgba(232,179,76,.12)}
 /* buttons */
-.btn{display:inline-flex;align-items:center;gap:8px;padding:14px 26px;border-radius:999px;font-weight:600;font-size:.95rem;transition:transform .15s ease;border:none;cursor:pointer}
-.btn:hover{transform:translateY(-1px)}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:12px 24px;border-radius:999px;font-weight:600;font-size:.9rem;border:none;cursor:pointer}
 .btn-p{background:var(--accent);color:#161006}
 .btn-g{border:1px solid var(--border);color:var(--text);background:transparent}
 /* grids */
-.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:22px}
-.g2{display:grid;grid-template-columns:1fr 1fr;gap:22px}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:18px}
 @media(max-width:820px){.g3,.g2{grid-template-columns:1fr}}
 /* hero */
-.hero{padding:64px 0 40px}
-.hero-g{display:grid;grid-template-columns:1.1fr .9fr;gap:48px;align-items:center}
+.hero{padding:48px 0 32px}
+.hero-g{display:grid;grid-template-columns:1.1fr .9fr;gap:36px;align-items:center}
 @media(max-width:900px){.hero-g{grid-template-columns:1fr}}
-.hero .lead{font-size:1.12rem;max-width:52ch;margin:20px 0 28px}
-.cta-row{display:flex;gap:14px;flex-wrap:wrap}
-.badge{display:inline-block;font-family:var(--mono);font-size:.72rem;padding:4px 10px;border-radius:999px;border:1px solid var(--border);color:var(--dim);margin-right:8px;margin-bottom:8px}
+.hero .lead{font-size:1rem;max-width:52ch;margin:16px 0 24px}
+.cta-row{display:flex;gap:12px;flex-wrap:wrap}
+.badge{display:inline-block;font-family:var(--mono);font-size:.7rem;padding:3px 8px;border-radius:999px;border:1px solid var(--border);color:var(--dim);margin-right:6px;margin-bottom:6px}
 /* path diagram */
-.pdiag{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:28px;overflow:hidden}
+.pdiag{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:20px;overflow:hidden}
 .pdiag svg{width:100%;height:auto;max-width:100%;display:block}
-.p-line{stroke:var(--signal);stroke-width:2;fill:none;stroke-dasharray:6 8;animation:dash 3.2s linear infinite}
+.p-line{stroke:var(--signal);stroke-width:2;fill:none;stroke-dasharray:6 8;animation:dash 4s linear infinite}
 @keyframes dash{to{stroke-dashoffset:-140}}
 .p-label{font-family:var(--mono);font-size:11px;fill:var(--dim)}
 .p-node{fill:var(--bg);stroke:var(--accent);stroke-width:1.6}
 /* sections */
-section{padding:56px 0}
-.card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:26px;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
-.card .num{font-family:var(--mono);color:var(--signal);font-size:.8rem;margin-bottom:10px;display:block}
+section{padding:40px 0}
+.card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:22px}
+.card .num{font-family:var(--mono);color:var(--signal);font-size:.8rem;margin-bottom:8px;display:block}
 /* tables */
 table{width:100%;border-collapse:collapse;margin:20px 0}
 th,td{text-align:left;padding:12px 14px;border-bottom:1px solid var(--border);font-size:.88rem}
@@ -37784,12 +37783,12 @@ th{font-family:var(--mono);font-size:.75rem;text-transform:uppercase;letter-spac
 .faq[open] summary::after{content:"\u2013"}
 .faq p{margin-top:12px}
 /* footer */
-footer{border-top:1px solid var(--border);margin-top:100px;padding:56px 0 32px}
-.fg{display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr;gap:32px;margin-bottom:40px}
-.fg h4{font-size:.85rem;color:var(--text);margin-bottom:14px}
+footer{border-top:1px solid var(--border);margin-top:60px;padding:40px 0 24px}
+.fg{display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr;gap:24px;margin-bottom:32px}
+.fg h4{font-size:.82rem;color:var(--text);margin-bottom:12px}
 .fg ul{list-style:none}
-.fg li{margin-bottom:9px}
-.fg a{color:var(--dim);font-size:.92rem}
+.fg li{margin-bottom:8px}
+.fg a{color:var(--dim);font-size:.88rem}
 .fg a:hover{color:var(--accent)}
 .fb{display:flex;justify-content:space-between;color:var(--dim);font-size:.82rem;flex-wrap:wrap;gap:10px;border-top:1px solid var(--border);padding-top:24px}
 @media(max-width:820px){.fg{grid-template-columns:1fr 1fr}}
@@ -37800,12 +37799,15 @@ ${extra||''}
 </head>
 <body>
 <div class="topnav"><div class="wrap">
-<a href="/" class="logo"><img src="/logo.jpg" alt="LAENFAER" style="width:32px;height:32px;border-radius:8px;object-fit:cover">LAENFAER</a>
+<a href="/" class="logo"><span class="mk"></span>LAENFAER</a>
 <nav class="nk">
 <a href="/pricing">Тарифы</a>
 <a href="/servers">Серверы</a>
+<a href="/setup">Настройка</a>
 <a href="/faq">FAQ</a>
-<a href="/support">Поддержка</a>
+<a href="/blog">Блог</a>
+<a href="/referral">Рефералы</a>
+<a href="/cabinet" style="color:var(--accent)">Кабинет</a>
 <a href="https://t.me/laenfaer_vpn_bot" class="nav-cta">Подключиться</a>
 </nav>
 <button class="mtoggle" aria-label="Меню" onclick="document.querySelector('.nk').classList.toggle('open')">&#9776;</button>
@@ -37818,8 +37820,8 @@ ${body}
 <div class="logo" style="margin-bottom:12px"><img src="/logo.jpg" alt="LAENFAER" style="width:28px;height:28px;border-radius:6px;object-fit:cover">LAENFAER</div>
 <p style="font-size:.92rem">VPN на протоколе VLESS Reality. Трафик, который выглядит как обычный HTTPS &mdash; без блокировок и ограничений.</p>
 </div>
-<div><h4>Сервис</h4><ul><li><a href="/about">О сервисе</a></li><li><a href="/pricing">Тарифы</a></li><li><a href="/servers">Серверы</a></li><li><a href="/referral">Рефералы</a></li></ul></div>
-<div><h4>Помощь</h4><ul><li><a href="/setup">Настройка</a></li><li><a href="/faq">FAQ</a></li><li><a href="/support">Поддержка</a></li><li><a href="/blog">Блог</a></li></ul></div>
+<div><h4>Сервис</h4><ul><li><a href="/about">О сервисе</a></li><li><a href="/pricing">Тарифы</a></li><li><a href="/servers">Серверы</a></li><li><a href="/referral">Рефералы</a></li><li><a href="/cabinet">Личный кабинет</a></li></ul></div>
+<div><h4>Помощь</h4><ul><li><a href="/setup">Настройка</a></li><li><a href="/faq">FAQ</a></li><li><a href="/support">Поддержка</a></li><li><a href="/blog">Блог</a></li><li><a href="/vs">Преимущества</a></li></ul></div>
 <div><h4>Документы</h4><ul><li><a href="/privacy">Конфиденциальность</a></li><li><a href="/terms">Условия</a></li></ul></div>
 </div>
 <div class="fb">
@@ -38243,6 +38245,163 @@ app.get("/privacy", async (req, res) => {
 <h2 style="font-size:20px;color:#8BC53F;margin:20px 0 10px">6. Контакты</h2><p><a href="https://t.me/laenfaer_vpn_bot" style="color:#8BC53F">@laenfaer_vpn_bot</a></p>
 </div></div>
 `));
+});
+
+// ===== CABINET =====
+app.get("/cabinet", async (req, res) => {
+  res.setHeader("Content-Type","text/html; charset=utf-8").send(pageShell("Личный кабинет | LAENFAER VPN","Управление подпиской, ключами и аккаунтом LAENFAER VPN.",`
+<div style="max-width:500px;margin:0 auto;padding:40px 20px">
+<h1 style="font-size:28px;font-weight:800;margin-bottom:24px;text-align:center">Личный кабинет</h1>
+
+<div id="auth-form">
+<div style="background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:24px;margin-bottom:16px">
+<h3 style="font-size:16px;margin-bottom:16px">Вход / Регистрация</h3>
+<div style="margin-bottom:12px">
+<label style="display:block;font-size:12px;color:var(--dim);margin-bottom:6px">Email</label>
+<input type="email" id="reg-email" placeholder="your@email.com" style="width:100%;padding:12px;border-radius:10px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:14px;outline:none">
+</div>
+<div style="margin-bottom:16px">
+<label style="display:block;font-size:12px;color:var(--dim);margin-bottom:6px">Пароль</label>
+<input type="password" id="reg-pass" placeholder="Минимум 6 символов" style="width:100%;padding:12px;border-radius:10px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:14px;outline:none">
+</div>
+<button onclick="doAuth()" style="width:100%;padding:12px;border-radius:10px;background:var(--accent);color:#161006;font-weight:700;font-size:14px;border:none;cursor:pointer;margin-bottom:12px">Войти / Зарегистрироваться</button>
+<div style="text-align:center;font-size:12px;color:var(--dim)">или</div>
+<a href="https://t.me/laenfaer_vpn_bot?start=cabinet" style="display:block;text-align:center;padding:12px;border-radius:10px;border:1px solid var(--border);color:var(--text);font-size:13px;margin-top:12px;text-decoration:none">Войти через Telegram</a>
+</div>
+<div id="auth-msg" style="display:none;text-align:center;padding:12px;border-radius:10px;font-size:13px;margin-bottom:12px"></div>
+</div>
+
+<div id="cabinet-panel" style="display:none">
+<div style="background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:20px;margin-bottom:12px">
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+<h3 style="font-size:16px;margin:0">Профиль</h3>
+<button onclick="doLogout()" style="background:none;border:1px solid var(--border);color:var(--dim);padding:6px 12px;border-radius:8px;font-size:11px;cursor:pointer">Выйти</button>
+</div>
+<div id="cab-info" style="font-size:13px;color:var(--dim)">Загрузка...</div>
+</div>
+
+<div style="background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:20px;margin-bottom:12px">
+<h3 style="font-size:16px;margin-bottom:12px">Подписка</h3>
+<div id="cab-sub" style="font-size:13px;color:var(--dim)">Загрузка...</div>
+</div>
+
+<div style="background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:20px;margin-bottom:12px">
+<h3 style="font-size:16px;margin-bottom:12px">VPN-ключ</h3>
+<div id="cab-key" style="font-size:13px;color:var(--dim)">Загрузка...</div>
+</div>
+
+<div style="background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:20px">
+<h3 style="font-size:16px;margin-bottom:12px">Устройства</h3>
+<div id="cab-devices" style="font-size:13px;color:var(--dim)">Загрузка...</div>
+</div>
+</div>
+</div>
+
+<script>
+var sess=localStorage.getItem('lvpn_sess');
+var uid=localStorage.getItem('lvpn_uid');
+if(sess&&uid){loadCabinet();}
+
+function doAuth(){
+  var email=document.getElementById('reg-email').value.trim();
+  var pass=document.getElementById('reg-pass').value;
+  if(!email||!pass){showMsg('Введите email и пароль','red');return;}
+  if(pass.length<6){showMsg('Пароль минимум 6 символов','red');return;}
+  var fp=getFingerprint();
+  fetch('/api/cabinet/auth',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:email,pass:pass,fingerprint:fp})})
+  .then(function(r){return r.json()}).then(function(d){
+    if(d.ok){localStorage.setItem('lvpn_sess',d.session);localStorage.setItem('lvpn_uid',d.userId);sess=d.session;uid=d.userId;loadCabinet();}
+    else{showMsg(d.message||'Ошибка','red');}
+  }).catch(function(){showMsg('Ошибка сети','red');});
+}
+
+function doLogout(){localStorage.removeItem('lvpn_sess');localStorage.removeItem('lvpn_uid');document.getElementById('auth-form').style.display='';document.getElementById('cabinet-panel').style.display='none';}
+
+function loadCabinet(){
+  if(!sess||!uid)return;
+  document.getElementById('auth-form').style.display='none';
+  document.getElementById('cabinet-panel').style.display='';
+  fetch('/api/cabinet/profile?session='+sess+'&uid='+uid).then(function(r){return r.json()}).then(function(d){
+    if(!d.ok){doLogout();return;}
+    document.getElementById('cab-info').innerHTML='<b>'+esc(d.name)+'</b><br>ID: '+d.userId+'<br>Email: '+(d.email||'нет');
+    var sub=d.hasActiveSub?'<span style="color:var(--signal)">'+esc(d.tariffLabel)+'</span><br>Дней: '+d.daysLeft+'<br>До: '+d.expireDate:'<span style="color:#f87171">Нет активной подписки</span>';
+    document.getElementById('cab-sub').innerHTML=sub;
+    var key=d.key?'<code style="font-size:11px;word-break:break-all">'+esc(d.key)+'</code><br><button onclick="cpyKey()" style="margin-top:8px;background:var(--accent);color:#161006;padding:8px 16px;border-radius:8px;border:none;font-size:12px;font-weight:600;cursor:pointer">Скопировать</button>':'Нет ключа';
+    document.getElementById('cab-key').innerHTML=key;
+    document.getElementById('cab-devices').innerHTML='Устройств: '+d.deviceCount+'/1<br><span style="font-size:11px;color:var(--dim)">Fingerprint: '+d.fingerprint+'</span>';
+  }).catch(function(){});
+}
+
+function cpyKey(){var el=document.querySelector('#cab-key code');if(el)navigator.clipboard.writeText(el.textContent).then(function(){alert('Скопировано!')});}
+function esc(s){var d=document.createElement('div');d.textContent=s;return d.innerHTML;}
+function showMsg(t,c){var el=document.getElementById('auth-msg');el.style.display='';el.style.background=c==='red'?'rgba(248,113,113,.1)':'rgba(45,212,191,.1)';el.style.color=c==='red'?'#f87171':'var(--signal)';el.textContent=t;}
+function getFingerprint(){var c=canvasFinger();return(c+'|'+navigator.userAgent.slice(0,50)).replace(/[^a-zA-Z0-9|]/g,'').slice(0,64);}
+function canvasFinger(){try{var c=document.createElement('canvas');var x=c.getContext('2d');x.textBaseline='top';x.font='14px Arial';x.fillText('fingerprint',2,2);return c.toDataURL().slice(-32);}catch(e){return 'fp';}}
+</script>
+`));
+});
+
+// Cabinet API
+app.post("/api/cabinet/auth", async (req, res) => {
+  try {
+    const { email, pass, fingerprint } = req.body;
+    if (!email || !pass) return res.json({ ok: false, message: "Email и пароль обязательны" });
+    if (pass.length < 6) return res.json({ ok: false, message: "Пароль минимум 6 символов" });
+    const fp = (fingerprint || "").slice(0, 64);
+    const { createHash } = await import("crypto");
+    const hash = createHash("sha256").update(pass).digest("hex").slice(0, 32);
+    const allUsers = await db.select().from(usersTable);
+    let user = allUsers.find(u => u.email === email);
+    if (user) {
+      if (user.emailPass !== hash) return res.json({ ok: false, message: "Неверный пароль" });
+      if (user.banned) return res.json({ ok: false, message: "Аккаунт заблокирован" });
+    } else {
+      if (fp) {
+        const dupFp = allUsers.find(u => u.deviceFingerprint === fp);
+        if (dupFp) return res.json({ ok: false, message: "На этом устройстве уже есть аккаунт. Войдите через Telegram." });
+      }
+      await db.update(usersTable).set({ email, emailPass: hash, deviceFingerprint: fp }).where(eq(usersTable.telegramId, "0"));
+      user = allUsers.find(u => u.email === email);
+      if (!user) {
+        await db.insert(usersTable).values({ telegramId: "email_" + Date.now(), name: email.split("@")[0], email, emailPass: hash, deviceFingerprint: fp });
+        const allUsers2 = await db.select().from(usersTable);
+        user = allUsers2.find(u => u.email === email);
+      }
+    }
+    const session = createHash("sha256").update(email + Date.now() + Math.random()).digest("hex").slice(0, 32);
+    res.json({ ok: true, session, userId: user.telegramId });
+  } catch (err) {
+    console.error("[CABINET_AUTH]", err);
+    res.status(500).json({ ok: false, message: "Ошибка сервера" });
+  }
+});
+
+app.get("/api/cabinet/profile", async (req, res) => {
+  try {
+    const { session, uid } = req.query;
+    if (!session || !uid) return res.json({ ok: false });
+    const user = await getUser(uid);
+    if (!user) return res.json({ ok: false });
+    const sub = await getSubscription(uid);
+    const hasActiveSub = sub && new Date(sub.expiresAt) > new Date();
+    const daysLeft = hasActiveSub ? Math.ceil((new Date(sub.expiresAt) - Date.now()) / 86400000) : 0;
+    const tariffLabel = hasActiveSub ? (sub.tariff && sub.tariff.includes("free") ? "Бесплатный (" + daysLeft + " дн.)" : "Premium (" + daysLeft + " дн.)") : "";
+    res.json({
+      ok: true,
+      userId: uid,
+      name: user.name,
+      email: user.email || "",
+      hasActiveSub,
+      daysLeft,
+      tariffLabel,
+      expireDate: hasActiveSub ? new Date(sub.expiresAt).toLocaleDateString("ru-RU") : "",
+      key: sub?.key || "",
+      deviceCount: user.deviceFingerprint ? 1 : 0,
+      fingerprint: user.deviceFingerprint ? user.deviceFingerprint.slice(0, 8) + "..." : "нет",
+    });
+  } catch (err) {
+    res.status(500).json({ ok: false });
+  }
 });
 
 // ===== TERMS =====
@@ -57240,6 +57399,9 @@ var usersTable = pgTable("users", {
   telegramId: text("telegram_id").primaryKey(),
   name: text("name").notNull().default("\u041F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u0435\u043B\u044C"),
   username: text("username").notNull().default(""),
+  email: text("email").default(""),
+  emailPass: text("email_pass").default(""),
+  deviceFingerprint: text("device_fingerprint").default(""),
   banned: boolean("banned").notNull().default(false),
   balance: integer("balance").notNull().default(0),
   refBalance: integer("ref_balance").notNull().default(0),
@@ -60389,6 +60551,17 @@ var port = Number(rawPort);
 if (Number.isNaN(port) || port <= 0) {
   throw new Error(`Invalid PORT value: "${rawPort}"`);
 }
+
+// Migration: add cabinet columns if missing
+(async () => {
+  try {
+    await db.execute(import("drizzle-orm").raw(`ALTER TABLE users ADD COLUMN IF NOT EXISTS email text DEFAULT ''`));
+    await db.execute(import("drizzle-orm").raw(`ALTER TABLE users ADD COLUMN IF NOT EXISTS email_pass text DEFAULT ''`));
+    await db.execute(import("drizzle-orm").raw(`ALTER TABLE users ADD COLUMN IF NOT EXISTS device_fingerprint text DEFAULT ''`));
+    logger.info("Cabinet columns migration done");
+  } catch (e) { logger.warn({ e }, "Migration skip"); }
+})();
+
 app_default.listen(port, (err) => {
   if (err) {
     logger.error({ err }, "Error listening on port");
