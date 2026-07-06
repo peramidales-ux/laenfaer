@@ -37711,86 +37711,120 @@ function pageShell(title, desc, body, extra) {
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="${title}">
 <meta name="twitter:description" content="${desc}">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script type="application/ld+json">${svcLD}</script>
 <style>
-*{margin:0;padding:0;box-sizing:border-box}
-body{font-family:'Inter',-apple-system,sans-serif;background:#07090D;color:#fff;min-height:100vh;overflow-x:hidden}
-body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse at 50% 0%,rgba(139,197,63,.06) 0%,transparent 50%),radial-gradient(ellipse at 80% 100%,rgba(99,102,241,.05) 0%,transparent 50%);pointer-events:none;z-index:0}
-#particles{position:fixed;inset:0;z-index:0;pointer-events:none}
-.wrap{max-width:900px;margin:0 auto;padding:0 20px;position:relative;z-index:1}
-.glass{background:rgba(17,28,45,.5);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:1px solid rgba(139,197,63,.1);border-radius:24px;padding:32px;margin-bottom:24px;position:relative;overflow:hidden}
-.glass::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(139,197,63,.2),transparent)}
-.glass-sm{padding:24px;border-radius:20px}
-.glass:hover{border-color:rgba(139,197,63,.18);box-shadow:0 8px 32px rgba(139,197,63,.05)}
-.glow{box-shadow:0 0 60px rgba(139,197,63,.06),inset 0 0 60px rgba(139,197,63,.02)}
-h1{font-size:42px;font-weight:900;line-height:1.1;margin-bottom:12px}
-h2{font-size:28px;font-weight:800;margin-bottom:20px}
-h3{font-size:18px;font-weight:700;margin-bottom:8px}
-.accent{color:#8BC53F}
-.btn{display:inline-block;background:#8BC53F;color:#07090D;font-size:16px;font-weight:700;padding:14px 32px;border-radius:16px;text-decoration:none;transition:all .2s;border:none;cursor:pointer}
-.btn:hover{box-shadow:0 8px 32px rgba(139,197,63,.3);transform:translateY(-2px)}
-.btn:active{transform:scale(.97)}
-.btn-outline{background:rgba(139,197,63,.08);color:#8BC53F;border:1px solid rgba(139,197,63,.15)}
-.btn-outline:hover{background:rgba(139,197,63,.15)}
-.card-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px}
-.detail-box{background:rgba(7,9,13,.4);border:1px solid rgba(139,197,63,.06);border-radius:14px;padding:16px}
-.tag{display:inline-block;padding:4px 12px;border-radius:8px;font-size:11px;font-weight:700;background:rgba(139,197,63,.1);color:#8BC53F;border:1px solid rgba(139,197,63,.12)}
-.info-label{font-size:11px;font-weight:700;color:rgba(255,255,255,.25);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px}
-.info-value{font-size:14px;font-weight:600}
-.info-sub{font-size:12px;color:rgba(255,255,255,.3);margin-top:4px}
-.step{display:flex;gap:16px;align-items:start;padding:16px;background:rgba(17,28,45,.3);border:1px solid rgba(139,197,63,.05);border-radius:16px;margin-bottom:12px}
-.step-num{width:40px;height:40px;border-radius:12px;background:rgba(139,197,63,.1);color:#8BC53F;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:18px;flex-shrink:0}
-.step-text{flex:1}
-.step-title{font-size:15px;font-weight:700;margin-bottom:4px}
-.step-desc{font-size:13px;color:rgba(255,255,255,.35);line-height:1.5}
-.faq{margin-bottom:8px}
-.faq summary{font-weight:700;cursor:pointer;font-size:15px;padding:14px;background:rgba(17,28,45,.3);border:1px solid rgba(139,197,63,.06);border-radius:14px;transition:all .2s}
-.faq summary:hover{border-color:rgba(139,197,63,.15)}
-.faq[open] summary{border-radius:14px 14px 0 0;border-bottom-color:transparent}
-.faq-content{padding:14px;background:rgba(17,28,45,.2);border:1px solid rgba(139,197,63,.06);border-top:none;border-radius:0 0 14px 14px}
-.faq-content p{font-size:13px;color:rgba(255,255,255,.4);line-height:1.6}
-.app-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
-.app-card{background:rgba(17,28,45,.4);border:1px solid rgba(139,197,63,.06);border-radius:16px;padding:20px;text-align:center;text-decoration:none;color:#fff;transition:all .2s}
-.app-card:hover{border-color:rgba(139,197,63,.15);transform:translateY(-2px)}
-.app-icon{font-size:32px;margin-bottom:8px}
-.app-name{font-size:14px;font-weight:700;color:#8BC53F}
-.app-desc{font-size:11px;color:rgba(255,255,255,.3);margin-top:4px}
-@media(max-width:600px){
-  h1{font-size:28px}h2{font-size:22px}
-  .glass{padding:20px;border-radius:20px}
-  .card-grid{grid-template-columns:1fr}
-}
+:root{--bg:#0A1512;--bg-el:#10241D;--bg-card:#0E1F19;--text:#EAF2ED;--dim:#9FB8AC;--accent:#E8B34C;--accent-s:#F2CE85;--signal:#2DD4BF;--border:rgba(234,242,237,.09);--radius:14px;--serif:"Space Grotesk","Inter",sans-serif;--body:"Inter",-apple-system,sans-serif;--mono:"JetBrains Mono",monospace}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:var(--body);line-height:1.6;font-size:16px;-webkit-font-smoothing:antialiased;min-height:100vh;overflow-x:hidden}
+body::before{content:"";position:fixed;inset:0;background-image:radial-gradient(ellipse at 20% 0%,rgba(232,179,76,.06),transparent 55%),radial-gradient(ellipse at 90% 30%,rgba(45,212,191,.05),transparent 50%);pointer-events:none;z-index:0}
+a{color:inherit;text-decoration:none}
+img{max-width:100%;display:block}
+.wrap{max-width:1120px;margin:0 auto;padding:0 24px;position:relative;z-index:1}
+h1,h2,h3{font-family:var(--serif);font-weight:600;letter-spacing:-.01em}
+h1{font-size:clamp(2.2rem,5vw,3.6rem);line-height:1.08}
+h2{font-size:clamp(1.6rem,3vw,2.3rem);margin-bottom:16px}
+h3{font-size:1.25rem;margin-bottom:10px}
+p{color:var(--dim)}
+.eyebrow{font-family:var(--mono);font-size:.78rem;letter-spacing:.14em;text-transform:uppercase;color:var(--signal);display:inline-block;margin-bottom:14px}
+/* nav */
+.topnav{position:sticky;top:0;z-index:100;background:rgba(10,21,18,.85);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-bottom:1px solid var(--border)}
+.topnav .wrap{display:flex;align-items:center;justify-content:space-between;padding:16px 0}
+.logo{font-family:var(--serif);font-weight:700;font-size:1.15rem;display:flex;align-items:center;gap:8px}
+.logo .mk{width:9px;height:9px;border-radius:50%;background:var(--accent);box-shadow:0 0 12px var(--accent)}
+nav.nk{display:flex;gap:28px;font-size:.92rem;color:var(--dim)}
+nav.nk a:hover{color:var(--text)}
+.nav-cta{background:var(--accent);color:#161006!important;padding:10px 20px;border-radius:999px;font-weight:600;font-size:.9rem}
+.mtoggle{display:none;background:none;border:none;color:var(--text);font-size:1.4rem;cursor:pointer}
+@media(max-width:820px){nav.nk{position:fixed;top:60px;left:0;right:0;background:var(--bg-el);flex-direction:column;padding:20px 24px;gap:16px;border-bottom:1px solid var(--border);display:none;z-index:99}nav.nk.open{display:flex}.mtoggle{display:block}}
+/* glass cards */
+.glass{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:28px;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);position:relative;overflow:hidden;transition:border-color .2s,box-shadow .2s}
+.glass::before{content:"";position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(232,179,76,.15),transparent)}
+.glass:hover{border-color:rgba(232,179,76,.18);box-shadow:0 8px 32px rgba(232,179,76,.05)}
+.glass-glow{box-shadow:0 0 60px rgba(45,212,191,.04),inset 0 0 60px rgba(45,212,191,.02)}
+/* buttons */
+.btn{display:inline-flex;align-items:center;gap:8px;padding:14px 26px;border-radius:999px;font-weight:600;font-size:.95rem;transition:transform .15s ease;border:none;cursor:pointer}
+.btn:hover{transform:translateY(-1px)}
+.btn-p{background:var(--accent);color:#161006}
+.btn-g{border:1px solid var(--border);color:var(--text);background:transparent}
+/* grids */
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:22px}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:22px}
+@media(max-width:820px){.g3,.g2{grid-template-columns:1fr}}
+/* hero */
+.hero{padding:64px 0 40px}
+.hero-g{display:grid;grid-template-columns:1.1fr .9fr;gap:48px;align-items:center}
+@media(max-width:900px){.hero-g{grid-template-columns:1fr}}
+.hero .lead{font-size:1.12rem;max-width:52ch;margin:20px 0 28px}
+.cta-row{display:flex;gap:14px;flex-wrap:wrap}
+.badge{display:inline-block;font-family:var(--mono);font-size:.72rem;padding:4px 10px;border-radius:999px;border:1px solid var(--border);color:var(--dim);margin-right:8px;margin-bottom:8px}
+/* path diagram */
+.pdiag{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:28px}
+.pdiag svg{width:100%;height:auto}
+.p-line{stroke:var(--signal);stroke-width:2;fill:none;stroke-dasharray:6 8;animation:dash 3.2s linear infinite}
+@keyframes dash{to{stroke-dashoffset:-140}}
+.p-label{font-family:var(--mono);font-size:11px;fill:var(--dim)}
+.p-node{fill:var(--bg);stroke:var(--accent);stroke-width:1.6}
+/* sections */
+section{padding:56px 0}
+.card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:26px;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+.card .num{font-family:var(--mono);color:var(--signal);font-size:.8rem;margin-bottom:10px;display:block}
+/* tables */
+table{width:100%;border-collapse:collapse;margin:20px 0}
+th,td{text-align:left;padding:14px 16px;border-bottom:1px solid var(--border);font-size:.94rem}
+th{font-family:var(--mono);font-size:.78rem;text-transform:uppercase;letter-spacing:.06em;color:var(--dim)}
+/* FAQ */
+.faq{border-bottom:1px solid var(--border);padding:18px 0}
+.faq summary{cursor:pointer;font-weight:600;list-style:none;display:flex;justify-content:space-between}
+.faq summary::-webkit-details-marker{display:none}
+.faq summary::after{content:"+";color:var(--accent);font-size:1.2rem}
+.faq[open] summary::after{content:"\u2013"}
+.faq p{margin-top:12px}
+/* footer */
+footer{border-top:1px solid var(--border);margin-top:100px;padding:56px 0 32px}
+.fg{display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr;gap:32px;margin-bottom:40px}
+.fg h4{font-size:.85rem;color:var(--text);margin-bottom:14px}
+.fg ul{list-style:none}
+.fg li{margin-bottom:9px}
+.fg a{color:var(--dim);font-size:.92rem}
+.fg a:hover{color:var(--accent)}
+.fb{display:flex;justify-content:space-between;color:var(--dim);font-size:.82rem;flex-wrap:wrap;gap:10px;border-top:1px solid var(--border);padding-top:24px}
+@media(max-width:820px){.fg{grid-template-columns:1fr 1fr}}
+/* responsive tweaks */
+@media(max-width:600px){.hero{padding:40px 0 24px}section{padding:40px 0}.glass{padding:20px;border-radius:20px}footer{margin-top:40px;padding:32px 0 20px}}
 ${extra||''}
 </style>
 </head>
 <body>
-<canvas id="particles" style="position:fixed;inset:0;z-index:0;pointer-events:none"></canvas>
-<nav style="position:sticky;top:0;z-index:100;background:rgba(7,9,13,.9);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-bottom:1px solid rgba(139,197,63,.08);padding:14px 0">
-<div class="wrap" style="display:flex;align-items:center;justify-content:space-between">
-<a href="/" style="color:#8BC53F;font-weight:900;font-size:16px;text-decoration:none;letter-spacing:1px">&#9889; LAENFAER</a>
-<div style="display:flex;gap:24px;align-items:center">
-<a href="/tariffs" style="color:rgba(255,255,255,.5);text-decoration:none;font-size:13px;font-weight:500;transition:color .2s" onmouseover="this.style.color='#8BC53F'" onmouseout="this.style.color='rgba(255,255,255,.5)'">Тарифы</a>
-<a href="/support" style="color:rgba(255,255,255,.5);text-decoration:none;font-size:13px;font-weight:500;transition:color .2s" onmouseover="this.style.color='#8BC53F'" onmouseout="this.style.color='rgba(255,255,255,.5)'">Поддержка</a>
-<a href="https://t.me/laenfaer_vpn_bot" class="btn" style="padding:10px 20px;font-size:13px">Подключиться</a>
-</div>
-</div>
+<div class="topnav"><div class="wrap">
+<a href="/" class="logo"><span class="mk"></span>LAENFAER</a>
+<nav class="nk">
+<a href="/pricing">Тарифы</a>
+<a href="/servers">Серверы</a>
+<a href="/faq">FAQ</a>
+<a href="/support">Поддержка</a>
+<a href="https://t.me/laenfaer_vpn_bot" class="nav-cta">Подключиться</a>
 </nav>
+<button class="mtoggle" aria-label="Меню" onclick="document.querySelector('.nk').classList.toggle('open')">&#9776;</button>
+</div></div>
 ${body}
-<footer style="background:rgba(10,12,18,.8);border-top:1px solid rgba(139,197,63,.06);padding:40px 20px;text-align:center;margin-top:80px;position:relative;z-index:1">
+<footer>
 <div class="wrap">
-<p style="font-size:12px;color:rgba(255,255,255,.2);margin-bottom:16px">&copy; 2026 LAENFAER VPN. Все права защищены.</p>
-<div style="display:flex;justify-content:center;gap:24px;flex-wrap:wrap">
-<a href="/" style="color:rgba(255,255,255,.25);text-decoration:none;font-size:12px">Главная</a>
-<a href="/tariffs" style="color:rgba(255,255,255,.25);text-decoration:none;font-size:12px">Тарифы</a>
-<a href="/support" style="color:rgba(255,255,255,.25);text-decoration:none;font-size:12px">Поддержка</a>
-<a href="https://t.me/laenfaer_vpn_bot" style="color:rgba(255,255,255,.25);text-decoration:none;font-size:12px">Telegram</a>
+<div class="fg">
+<div>
+<div class="logo" style="margin-bottom:12px"><span class="mk"></span>LAENFAER</div>
+<p style="font-size:.92rem">VPN на протоколе VLESS Reality. Трафик, который выглядит как обычный HTTPS &mdash; без блокировок и ограничений.</p>
 </div>
+<div><h4>Сервис</h4><ul><li><a href="/about">О сервисе</a></li><li><a href="/pricing">Тарифы</a></li><li><a href="/servers">Серверы</a></li><li><a href="/referral">Рефералы</a></li></ul></div>
+<div><h4>Помощь</h4><ul><li><a href="/setup">Настройка</a></li><li><a href="/faq">FAQ</a></li><li><a href="/support">Поддержка</a></li><li><a href="/blog">Блог</a></li></ul></div>
+<div><h4>Документы</h4><ul><li><a href="/privacy">Конфиденциальность</a></li><li><a href="/terms">Условия</a></li></ul></div>
 </div>
-</footer>
-<script>
-(function(){var c=document.getElementById('particles');if(!c)return;var x=c.getContext('2d');function r(){c.width=window.innerWidth;c.height=window.innerHeight}r();window.addEventListener('resize',r);var p=[];for(var i=0;i<50;i++)p.push({x:Math.random()*c.width,y:Math.random()*c.height,r:Math.random()*1.5+.3,dx:(Math.random()-.5)*.2,dy:(Math.random()-.5)*.2,o:Math.random()*.2+.05});function d(){x.clearRect(0,0,c.width,c.height);for(var i=0;i<p.length;i++){var v=p[i];v.x+=v.dx;v.y+=v.dy;if(v.x<0||v.x>c.width)v.dx*=-1;if(v.y<0||v.y>c.height)v.dy*=-1;x.beginPath();x.arc(v.x,v.y,v.r,0,6.28);x.fillStyle='rgba(139,197,63,'+v.o+')';x.fill()}requestAnimationFrame(d)}d()})();
-</script>
+<div class="fb">
+<span>&copy; 2026 LAENFAER VPN</span>
+<span style="font-family:var(--mono);font-size:.78rem">Обновлено: июль 2026</span>
+</div>
+</div></footer>
 </body>
 </html>`;
 }
@@ -37799,97 +37833,73 @@ ${body}
 app.get("/", async (_req, res) => {
   res.setHeader("Content-Type", "text/html; charset=utf-8");
   res.send(pageShell(SEO.title, SEO.description, `
-<div style="max-width:800px;margin:0 auto;padding:60px 20px;text-align:center">
-<div style="font-size:64px;margin-bottom:16px">&#9889;</div>
-<h1 style="font-size:42px;font-weight:900;color:#8BC53F;margin-bottom:12px;line-height:1.1">LAENFAER VPN</h1>
-<p style="font-size:18px;color:rgba(255,255,255,.5);margin-bottom:32px;line-height:1.6">Быстрый, надёжный VPN без ограничений.<br>Подключись за 2 минуты через Telegram.</p>
-<a href="https://t.me/laenfaer_vpn_bot" style="display:inline-block;background:#8BC53F;color:#07090D;font-size:18px;font-weight:700;padding:16px 40px;border-radius:16px;text-decoration:none;margin-bottom:16px">Подключиться к боту →</a>
+<section class="hero"><div class="wrap hero-g">
+<div>
+<span class="eyebrow">VLESS &middot; Reality &middot; 50+ серверов</span>
+<h1>VPN, который провайдер не отличит от обычного HTTPS</h1>
+<p class="lead">LAENFAER &mdash; быстрый VPN на протоколе VLESS Reality. Трафик маскируется под обычные защищённые сайты, поэтому его не блокируют и не замедляют. Подключение через Telegram-бота за 2 минуты.</p>
+<div class="cta-row">
+<a href="https://t.me/laenfaer_vpn_bot" class="btn btn-p">Попробовать 3 дня бесплатно</a>
+<a href="/pricing" class="btn btn-g">Смотреть тарифы</a>
+</div>
+<div style="margin-top:28px">
+<span class="badge">До 1 Гбит/с</span>
+<span class="badge">50+ серверов</span>
+<span class="badge">Без логов трафика</span>
+<span class="badge">Оплата от 10 ₽/день</span>
+</div>
+</div>
+<div class="pdiag">
+<svg viewBox="0 0 360 220" xmlns="http://www.w3.org/2000/svg">
+<circle class="p-node" cx="30" cy="110" r="10"></circle>
+<text class="p-label" x="8" y="140">ваш девайс</text>
+<path class="p-line" d="M40,110 C 120,40 180,180 260,60"></path>
+<circle class="p-node" cx="260" cy="60" r="10"></circle>
+<text class="p-label" x="225" y="42">сервер LAENFAER</text>
+<path class="p-line" d="M270,60 C 300,80 320,120 330,110" stroke="#E8B34C"></path>
+<circle class="p-node" cx="330" cy="110" r="10" stroke="#2DD4BF"></circle>
+<text class="p-label" x="285" y="140">интернет</text>
+<text class="p-label" x="70" y="200" fill="#9FB8AC">Провайдер видит: обычный HTTPS-трафик к известному сайту</text>
+</svg>
+</div>
+</div></section>
 
-<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin:48px 0;text-align:left">
-<div style="background:rgba(17,28,45,.5);border:1px solid rgba(139,197,63,.08);border-radius:16px;padding:24px">
-<div style="font-size:32px;margin-bottom:8px">&#127760;</div>
-<h3 style="font-size:16px;color:#8BC53F;margin-bottom:4px">50+ серверов</h3>
-<p style="font-size:13px;color:rgba(255,255,255,.35);line-height:1.5">Серверы в Германии, Нидерландах, Финляндии, России и других странах. Автоматический выбор оптимального сервера.</p>
+<section><div class="wrap">
+<span class="eyebrow">Как это работает</span>
+<h2>Три шага до подключения</h2>
+<div class="g3">
+<div class="glass"><span class="num">01</span><h3>Открыть бота</h3><p>Напишите боту <a href="https://t.me/laenfaer_vpn_bot">@laenfaer_vpn_bot</a> в Telegram и выберите тариф &mdash; есть бесплатный пробный период на 3 дня.</p></div>
+<div class="glass"><span class="num">02</span><h3>Получить ссылку</h3><p>Бот выдаёт персональную ссылку-подписку VLESS Reality, привязанную к вашему аккаунту.</p></div>
+<div class="glass"><span class="num">03</span><h3>Подключиться</h3><p>Вставьте ссылку в приложение Happ (iPhone) или HappProxy (Android) &mdash; сервер подберётся автоматически.</p></div>
 </div>
-<div style="background:rgba(17,28,45,.5);border:1px solid rgba(139,197,63,.08);border-radius:16px;padding:24px">
-<div style="font-size:32px;margin-bottom:8px">&#9889;</div>
-<h3 style="font-size:16px;color:#8BC53F;margin-bottom:4px">Высокая скорость</h3>
-<p style="font-size:13px;color:rgba(255,255,255,.35);line-height:1.5">Серверы с пропускной способностью до 1 Гбит/с. Стриминг, загрузки, игры — без задержек и буферизации.</p>
-</div>
-<div style="background:rgba(17,28,45,.5);border:1px solid rgba(139,197,63,.08);border-radius:16px;padding:24px">
-<div style="font-size:32px;margin-bottom:8px">&#128274;</div>
-<h3 style="font-size:16px;color:#8BC53F;margin-bottom:4px">Безопасность</h3>
-<p style="font-size:13px;color:rgba(255,255,255,.35);line-height:1.5">Шифрование VLESS Reality. Никто не сможет перехватить ваш трафик. Полная анонимность в интернете.</p>
-</div>
-<div style="background:rgba(17,28,45,.5);border:1px solid rgba(139,197,63,.08);border-radius:16px;padding:24px">
-<div style="font-size:32px;margin-bottom:8px">&#128176;</div>
-<h3 style="font-size:16px;color:#8BC53F;margin-bottom:4px">Доступные цены</h3>
-<p style="font-size:13px;color:rgba(255,255,255,.35);line-height:1.5">От 10 рублей за день. Бесплатный пробный период 3 дня. Скидки при покупке на 90 и 180 дней.</p>
-</div>
-</div>
+</div></section>
 
-<section style="margin:48px 0">
-<h2 style="font-size:28px;font-weight:900;color:#8BC53F;margin-bottom:24px">Как это работает</h2>
-<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:20px;text-align:center">
-<div style="background:rgba(17,28,45,.4);border:1px solid rgba(139,197,63,.06);border-radius:16px;padding:24px">
-<div style="font-size:36px;font-weight:900;color:#8BC53F;margin-bottom:8px">1</div>
-<h3 style="font-size:15px;margin-bottom:4px">Открой бота</h3>
-<p style="font-size:12px;color:rgba(255,255,255,.3)">Нажми кнопку ниже и получи бесплатный ключ</p>
+<section><div class="wrap">
+<span class="eyebrow">Почему LAENFAER</span>
+<h2>Сделан для сетей, где обычный VPN не работает</h2>
+<div class="g2">
+<div class="glass glass-glow"><h3>Протокол Reality</h3><p>VLESS с Reality &mdash; один из немногих протоколов, который маскирует TLS-хендшейк под реальный сайт. Провайдер видит соединение к настоящему серверу и не может отличить его от обычного просмотра сайта.</p></div>
+<div class="glass glass-glow"><h3>50+ серверов в 8 странах</h3><p>Германия, Нидерланды, Финляндия, Россия и другие локации. Автовыбор находит сервер с наименьшей задержкой для вашей сети.</p></div>
+<div class="glass glass-glow"><h3>Скорость до 1 Гбит/с</h3><p>Собственная сетевая инфраструктура без переподписки каналов &mdash; важно для стриминга и загрузки больших файлов.</p></div>
+<div class="glass glass-glow"><h3>Оплата без границ</h3><p>СБП, банковские карты, криптовалюта. Тарифы от 10 ₽/день, скидки на 90 и 180 дней.</p></div>
 </div>
-<div style="background:rgba(17,28,45,.4);border:1px solid rgba(139,197,63,.06);border-radius:16px;padding:24px">
-<div style="font-size:36px;font-weight:900;color:#8BC53F;margin-bottom:8px">2</div>
-<h3 style="font-size:15px;margin-bottom:4px">Скачай приложение</h3>
-<p style="font-size:12px;color:rgba(255,255,255,.3)">HappProxy (Android) или Happ (iPhone)</p>
-</div>
-<div style="background:rgba(17,28,45,.4);border:1px solid rgba(139,197,63,.06);border-radius:16px;padding:24px">
-<div style="font-size:36px;font-weight:900;color:#8BC53F;margin-bottom:8px">3</div>
-<h3 style="font-size:15px;margin-bottom:4px">Вставь подписку</h3>
-<p style="font-size:12px;color:rgba(255,255,255,.3)">Скопируй ссылку из бота и вставь в приложение</p>
-</div>
-<div style="background:rgba(17,28,45,.4);border:1px solid rgba(139,197,63,.06);border-radius:16px;padding:24px">
-<div style="font-size:36px;font-weight:900;color:#8BC53F;margin-bottom:8px">4</div>
-<h3 style="font-size:15px;margin-bottom:4px">Подключись</h3>
-<p style="font-size:12px;color:rgba(255,255,255,.3)">Нажми кнопку подключения — сервер выбирается автоматически</p>
-</div>
-</div>
-</section>
+</div></section>
 
-<section style="margin:48px 0;background:rgba(17,28,45,.4);border:1px solid rgba(139,197,63,.06);border-radius:20px;padding:32px;text-align:center">
-<h2 style="font-size:24px;font-weight:900;color:#8BC53F;margin-bottom:8px">Бесплатный пробный период</h2>
-<p style="font-size:14px;color:rgba(255,255,255,.4);margin-bottom:20px">Попробуй LAENFAER VPN бесплатно на 3 дня. Без привязки карты.</p>
-<a href="https://t.me/laenfaer_vpn_bot?start=free" style="display:inline-block;background:#8BC53F;color:#07090D;font-size:16px;font-weight:700;padding:14px 32px;border-radius:14px;text-decoration:none">Попробовать бесплатно →</a>
-</section>
+<section><div class="wrap" style="text-align:center;background:var(--bg-el);border-radius:var(--radius);padding:56px 24px;border:1px solid var(--border)">
+<h2>Подключите LAENFAER за 2 минуты</h2>
+<p style="max-width:50ch;margin:0 auto 24px">Бесплатный пробный период 3 дня, карта не нужна.</p>
+<a href="https://t.me/laenfaer_vpn_bot" class="btn btn-p">Открыть в Telegram</a>
+</div></section>
 
-<section style="margin:48px 0">
-<h2 style="font-size:28px;font-weight:900;color:#8BC53F;margin-bottom:24px;text-align:center">Часто задаваемые вопросы</h2>
-<details style="background:rgba(17,28,45,.4);border:1px solid rgba(139,197,63,.06);border-radius:14px;padding:16px;margin-bottom:8px">
-<summary style="font-weight:700;cursor:pointer;font-size:14px">Какие приложения поддерживаются?</summary>
-<p style="font-size:13px;color:rgba(255,255,255,.35);margin-top:10px;line-height:1.5">HappProxy (Android), Happ (iPhone/iPad), INCY (все платформы), v2rayTun и другие клиенты с поддержкой VLESS Reality.</p>
-</details>
-<details style="background:rgba(17,28,45,.4);border:1px solid rgba(139,197,63,.06);border-radius:14px;padding:16px;margin-bottom:8px">
-<summary style="font-weight:700;cursor:pointer;font-size:14px">Безопасен ли VPN?</summary>
-<p style="font-size:13px;color:rgba(255,255,255,.35);margin-top:10px;line-height:1.5">Да. Мы используем протокол VLESS с технологией Reality, который маскирует VPN-трафик под обычное HTTPS-соединение. Ваш провайдер не сможет определить использование VPN.</p>
-</details>
-<details style="background:rgba(17,28,45,.4);border:1px solid rgba(139,197,63,.06);border-radius:14px;padding:16px;margin-bottom:8px">
-<summary style="font-weight:700;cursor:pointer;font-size:14px">Сколько устройств можно подключить?</summary>
-<p style="font-size:13px;color:rgba(255,255,255,.35);margin-top:10px;line-height:1.5">Зависит от тарифа. На бесплатном пробном — 1 устройство. На платных тарифах — от 1 до 5 устройств одновременно.</p>
-</details>
-<details style="background:rgba(17,28,45,.4);border:1px solid rgba(139,197,63,.06);border-radius:14px;padding:16px;margin-bottom:8px">
-<summary style="font-weight:700;cursor:pointer;font-size:14px">Как оплатить подписку?</summary>
-<p style="font-size:13px;color:rgba(255,255,255,.35);margin-top:10px;line-height:1.5">Оплата через СБП, банковские карты или криптовалюту. Оплата проходит через защищённые платёжные шлюзы.</p>
-</details>
-<details style="background:rgba(17,28,45,.4);border:1px solid rgba(139,197,63,.06);border-radius:14px;padding:16px;margin-bottom:8px">
-<summary style="font-weight:700;cursor:pointer;font-size:14px">Есть ли реферальная программа?</summary>
-<p style="font-size:13px;color:rgba(255,255,255,.35);margin-top:10px;line-height:1.5">Да! Приглашайте друзей и получайте 25% от их оплаты на свой баланс. Баланс можно использовать для оплаты VPN или вывести деньгами.</p>
-</details>
-</section>
-
-<section style="text-align:center;margin:48px 0">
-<h2 style="font-size:28px;font-weight:900;color:#8BC53F;margin-bottom:12px">Готов подключиться?</h2>
-<p style="font-size:14px;color:rgba(255,255,255,.4);margin-bottom:20px">Бесплатный пробный период — 3 дня без ограничений</p>
-<a href="https://t.me/laenfaer_vpn_bot" style="display:inline-block;background:#8BC53F;color:#07090D;font-size:18px;font-weight:700;padding:16px 40px;border-radius:16px;text-decoration:none">Начать сейчас →</a>
-</section>
-</div>
+<section><div class="wrap">
+<span class="eyebrow">FAQ</span>
+<h2>Часто задаваемые вопросы</h2>
+<details class="faq"><summary>Какие приложения поддерживаются?</summary><p>HappProxy (Android), Happ (iPhone/iPad), INCY (все платформы), v2rayTun и другие клиенты с поддержкой VLESS Reality.</p></details>
+<details class="faq"><summary>Безопасен ли VPN?</summary><p>Да. Мы используем протокол VLESS с технологией Reality, который маскирует VPN-трафик под обычное HTTPS-соединение. Ваш провайдер не сможет определить использование VPN.</p></details>
+<details class="faq"><summary>Сколько устройств можно подключить?</summary><p>Зависит от тарифа. На бесплатном пробном &mdash; 1 устройство. На платных тарифах &mdash; от 1 до 5 устройств одновременно.</p></details>
+<details class="faq"><summary>Как оплатить подписку?</summary><p>Оплата через СБП, банковские карты или криптовалюту. Оплата проходит через защищённые платёжные шлюзы.</p></details>
+<details class="faq"><summary>Есть ли реферальная программа?</summary><p>Да! Приглашайте друзей и получайте 25% от их оплаты на свой баланс. Баланс можно использовать для оплаты VPN или вывести деньгами.</p></details>
+</div></section>
 `, `<script type="application/ld+json">${faqLD}</script>`));
 });
 
