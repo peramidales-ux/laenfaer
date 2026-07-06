@@ -38536,8 +38536,8 @@ h+='<div style="margin-bottom:18px"><div class="hero-title">Добро пожа�
 
 /* Status + Traffic */
 h+='<div class="c">';
-h+='<div class="status-row"><div class="status-dot"></div><div class="status-text">'+(H?'НОРМА':'НЕТ АКТИВА'))+'</div><div class="status-badge">'+(H?Ta:'ПРОБНЫЙ ПЕРИОД')+'</div></div>';
-h+='<div class="traffic-header"><div><div class="traffic-title">Расход трафика</div><div class="traffic-sub">0 МБ /无限 ГБ</div></div><div class="traffic-pct">0%</div></div>';
+h+='<div class="status-row"><div class="status-dot"></div><div class="status-text">'+(H?'НОРМА':'НЕТ АКТИВА')+'</div><div class="status-badge">'+(H?Ta:'ПРОБНЫЙ ПЕРИОД')+'</div></div>';
+h+='<div class="traffic-header"><div><div class="traffic-title">Расход трафика</div><div class="traffic-sub">0 МБ / ∞ ГБ</div></div><div class="traffic-pct">0%</div></div>';
 h+='<div class="progress"><div class="progress-fill" style="width:0%"></div></div>';
 h+='<div class="progress-labels"><span>0 МБ</span><span>2.5 ГБ</span><span>5.0 ГБ</span><span>7.5 ГБ</span><span>10.0 ГБ</span></div>';
 h+='</div>';
@@ -38565,7 +38565,7 @@ if(H){
 h+='<div class="c"><div class="status-row"><div class="status-dot"></div><div class="status-text">НОРМА</div><div class="status-badge">'+Ta+'</div></div>';
 h+='<div style="font-size:16px;font-weight:800;margin-bottom:10px">'+Ta+'</div>';
 h+='<div class="c-sm" style="background:rgba(139,197,63,.04);border-color:rgba(139,197,63,.1)"><div style="font-size:13px;font-weight:700;color:#8BC53F;margin-bottom:4px">Текущий план</div><div style="font-size:11px;color:rgba(255,255,255,.35);line-height:1.5">Действует до '+ED+'. Автобновление подписки каждые 12 часов.</div><div style="margin-top:8px;font-size:12px;font-weight:700;color:#8BC53F">'+DY+' дн. осталось</div></div>';
-h+='<div class="traffic-header" style="margin-top:10px"><div class="traffic-title">Трафик</div><div>0 МБ /无限 ГБ <span style="color:#8BC53F;cursor:pointer">&#128260; Обновить</span></div></div>';
+h+='<div class="traffic-header" style="margin-top:10px"><div class="traffic-title">Трафик</div><div>0 МБ / ∞ ГБ <span style="color:#8BC53F;cursor:pointer">&#128260; Обновить</span></div></div>';
 h+='<div class="progress"><div class="progress-fill" style="width:0%"></div></div>';
 if(SL){h+='<div class="link-box"><div class="link-text" id="sl2">'+SL+'</div><button class="link-copy" data-copy="sl2">&#128203;</button></div>';}
 h+='</div>';
@@ -38658,7 +38658,7 @@ app.get("/api/profile/:userId", async (req, res) => {
       totalPaid: u?.totalPaid || 0,
       balance: u?.balance || 0,
       servers: [
-        { name: "Авто-выбор", country: "🌍 Автоматически", ping: "最优" },
+        { name: "Авто-выбор", country: "🌍 Автоматически", ping: "авто" },
         { name: "Германия", country: "🇩🇪 Europe", ping: "18ms" },
         { name: "Нидерланды", country: "🇳🇱 Europe", ping: "22ms" },
         { name: "Финляндия", country: "🇫🇮 Europe", ping: "15ms" },
