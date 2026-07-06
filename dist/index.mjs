@@ -58739,30 +58739,6 @@ adminBot.callbackQuery(/.*/, async (ctx) => {
     await ctx.editMessageText("\u{1F50D} \u041E\u0442\u043F\u0440\u0430\u0432\u044C\u0442\u0435 \u0418\u0414 \u043F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u0435\u043B\u044F \u0438\u043B\u0438 \u0435\u0433\u043E \u0438\u043C\u044F / \u0443\u0437\u043D\u0438\u043A:", { reply_markup: adminBackKb() });
     return;
   }
-  if (data.startsWith("manage_user_")) {
-    const uid = data.replace("manage_user_", "");
-    const user = await getUser(uid);
-    if (!user) {
-      await ctx.answerCallbackQuery({ text: "\u274C \u041F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u0435\u043B\u044C \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D", show_alert: true });
-      return;
-    }
-    const sub = await getSubscription(uid);
-    const hasActive = sub && new Date(sub.expiresAt) > new Date();
-    const left = hasActive ? daysLeft(sub.expiresAt) : 0;
-    const bal = await getUserBalanceInfo(uid);
-    const banned = user.banned ? " \u{1F6AB} \u0417\u0410\u0411\u041B\u041E\u041A\u0418\u0420\u041E\u0412\u0410\u041D" : "";
-    let text2 = `\u{1F464} <b>${escapeHtml(user.name)}</b>${banned}\n\u{1F194} ID: <code>${uid}</code>\n\u{1F464} @${user.username || "нет"}\n\n\u{1F4CB} \u041F\u043E\u0434\u043F\u0438\u0441\u043A\u0430: ${hasActive ? `\u{1F7E2} ${sub.tariff} (${left} \u0434\u043D.)` : "\u{1F534} \u041D\u0435\u0442"}\n\u{1F4B0} \u0411\u0430\u043B\u0430\u043D\u0441: ${bal.balance || 0}\u20BD\n\u{1F91D} \u0420\u0435\u0444. \u0431\u0430\u043B\u0430\u043D\u0441: ${bal.refBalance || 0}\u20BD`;
-    const kb = new InlineKeyboard2();
-    if (user.banned) {
-      kb.text("\u2705 \u0420\u0430\u0437\u0431\u0430\u043D\u0438\u0442\u044C", `unban_${uid}`).row();
-    } else {
-      kb.text("\u{1F6AB} \u0417\u0430\u0431\u043B\u043E\u043A\u0438\u0440\u043E\u0432\u0430\u0442\u044C", `ban_${uid}`).row();
-    }
-    kb.text("\u{1F504} \u041E\u0431\u043D\u0443\u043B\u0438\u0442\u044C \u0431\u0430\u043B\u0430\u043D\u0441", `reset_bal_${uid}`).text("\u{1F4B5} \u0414\u043E\u0431\u0430\u0432\u0438\u0442\u044C \u0434\u043D\u0438", `give_prem_days_${uid}`).row();
-    kb.text("\u{1F519} \u041D\u0430\u0437\u0430\u0434", "admin_search_user");
-    await ctx.editMessageText(text2, { parse_mode: "HTML", reply_markup: kb });
-    return;
-  }
   if (data.startsWith("confirm_pay_")) {
     const payId = data.replace("confirm_pay_", "");
     const req = await getPaymentRequest(payId);
