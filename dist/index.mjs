@@ -37729,15 +37729,15 @@ h3{font-size:1.25rem;margin-bottom:10px}
 p{color:var(--dim)}
 .eyebrow{font-family:var(--mono);font-size:.78rem;letter-spacing:.14em;text-transform:uppercase;color:var(--signal);display:inline-block;margin-bottom:14px}
 /* nav */
-.topnav{position:sticky;top:0;z-index:100;background:rgba(10,21,18,.85);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-bottom:1px solid var(--border)}
-.topnav .wrap{display:flex;align-items:center;justify-content:space-between;padding:16px 0}
-.logo{font-family:var(--serif);font-weight:700;font-size:1.15rem;display:flex;align-items:center;gap:8px}
+.topnav{position:sticky;top:0;z-index:100;background:rgba(10,21,18,.85);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-bottom:1px solid var(--border);width:100%}
+.topnav .wrap{display:flex;align-items:center;justify-content:space-between;padding:16px 0;max-width:1120px;margin:0 auto;padding-left:24px;padding-right:24px}
+.logo{font-family:var(--serif);font-weight:700;font-size:1.15rem;display:flex;align-items:center;gap:8px;flex-shrink:0}
 .logo .mk{width:9px;height:9px;border-radius:50%;background:var(--accent);box-shadow:0 0 12px var(--accent)}
-nav.nk{display:flex;gap:28px;font-size:.92rem;color:var(--dim)}
+nav.nk{display:flex;gap:28px;font-size:.92rem;color:var(--dim);align-items:center}
 nav.nk a:hover{color:var(--text)}
-.nav-cta{background:var(--accent);color:#161006!important;padding:10px 20px;border-radius:999px;font-weight:600;font-size:.9rem}
-.mtoggle{display:none;background:none;border:none;color:var(--text);font-size:1.4rem;cursor:pointer}
-@media(max-width:820px){nav.nk{position:fixed;top:60px;left:0;right:0;background:var(--bg-el);flex-direction:column;padding:20px 24px;gap:16px;border-bottom:1px solid var(--border);display:none;z-index:99}nav.nk.open{display:flex}.mtoggle{display:block}}
+.nav-cta{background:var(--accent);color:#161006!important;padding:10px 20px;border-radius:999px;font-weight:600;font-size:.9rem;white-space:nowrap}
+.mtoggle{display:none;background:none;border:none;color:var(--text);font-size:1.4rem;cursor:pointer;padding:8px;flex-shrink:0}
+@media(max-width:820px){nav.nk{position:fixed;top:56px;left:0;right:0;background:var(--bg-el);flex-direction:column;padding:20px 24px;gap:16px;border-bottom:1px solid var(--border);display:none;z-index:99;max-height:calc(100vh - 56px);overflow-y:auto}nav.nk.open{display:flex}.mtoggle{display:block}}
 /* glass cards */
 .glass{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:28px;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);position:relative;overflow:hidden;transition:border-color .2s,box-shadow .2s}
 .glass::before{content:"";position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(232,179,76,.15),transparent)}
@@ -37771,9 +37771,9 @@ section{padding:56px 0}
 .card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:26px;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
 .card .num{font-family:var(--mono);color:var(--signal);font-size:.8rem;margin-bottom:10px;display:block}
 /* tables */
-table{width:100%;border-collapse:collapse;margin:20px 0;display:block;overflow-x:auto}
-th,td{text-align:left;padding:14px 16px;border-bottom:1px solid var(--border);font-size:.94rem;white-space:nowrap}
-th{font-family:var(--mono);font-size:.78rem;text-transform:uppercase;letter-spacing:.06em;color:var(--dim)}
+table{width:100%;border-collapse:collapse;margin:20px 0}
+th,td{text-align:left;padding:12px 14px;border-bottom:1px solid var(--border);font-size:.88rem}
+th{font-family:var(--mono);font-size:.75rem;text-transform:uppercase;letter-spacing:.06em;color:var(--dim)}
 /* FAQ */
 .faq{border-bottom:1px solid var(--border);padding:18px 0}
 .faq summary{cursor:pointer;font-weight:600;list-style:none;display:flex;justify-content:space-between}
@@ -37912,19 +37912,20 @@ app.get("/", async (_req, res) => {
 </div></section>
 
 <section><div class="wrap">
-<span class="eyebrow">Сравнение</span>
-<h2>LAENFAER vs другие VPN</h2>
-<div style="overflow-x:auto">
+<span class="eyebrow">Наши преимущества</span>
+<h2>Почему выбирают LAENFAER</h2>
+<div style="overflow-x:auto;-webkit-overflow-scrolling:touch">
 <table>
-<thead><tr><th>Функция</th><th>LAENFAER</th><th>NordVPN</th><th>ExpressVPN</th></tr></thead>
+<thead><tr><th>Параметр</th><th>LAENFAER</th></tr></thead>
 <tbody>
-<tr><td>Протокол</td><td style="color:var(--accent)">VLESS Reality</td><td>OpenVPN/WireGuard</td><td>Lightway</td></tr>
-<tr><td>Маскировка трафика</td><td style="color:var(--signal)">&#10003; Полная</td><td>&#10007; Частичная</td><td>&#10007; Частичная</td></tr>
-<tr><td>Скорость</td><td style="color:var(--accent)">до 1 Гбит/с</td><td>до 670 Мбит/с</td><td>до 600 Мбит/с</td></tr>
-<tr><td>Цена от</td><td style="color:var(--accent)">10 ₽/день</td><td>~300 ₽/мес</td><td>~500 ₽/мес</td></tr>
-<tr><td>Бесплатный период</td><td style="color:var(--signal)">&#10003; 3 дня</td><td>&#10007; Нет</td><td>&#10007; Нет</td></tr>
-<tr><td>Подключение</td><td style="color:var(--accent)">Telegram-бот</td><td>Приложение</td><td>Приложение</td></tr>
-<tr><td>Логирование</td><td style="color:var(--signal)">&#10003; Нет</td><td>Частичное</td><td>Частичное</td></tr>
+<tr><td>Протокол</td><td style="color:var(--accent)">VLESS Reality</td></tr>
+<tr><td>Маскировка трафика</td><td style="color:var(--signal)">Полная — провайдер не отличит от HTTPS</td></tr>
+<tr><td>Скорость</td><td style="color:var(--accent)">до 1 Гбит/с</td></tr>
+<tr><td>Цена от</td><td style="color:var(--accent)">10 &#8381;/день</td></tr>
+<tr><td>Бесплатный период</td><td style="color:var(--signal)">3 дня бесплатно</td></tr>
+<tr><td>Подключение</td><td style="color:var(--accent)">Telegram-бот за 2 минуты</td></tr>
+<tr><td>Логирование</td><td style="color:var(--signal)">Полное отсутствие логов</td></tr>
+<tr><td>Серверы</td><td style="color:var(--accent)">50+ в 8 странах</td></tr>
 </tbody>
 </table>
 </div>
@@ -38158,20 +38159,41 @@ app.get("/blog/:slug", async (req, res) => {
 
 // ===== VS =====
 app.get("/vs", async (req, res) => {
-  res.setHeader("Content-Type","text/html; charset=utf-8").send(pageShell("LAENFAER VPN vs другие VPN — сравнение","Сравнение LAENFAER VPN с NordVPN, ExpressVPN, Windscribe. Скорость, цены, безопасность.",`
+  res.setHeader("Content-Type","text/html; charset=utf-8").send(pageShell("LAENFAER VPN — преимущества сервиса","Почему LAENFAER VPN — лучший выбор для безопасного интернета. VLESS Reality, скорость, цены.",`
 <div style="max-width:800px;margin:0 auto;padding:40px 20px">
-<nav style="font-size:12px;color:rgba(255,255,255,.3);margin-bottom:24px"><a href="/" style="color:rgba(255,255,255,.4);text-decoration:none">Главная</a> / <span style="color:rgba(255,255,255,.25)">Сравнение</span></nav>
-<h1 style="font-size:36px;font-weight:900;color:#8BC53F;margin-bottom:20px">Сравнение с конкурентами</h1>
+<nav style="font-size:12px;color:rgba(255,255,255,.3);margin-bottom:24px"><a href="/" style="color:rgba(255,255,255,.4);text-decoration:none">Главная</a> / <span style="color:rgba(255,255,255,.25)">Преимущества</span></nav>
+<h1 style="font-size:36px;font-weight:900;color:#8BC53F;margin-bottom:20px">Наши преимущества</h1>
 <div style="background:rgba(17,28,45,.5);border:1px solid rgba(139,197,63,.1);border-radius:20px;padding:24px;overflow-x:auto">
-<table style="width:100%;border-collapse:collapse;font-size:13px"><thead><tr><th style="text-align:left;padding:10px;border-bottom:2px solid rgba(139,197,63,.15);color:#8BC53F">Параметр</th><th style="text-align:left;padding:10px;border-bottom:2px solid rgba(139,197,63,.15);color:#8BC53F">LAENFAER</th><th style="text-align:left;padding:10px;border-bottom:2px solid rgba(139,197,63,.15)">NordVPN</th><th style="text-align:left;padding:10px;border-bottom:2px solid rgba(139,197,63,.15)">ExpressVPN</th></tr></thead><tbody>
-<tr><td style="padding:10px;border-bottom:1px solid rgba(139,197,63,.05)">Протокол</td><td style="padding:10px;border-bottom:1px solid rgba(139,197,63,.05);color:#8BC53F;font-weight:600">VLESS Reality</td><td style="padding:10px;border-bottom:1px solid rgba(139,197,63,.05)">OpenVPN</td><td style="padding:10px;border-bottom:1px solid rgba(139,197,63,.05)">Lightway</td></tr>
-<tr><td style="padding:10px;border-bottom:1px solid rgba(139,197,63,.05)">Обход DPI</td><td style="padding:10px;border-bottom:1px solid rgba(139,197,63,.05);color:#8BC53F">&#10003; Полный</td><td style="padding:10px;border-bottom:1px solid rgba(139,197,63,.05)">Частичный</td><td style="padding:10px;border-bottom:1px solid rgba(139,197,63,.05);color:#8BC53F">&#10003;</td></tr>
-<tr><td style="padding:10px;border-bottom:1px solid rgba(139,197,63,.05)">Цена 30 дней</td><td style="padding:10px;border-bottom:1px solid rgba(139,197,63,.05);color:#8BC53F;font-weight:600">249 &#8381;</td><td style="padding:10px;border-bottom:1px solid rgba(139,197,63,.05)">~800 &#8381;</td><td style="padding:10px;border-bottom:1px solid rgba(139,197,63,.05)">~900 &#8381;</td></tr>
-<tr><td style="padding:10px;border-bottom:1px solid rgba(139,197,63,.05)">Пробный</td><td style="padding:10px;border-bottom:1px solid rgba(139,197,63,.05);color:#8BC53F">3 дня бесплатно</td><td style="padding:10px;border-bottom:1px solid rgba(139,197,63,.05)">30 дней</td><td style="padding:10px;border-bottom:1px solid rgba(139,197,63,.05)">30 дней</td></tr>
-<tr><td style="padding:10px;border-bottom:1px solid rgba(139,197,63,.05)">Скорость</td><td style="padding:10px;border-bottom:1px solid rgba(139,197,63,.05);color:#8BC53F">1 Гбит/с</td><td style="padding:10px;border-bottom:1px solid rgba(139,197,63,.05)">650 Мбит/с</td><td style="padding:10px;border-bottom:1px solid rgba(139,197,63,.05)">800 Мбит/с</td></tr>
-<tr><td style="padding:10px;border-bottom:1px solid rgba(139,197,63,.05)">Оплата СБП</td><td style="padding:10px;border-bottom:1px solid rgba(139,197,63,.05);color:#8BC53F">&#10003;</td><td style="padding:10px;border-bottom:1px solid rgba(139,197,63,.05);color:#ef4444">&#10007;</td><td style="padding:10px;border-bottom:1px solid rgba(139,197,63,.05);color:#ef4444">&#10007;</td></tr>
-<tr><td style="padding:10px;border-bottom:1px solid rgba(139,197,63,.05)">Реферальная 25%</td><td style="padding:10px;border-bottom:1px solid rgba(139,197,63,.05);color:#8BC53F">&#10003;</td><td style="padding:10px;border-bottom:1px solid rgba(139,197,63,.05)">Есть</td><td style="padding:10px;border-bottom:1px solid rgba(139,197,63,.05);color:#ef4444">&#10007;</td></tr>
+<table style="width:100%;border-collapse:collapse;font-size:13px"><thead><tr><th style="text-align:left;padding:10px;border-bottom:2px solid rgba(139,197,63,.15);color:#8BC53F">Параметр</th><th style="text-align:left;padding:10px;border-bottom:2px solid rgba(139,197,63,.15);color:#8BC53F">LAENFAER</th></tr></thead><tbody>
+<tr><td style="padding:10px;border-bottom:1px solid rgba(139,197,63,.05)">Протокол</td><td style="padding:10px;border-bottom:1px solid rgba(139,197,63,.05);color:#8BC53F;font-weight:600">VLESS Reality</td></tr>
+<tr><td style="padding:10px;border-bottom:1px solid rgba(139,197,63,.05)">Обход DPI</td><td style="padding:10px;border-bottom:1px solid rgba(139,197,63,.05);color:#8BC53F">&#10003; Полный</td></tr>
+<tr><td style="padding:10px;border-bottom:1px solid rgba(139,197,63,.05)">Цена 30 дней</td><td style="padding:10px;border-bottom:1px solid rgba(139,197,63,.05);color:#8BC53F;font-weight:600">249 &#8381;</td></tr>
+<tr><td style="padding:10px;border-bottom:1px solid rgba(139,197,63,.05)">Пробный период</td><td style="padding:10px;border-bottom:1px solid rgba(139,197,63,.05);color:#8BC53F">3 дня бесплатно</td></tr>
+<tr><td style="padding:10px;border-bottom:1px solid rgba(139,197,63,.05)">Скорость</td><td style="padding:10px;border-bottom:1px solid rgba(139,197,63,.05);color:#8BC53F">до 1 Гбит/с</td></tr>
+<tr><td style="padding:10px;border-bottom:1px solid rgba(139,197,63,.05)">Оплата СБП</td><td style="padding:10px;border-bottom:1px solid rgba(139,197,63,.05);color:#8BC53F">&#10003;</td></tr>
+<tr><td style="padding:10px;border-bottom:1px solid rgba(139,197,63,.05)">Реферальная программа</td><td style="padding:10px;border-bottom:1px solid rgba(139,197,63,.05);color:#8BC53F">25% от оплаты друзей</td></tr>
+<tr><td style="padding:10px;border-bottom:1px solid rgba(139,197,63,.05)">Серверы</td><td style="padding:10px;border-bottom:1px solid rgba(139,197,63,.05);color:#8BC53F">50+ в 8 странах</td></tr>
+<tr><td style="padding:10px;border-bottom:1px solid rgba(139,197,63,.05)">Подключение</td><td style="padding:10px;border-bottom:1px solid rgba(139,197,63,.05);color:#8BC53F">Telegram-бот за 2 мин</td></tr>
+<tr><td style="padding:10px;border-bottom:1px solid rgba(139,197,63,.05)">Логирование</td><td style="padding:10px;border-bottom:1px solid rgba(139,197,63,.05);color:#8BC53F">Полное отсутствие</td></tr>
 </tbody></table></div>
+
+<div style="margin-top:32px">
+<h2 style="font-size:22px;color:#8BC53F;margin-bottom:16px">Почему VLESS Reality?</h2>
+<div style="display:grid;gap:16px">
+<div style="background:rgba(17,28,45,.5);border:1px solid rgba(139,197,63,.1);border-radius:16px;padding:24px">
+<h3 style="font-size:16px;margin-bottom:8px">Маскировка под реальный сайт</h3>
+<p style="font-size:14px;color:rgba(255,255,255,.4);line-height:1.6">TLS-хендшейк подделывается под реальный сайт. Провайдер видит обычное HTTPS-соединение и не может отличить его от VPN.</p>
+</div>
+<div style="background:rgba(17,28,45,.5);border:1px solid rgba(139,197,63,.1);border-radius:16px;padding:24px">
+<h3 style="font-size:16px;margin-bottom:8px">Нет сертификатов</h3>
+<p style="font-size:14px;color:rgba(255,255,255,.4);line-height:1.6">В отличие от других протоколов, VLESS Reality не требует покупки домена или получения сертификата.</p>
+</div>
+<div style="background:rgba(17,28,45,.5);border:1px solid rgba(139,197,63,.1);border-radius:16px;padding:24px">
+<h3 style="font-size:16px;margin-bottom:8px">Работает в жёстком DPI</h3>
+<p style="font-size:14px;color:rgba(255,255,255,.4);line-height:1.6">Даже при глубоком анализе пакетов провайдер не сможет определить использование VPN.</p>
+</div>
+</div>
+</div>
 </div>
 `));
 });
