@@ -38625,7 +38625,7 @@ function updateTimers(){var el=document.getElementById('td');if(!el)return;if(!D
 updateTimers();setInterval(updateTimers,1000);
 
 /* Promo button */
-var pb=document.getElementById('promoBtn');if(pb)pb.addEventListener('click',function(){var v=document.getElementById('promoInput');if(v&&v.value.trim()){fetch('/api/promo/'+uid+'?code='+encodeURIComponent(v.value.trim())).then(function(r){return r.json()}).then(function(r){toast(r.message||'Промокод применён!');if(r.ok&&r.subLink){D.subLink=r.subLink;SL=r.subLink}}).catch(function(){toast('Ошибка сети')}}});
+var pb=document.getElementById('promoBtn');if(pb)pb.addEventListener('click',function(){var v=document.getElementById('promoInput');if(v&&v.value.trim()){fetch('/api/promo/'+uid+'?code='+encodeURIComponent(v.value.trim())).then(function(r){return r.json()}).then(function(r){toast(r.message||'Промокод применён!');if(r.ok&&r.subLink){D.subLink=r.subLink;SL=r.subLink}}).catch(function(){toast('Ошибка сети')})}});
 
 }).catch(function(){document.getElementById('S').innerHTML='<div class="c" style="text-align:center;margin-top:40px"><div style="font-size:15px;font-weight:800;color:#f87171">Ошибка загрузки</div></div>'});
 }
@@ -58621,7 +58621,7 @@ adminBot.callbackQuery(/.*/, async (ctx) => {
       const lastUnderscore = rest.lastIndexOf("_");
       const code = rest.substring(0, lastUnderscore);
       const days = rest.substring(lastUnderscore + 1);
-      adminStates.set(ADMIN_ID2, `promo_max_${code}_${days}_free_${days}days`);
+      adminStates.set(ADMIN_ID2, `promo_fin|${code}|${days}|free_${days}days`);
       await ctx.editMessageText(`\u2705 \u0422\u0438\u043F: \u0411\u0435\u0441\u043F\u043B\u0430\u0442\u043D\u0430\u044F\n\n\u0412\u0432\u0435\u0434\u0438\u0442\u0435 \u043B\u0438\u043C\u0438\u0442 \u0438\u0441\u043F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u043D\u0438\u0439 (\u043F\u043E \u0443\u043C\u043E\u043B\u0447\u0430\u043D\u0438\u044E: 999):`, { reply_markup: adminBackKb() });
       return;
     }
@@ -58635,7 +58635,7 @@ adminBot.callbackQuery(/.*/, async (ctx) => {
       const lastUnderscore = rest.lastIndexOf("_");
       const code = rest.substring(0, lastUnderscore);
       const days = rest.substring(lastUnderscore + 1);
-      adminStates.set(ADMIN_ID2, `promo_max_${code}_${days}_30days`);
+      adminStates.set(ADMIN_ID2, `promo_fin|${code}|${days}|${days}days`);
       await ctx.editMessageText(`\u2705 \u0422\u0438\u043F: Premium\n\n\u0412\u0432\u0435\u0434\u0438\u0442\u0435 \u043B\u0438\u043C\u0438\u0442 \u0438\u0441\u043F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u043D\u0438\u0439 (\u043F\u043E \u0443\u043C\u043E\u043B\u0447\u0430\u043D\u0438\u044E: 999):`, { reply_markup: adminBackKb() });
       return;
     }
@@ -59205,14 +59205,11 @@ ${escapeHtml(text2)}`,
     });
     return;
   }
-  if (state.startsWith("promo_max_")) {
-    const rest = state.replace("promo_max_", "");
-    const lastUnderscore1 = rest.lastIndexOf("_");
-    const tariff = rest.substring(lastUnderscore1 + 1);
-    const beforeTariff = rest.substring(0, lastUnderscore1);
-    const lastUnderscore2 = beforeTariff.lastIndexOf("_");
-    const days = beforeTariff.substring(lastUnderscore2 + 1);
-    const code = beforeTariff.substring(0, lastUnderscore2);
+  if (state.startsWith("promo_fin|")) {
+    const parts = state.split("|");
+    const code = parts[1];
+    const days = parts[2];
+    const tariff = parts[3];
     adminStates.delete(ADMIN_ID2);
     const maxUses = parseInt(text2.trim(), 10) || 999;
     await savePromoCode(code, days, tariff, maxUses);
