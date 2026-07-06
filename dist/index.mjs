@@ -38529,7 +38529,7 @@ document.addEventListener('click',function(e){if(e.target.closest('#p-bal .c:las
 if(!uid){document.getElementById('S').innerHTML='<div class="c" style="text-align:center;margin-top:40px"><div style="font-size:36px;margin-bottom:10px">&#128274;</div><div style="font-size:16px;font-weight:800">Откройте из Telegram</div></div>';}
 else{
 fetch('/api/profile/'+uid).then(function(r){return r.json()}).then(function(d){
-D=d;var N=d.name||'Пользователь',U=d.username||'',H=d.hasActiveSub,DY=d.daysLeft||0,Ta=d.tariffLabel||d.tariff||'',SL=d.subLink||'',SC=d.serverCount||0,RC=d.refCount||0,TP=d.totalPaid||0,BL=d.balance||0,ED=d.expireDate||'',EDD=d.expireDateDisplay||ED,SRV=d.servers||[];
+D=d;var N=d.name||'Пользователь',U=d.username||'',H=d.hasActiveSub,DY=d.daysLeft||0,Ta=d.tariffLabel||d.tariff||'',SL=d.subLink||'',SC=d.serverCount||0,RC=d.refCount||0,RE=d.refEarnings||0,TP=d.totalPaid||0,BL=d.balance||0,ED=d.expireDate||'',EDD=d.expireDateDisplay||ED,SRV=d.servers||[];
 var h='';
 
 /* HOME */
@@ -38600,7 +38600,7 @@ h+='</div></div>';
 h+='<div class="page" id="p-ref" style="display:none"><div class="hbar"><div class="hbar-logo">&#9889;</div><div class="hbar-name">LAENFAER VPN</div><div class="hbar-bell">&#128276;</div><div class="hbar-lang">&#127479;&#127482; RU</div></div><div class="anim">';
 h+='<div style="font-size:22px;font-weight:900;margin-bottom:16px">Реферальная программа</div>';
 h+='<div class="ref-stats"><div class="ref-stat" style="flex:1.5"><div class="ref-stat-l">Всего рефералов</div><div class="ref-stat-v">'+RC+'</div><div class="ref-stat-sub">0 активных</div></div></div>';
-h+='<div class="stats"><div class="stat"><div class="stat-v c1">'+TP+'&#8381;</div><div class="stat-l">Заработок</div></div><div class="stat"><div class="stat-v" style="color:#8BC53F">25%</div><div class="stat-l">Комиссия</div></div></div>';
+h+='<div class="stats"><div class="stat"><div class="stat-v c1">'+RE+'&#8381;</div><div class="stat-l">Заработок</div></div><div class="stat"><div class="stat-v" style="color:#8BC53F">25%</div><div class="stat-l">Комиссия</div></div></div>';
 
 h+='<div class="c"><div class="st">Ваши реферальные ссылки</div>';
 h+='<div class="link-box"><div class="link-text" id="rl1">https://t.me/laenfaer_vpn_bot?start='+uid+'</div><button class="link-copy" data-copy="rl1">&#128203;</button></div>';
@@ -38654,12 +38654,15 @@ app.get("/api/profile/:userId", async (req, res) => {
     const expireDate = hasActiveSub ? new Date(s.expiresAt).toISOString() : "";
     const expireDateDisplay = hasActiveSub ? new Date(s.expiresAt).toLocaleDateString("ru-RU") : "";
     const subLink = hasActiveSub && domain ? domain + "/sub/" + userId : "";
+    const refCountRows = await db.select().from(referralCountsTable).where(eq(referralCountsTable.userId, userId)).limit(1);
+    const refCount = refCountRows[0]?.count || 0;
     res.json({
       name: u?.name || "Пользователь",
       username: u?.username || "",
       hasActiveSub, daysLeft, tariff, tariffLabel, expireDate, expireDateDisplay, subLink,
       serverCount: 50,
-      refCount: u?.refBalance || 0,
+      refCount,
+      refEarnings: u?.refBalance || 0,
       refCode: userId,
       totalPaid: u?.totalPaid || 0,
       balance: u?.balance || 0,
