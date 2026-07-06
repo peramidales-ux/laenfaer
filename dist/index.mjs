@@ -58965,7 +58965,7 @@ ID: <code>${req.telegramId}</code>`,
     const users = await getAllUsers();
     const subText = "\u26A0\uFE0F \u0414\u043E\u0441\u0442\u0443\u043F \u0437\u0430\u0431\u043B\u043E\u043A\u0438\u0440\u043E\u0432\u0430\u043D!\n\n\u041F\u043E\u0434\u043F\u0438\u0448\u0438\u0441\u044C \u043D\u0430 \u043A\u0430\u043D\u0430\u043B, \u0447\u0442\u043E\u0431\u044B \u0434\u0430\u043B\u044C\u0448\u0435 \u043E\u0441\u0442\u0430\u0432\u0430\u0442\u044C\u0441\u044F \u043D\u0430 \u0441\u0432\u044F\u0437\u0438! \u{1F525}";
     const subKb = new InlineKeyboard().url("\u{1F4E2} \u041F\u043E\u0434\u043F\u0438\u0441\u0430\u0442\u044C\u0441\u044F \u043D\u0430 \u043A\u0430\u043D\u0430\u043B", CHANNEL_URL).row().text("\u2705 \u041F\u0440\u043E\u0432\u0435\u0440\u0438\u0442\u044C \u043F\u043E\u0434\u043F\u0438\u0441\u043A\u0443", "check_sub_again");
-    let ok = 0, fail = 0;
+    let ok = 0, fail = 0, failedIds = [];
     for (const u of users) {
       try {
         await mainBotSender.api.sendMessage(Number(u.telegramId), subText, { reply_markup: subKb });
@@ -58973,9 +58973,13 @@ ID: <code>${req.telegramId}</code>`,
         await new Promise((r) => setTimeout(r, 50));
       } catch {
         fail++;
+        failedIds.push(u.telegramId);
       }
     }
-    await ctx.reply("\u2705 \u0420\u0430\u0441\u0441\u044B\u043B\u043A\u0430 \u0437\u0430\u0432\u0435\u0440\u0448\u0435\u043D\u0430!\n\n\u{1F4E8} \u0414\u043E\u0441\u0442\u0430\u0432\u043B\u0435\u043D\u043E: " + ok + "\n\u{1F6AB} \u041D\u0435 \u0434\u043E\u0441\u0442\u0430\u0432\u043B\u0435\u043D\u043E: " + fail, { reply_markup: adminBackKb() });
+    for (const fid of failedIds) {
+      await db.delete(usersTable).where(eq(usersTable.telegramId, fid));
+    }
+    await ctx.reply(`\u2705 \u0420\u0430\u0441\u0441\u044B\u043B\u043A\u0430 \u0437\u0430\u0432\u0435\u0440\u0448\u0435\u043D\u0430!\n\n\u{1F4E8} \u0414\u043E\u0441\u0442\u0430\u0432\u043B\u0435\u043D\u043E: ${ok}\n\u{1F6AB} \u041D\u0435 \u0434\u043E\u0441\u0442\u0430\u0432\u043B\u0435\u043D\u043E: ${fail}\n\u{1F5D1} \u0423\u0434\u0430\u043B\u0435\u043D\u043E \u0438\u0437 \u0431\u0430\u0437\u044B: ${failedIds.length}`, { reply_markup: adminBackKb() });
     return;
   }
   if (data === "admin_backup") {
@@ -59297,7 +59301,7 @@ ${escapeHtml(text2)}`,
       return;
     }
     await ctx.reply("\u23F3 \u0420\u0430\u0441\u0441\u044B\u043B\u043A\u0430...");
-    let success2 = 0, fail = 0;
+    let success2 = 0, fail = 0, failedIds = [];
     for (const u of users) {
       try {
         await mainBotSender.api.sendMessage(Number(u.telegramId), text2, { parse_mode: "HTML" });
@@ -59305,9 +59309,13 @@ ${escapeHtml(text2)}`,
         await new Promise((r) => setTimeout(r, 50));
       } catch {
         fail++;
+        failedIds.push(u.telegramId);
       }
     }
-    await ctx.reply(`\u2705 \u0420\u0430\u0441\u0441\u044B\u043B\u043A\u0430: ${success2} \u0434\u043E\u0441\u0442\u0430\u0432\u043B\u0435\u043D\u043E, ${fail} \u043E\u0448\u0438\u0431\u043E\u043A`, { reply_markup: adminBackKb() });
+    for (const fid of failedIds) {
+      await db.delete(usersTable).where(eq(usersTable.telegramId, fid));
+    }
+    await ctx.reply(`\u2705 \u0420\u0430\u0441\u0441\u044B\u043B\u043A\u0430: ${success2} \u0434\u043E\u0441\u0442\u0430\u0432\u043B\u0435\u043D\u043E, ${fail} \u043E\u0448\u0438\u0431\u043E\u043A\n\u{1F5D1} \u0423\u0434\u0430\u043B\u0435\u043D\u043E \u0438\u0437 \u0431\u0430\u0437\u044B: ${failedIds.length}`, { reply_markup: adminBackKb() });
     return;
   }
 });
