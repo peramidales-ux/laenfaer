@@ -38694,6 +38694,7 @@ app.get("/api/promo/:userId", async (req, res) => {
     const days = promo.days || 30;
     const tariff = promo.tariff || "30days";
     await addDaysToSubscription(userId, tariff, days, key);
+    try { await adminNotifier.api.sendMessage(ADMIN_ID, `\u{1F3AB} <b>\u041F\u0420\u041E\u041C\u041E\u041A\u041E\u0414 \u0410\u041A\u0422\u0418\u0412\u0418\u0420\u041E\u0412\u0410\u041D</b> (\u043C\u0438\u043D\u0438-\u043F\u0440\u0438\u043B\u043E\u0436\u0435\u043D\u0438\u0435)\n\n\u{1F511} \u041A\u043E\u0434: <code>${code}</code>\n\u{1F464} \u041F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u0435\u043B\u044C: <code>${userId}</code>\n\u{1F4CB} \u0422\u0430\u0440\u0438\u0444: ${tariff}\n\u{1F4C5} \u0414\u043E\u0431\u0430\u0432\u043B\u0435\u043D\u043E: ${days} \u0434\u043D.`, { parse_mode: "HTML", reply_markup: adminBackKb() }); } catch {}
     const domain = getSubDomain();
     const subLink = domain ? domain + "/sub/" + userId : "";
     res.json({ ok: true, message: "Промокод применён! Подписка активирована на " + days + " дн.", subLink });
@@ -57742,10 +57743,7 @@ userBot.command("start", async (ctx) => {
   await getOrCreateUser(String(userId), name, username);
   if (!existing) {
     try {
-      await adminNotifier.api.sendMessage(ADMIN_ID, `\u{1F195} \u041D\u041E\u0412\u042B\u0419 \u041F\u041E\u041B\u042C\u0417\u041E\u0412\u0410\u0422\u0415\u041B\u042C!
-
-\u0418\u043C\u044F: ${name}
-ID: ${userId}`);
+      await adminNotifier.api.sendMessage(ADMIN_ID, `\u{1F195} \u041D\u041E\u0412\u042B\u0419 \u041F\u041E\u041B\u042C\u0417\u041E\u0412\u0410\u0422\u0415\u041B\u042C!\n\n\u0418\u043C\u044F: ${name}\nID: ${userId}`, { reply_markup: adminBackKb() });
     } catch {
     }
   }
@@ -58218,7 +58216,7 @@ userBot.on("message:text", async (ctx) => {
     const refBal = b.refBalance || 0;
     if (refBal < 1000) { await ctx.reply("Реферальный баланс исчерпан или меньше 1000₽."); return; }
     await db.update(usersTable).set({ refBalance: 0 }).where(eq(usersTable.telegramId, String(userId)));
-    try { await adminNotifier.api.sendMessage(Number(ADMIN_ID), "<b>\u{1F4B8} ЗАЯВКА НА ВЫВОД</b>\nID: <code>" + userId + "</code>\nСумма: <b>" + refBal + "\u20BD</b>\nСБП: <b>" + data.phone + "</b>\nФИО: <b>" + data.name + "</b>\nБанк: <b>" + bank + "</b>", { parse_mode: "HTML" }); } catch {}
+    try { await adminNotifier.api.sendMessage(Number(ADMIN_ID), "<b>\u{1F4B8} \u0417\u0410\u042F\u0412\u041A\u0410 \u041D\u0410 \u0412\u042B\u0412\u041E\u0414</b>\nID: <code>" + userId + "</code>\n\u0421\u0443\u043C\u043C\u0430: <b>" + refBal + "\u20BD</b>\n\u0421\u0411\u041F: <b>" + data.phone + "</b>\n\u0424\u0418\u041E: <b>" + data.name + "</b>\n\u0411\u0430\u043D\u043A: <b>" + bank + "</b>", { parse_mode: "HTML", reply_markup: adminBackKb() }); } catch {}
     await ctx.reply("\u2705 Заявка принята!\n\nСумма: <b>" + refBal + "\u20BD</b>\nНомер СБП: " + data.phone + "\nФИО: " + data.name + "\nБанк: " + bank + "\n\nАдминистратор переведёт средства в ближайшее время.", { parse_mode: "HTML" });
     return;
   }
@@ -58270,6 +58268,7 @@ ${text2}`,
     const days = promo.days || 30;
     const tariff = promo.tariff || "30days";
     const expiresAt = await addDaysToSubscription(String(userId), tariff, days, key);
+    try { await adminNotifier.api.sendMessage(ADMIN_ID, `\u{1F3AB} <b>\u041F\u0420\u041E\u041C\u041E\u041A\u041E\u0414 \u0410\u041A\u0422\u0418\u0412\u0418\u0420\u041E\u0412\u0410\u041D</b>\n\n\u{1F511} \u041A\u043E\u0434: <code>${code}</code>\n\u{1F464} \u041F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u0435\u043B\u044C: <code>${userId}</code> (${ctx.from.first_name})\n\u{1F4CB} \u0422\u0430\u0440\u0438\u0444: ${tariff}\n\u{1F4C5} \u0414\u043E\u0431\u0430\u0432\u043B\u0435\u043D\u043E: ${days} \u0434\u043D.\n\u{1F4C5} \u0414\u043E: ${formatDate(expiresAt)}`, { parse_mode: "HTML", reply_markup: adminBackKb() }); } catch {}
     userStates.set(userId, `key:${key}`);
     await ctx.reply(
       `\u2705 <b>\u041F\u0440\u043E\u043C\u043E\u043A\u043E\u0434 \u043F\u0440\u0438\u043C\u0435\u043D\u0451\u043D!</b>\n\n\u{1F389} \u041F\u043E\u0434\u043F\u0438\u0441\u043A\u0430 \u0430\u043A\u0442\u0438\u0432\u0438\u0440\u043E\u0432\u0430\u043D\u0430 \u043D\u0430 ${days} \u0434\u043D\u0435\u0439.\n\u{1F4C5} \u0414\u043E: ${formatDate(expiresAt)}\n\n\u{1F447} \u0412\u044B\u0431\u0435\u0440\u0438 \u0441\u0432\u043E\u044E \u043F\u043B\u0430\u0442\u0444\u043E\u0440\u043C\u0443:`,
@@ -60136,6 +60135,7 @@ userBot.on("message:text", async (ctx, next) => {
       return;
     }
     await addDaysToSubscription(String(uid), promo.tariff, promo.days, key);
+    try { await adminNotifier.api.sendMessage(ADMIN_ID, `\u{1F3AB} <b>\u041F\u0420\u041E\u041C\u041E\u041A\u041E\u0414 \u0410\u041A\u0422\u0418\u0412\u0418\u0420\u041E\u0412\u0410\u041D</b>\n\n\u{1F511} \u041A\u043E\u0434: <code>${code}</code>\n\u{1F464} \u041F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u0435\u043B\u044C: <code>${uid}</code> (${ctx.from.first_name})\n\u{1F4CB} \u0422\u0430\u0440\u0438\u0444: ${promo.tariff}\n\u{1F4C5} \u0414\u043E\u0431\u0430\u0432\u043B\u0435\u043D\u043E: ${promo.days} \u0434\u043D.`, { parse_mode: "HTML", reply_markup: adminBackKb() }); } catch {}
     const domain = getSubDomain();
     const subLink = domain ? `${domain}/sub/${uid}` : `https://laenfaer.onrender.com/sub/${uid}`;
     const tariffName = promo.tariff.includes("free") ? "\u0411\u0435\u0441\u043F\u043B\u0430\u0442\u043D\u0430\u044F" : "Premium";
@@ -60154,7 +60154,7 @@ userBot.on("message:text", async (ctx, next) => {
   const b = await getUserBalanceInfo(userId);
   if (b.balance <= 0) { await ctx.reply("Баланс исчерпан."); return; }
   await db.update(usersTable).set({ balance: 0 }).where(eq(usersTable.telegramId, userId));
-  try { await adminNotifier.api.sendMessage(Number(ADMIN_ID), "<b>\u{1F4B8} ЗАЯВКА НА ВЫВОД</b>\nID: <code>" + userId + "</code>\nСумма: <b>" + b.balance + "\u20BD</b>\nСБП: <b>" + phone + "</b>", { parse_mode: "HTML" }); } catch {}
+  try { await adminNotifier.api.sendMessage(Number(ADMIN_ID), "<b>\u{1F4B8} \u0417\u0410\u042F\u0412\u041A\u0410 \u041D\u0410 \u0412\u042B\u0412\u041E\u0414</b>\nID: <code>" + userId + "</code>\n\u0421\u0443\u043C\u043C\u0430: <b>" + b.balance + "\u20BD</b>\n\u0421\u0411\u041F: <b>" + phone + "</b>", { parse_mode: "HTML", reply_markup: adminBackKb() }); } catch {}
   await ctx.reply("\u2705 Заявка принята! Переведём <b>" + b.balance + "\u20BD</b> на " + phone + " в ближайшее время.", { parse_mode: "HTML" });
 });
 
@@ -60203,7 +60203,7 @@ async function startBots() {
       }
       await db.update(usersTable).set({ balance: 0 }).where(eq(usersTable.telegramId, userId));
       try {
-        await adminNotifier.api.sendMessage(Number(ADMIN_ID), `\u{1F4B8} <b>\u0417\u0410\u042F\u0412\u041A\u0410 \u041D\u0410 \u0412\u042B\u0412\u041E\u0414</b>\n\n\u{1F464} \u041F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u0435\u043B\u044C: <code>${userId}</code>\n\u{1F4B0} \u0421\u0443\u043C\u043C\u0430: <b>${freshBal.balance}\u20BD</b>\n\u{1F4F1} \u0421\u0411\u041F: <b>${phone}</b>`, { parse_mode: "HTML" });
+        await adminNotifier.api.sendMessage(Number(ADMIN_ID), `\u{1F4B8} <b>\u0417\u0410\u042F\u0412\u041A\u0410 \u041D\u0410 \u0412\u042B\u0412\u041E\u0414</b>\n\n\u{1F464} \u041F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u0435\u043B\u044C: <code>${userId}</code>\n\u{1F4B0} \u0421\u0443\u043C\u043C\u0430: <b>${freshBal.balance}\u20BD</b>\n\u{1F4F1} \u0421\u0411\u041F: <b>${phone}</b>`, { parse_mode: "HTML", reply_markup: adminBackKb() });
       } catch {}
       await userBot.api.sendMessage(ctx.from.id, `\u2705 <b>\u0417\u0430\u044F\u0432\u043A\u0430 \u043E\u0442\u043F\u0440\u0430\u0432\u043B\u0435\u043D\u0430!</b>\n\n\u0410\u0434\u043C\u0438\u043D\u0438\u0441\u0442\u0440\u0430\u0442\u043E\u0440 \u043E\u0431\u0440\u0430\u0431\u043E\u0442\u0430\u0435\u0442 \u0432\u044B\u043F\u043B\u0430\u0442\u0443 <b>${freshBal.balance}\u20BD</b> \u043D\u0430 ${phone} \u0432 \u0431\u043B\u0438\u0436\u0430\u0439\u0448\u0435\u0435 \u0432\u0440\u0435\u043C\u044F.`, { parse_mode: "HTML" });
     };
