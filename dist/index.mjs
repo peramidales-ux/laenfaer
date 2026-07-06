@@ -38529,7 +38529,7 @@ document.addEventListener('click',function(e){if(e.target.closest('#p-bal .c:las
 if(!uid){document.getElementById('S').innerHTML='<div class="c" style="text-align:center;margin-top:40px"><div style="font-size:36px;margin-bottom:10px">&#128274;</div><div style="font-size:16px;font-weight:800">Откройте из Telegram</div></div>';}
 else{
 fetch('/api/profile/'+uid).then(function(r){return r.json()}).then(function(d){
-D=d;var N=d.name||'Пользователь',U=d.username||'',H=d.hasActiveSub,DY=d.daysLeft||0,Ta=d.tariff||'',SL=d.subLink||'',SC=d.serverCount||0,RC=d.refCount||0,TP=d.totalPaid||0,BL=d.balance||0,ED=d.expireDate||'',EDD=d.expireDateDisplay||ED,SRV=d.servers||[];
+D=d;var N=d.name||'Пользователь',U=d.username||'',H=d.hasActiveSub,DY=d.daysLeft||0,Ta=d.tariffLabel||d.tariff||'',SL=d.subLink||'',SC=d.serverCount||0,RC=d.refCount||0,TP=d.totalPaid||0,BL=d.balance||0,ED=d.expireDate||'',EDD=d.expireDateDisplay||ED,SRV=d.servers||[];
 var h='';
 
 /* HOME */
@@ -38649,13 +38649,15 @@ app.get("/api/profile/:userId", async (req, res) => {
     const hasActiveSub = s && new Date(s.expiresAt) > now;
     const daysLeft = hasActiveSub ? Math.ceil((new Date(s.expiresAt) - now) / 86400000) : 0;
     const tariff = hasActiveSub ? s.tariff : "";
+    const isFreeSub = hasActiveSub && s.tariff && (s.tariff.includes("free") || s.tariff === "free_3days" || s.tariff === "free_7days");
+    const tariffLabel = hasActiveSub ? (isFreeSub ? `Бесплатный (${daysLeft} дн.)` : `Premium (${daysLeft} дн.)`) : "";
     const expireDate = hasActiveSub ? new Date(s.expiresAt).toISOString() : "";
     const expireDateDisplay = hasActiveSub ? new Date(s.expiresAt).toLocaleDateString("ru-RU") : "";
     const subLink = hasActiveSub && domain ? domain + "/sub/" + userId : "";
     res.json({
       name: u?.name || "Пользователь",
       username: u?.username || "",
-      hasActiveSub, daysLeft, tariff, expireDate, expireDateDisplay, subLink,
+      hasActiveSub, daysLeft, tariff, tariffLabel, expireDate, expireDateDisplay, subLink,
       serverCount: 50,
       refCount: u?.refBalance || 0,
       refCode: userId,
@@ -38683,10 +38685,12 @@ app.get("/api/promo/:userId", async (req, res) => {
     if (!code) return res.json({ ok: false, message: "Введите промокод" });
     const promo = await activatePromoCode(code);
     if (!promo) return res.json({ ok: false, message: "Промокод не найден или уже использован" });
-    const key = await getRandomPremiumKey() || await getRandomFreeKey();
+    const isFreeTariffApi = promo.tariff && promo.tariff.includes("free");
+    const key = isFreeTariffApi ? (await getRandomFreeKey() || await getRandomPremiumKey()) : (await getRandomPremiumKey() || await getRandomFreeKey());
     if (!key) return res.json({ ok: false, message: "Нет свободных ключей, обратитесь в поддержку" });
     const days = promo.days || 30;
     const tariff = promo.tariff || "30days";
+    await db.update(usersTable).set({ balance: 0 }).where(eq(usersTable.telegramId, userId));
     await setSubscription(userId, tariff, days, key);
     const domain = getSubDomain();
     const subLink = domain ? domain + "/sub/" + userId : "";
@@ -57174,6 +57178,7 @@ async function setSubscription(telegramId, tariff, days, key) {
     target: subscriptionsTable.telegramId,
     set: { tariff, expiresAt, key, reminderSent: false, updatedAt: /* @__PURE__ */ new Date() }
   });
+  await db.update(usersTable).set({ balance: 0 }).where(eq(usersTable.telegramId, telegramId));
   return expiresAt;
 }
 async function hasHadFreeKey(telegramId) {
@@ -57594,7 +57599,8 @@ async function getSubscriptionStatus(telegramId) {
   const sub = await getSubscription(telegramId);
   if (sub) {
     const left = daysLeft(sub.expiresAt);
-    const name = TARIFF_LABELS[sub.tariff] ?? "\u0410\u043A\u0442\u0438\u0432\u043D\u0430";
+    const isFree = sub.tariff && (sub.tariff.includes("free") || sub.tariff === "free_3days" || sub.tariff === "free_7days");
+    const name = isFree ? `Бесплатный (${left} дн.)` : `Premium (${left} дн.)`;
     if (left > 0) {
       return `\u{1F7E2} \u0410\u041A\u0422\u0418\u0412\u041D\u0410
 \u0422\u0430\u0440\u0438\u0444: ${name}
@@ -58236,7 +58242,8 @@ ${text2}`,
       await ctx.reply("\u274C \u041F\u0440\u043E\u043C\u043E\u043A\u043E\u0434 \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D \u0438\u043B\u0438 \u0443\u0436\u0435 \u0438\u0441\u043F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u043D.", { reply_markup: mainMenuKb() });
       return;
     }
-    const key = await getRandomPremiumKey() || await getRandomFreeKey();
+    const isFreeTariff = promo.tariff && (promo.tariff.includes("free") || promo.tariff === "free_3days" || promo.tariff === "free_7days");
+    const key = isFreeTariff ? (await getRandomFreeKey() || await getRandomPremiumKey()) : (await getRandomPremiumKey() || await getRandomFreeKey());
     if (!key) {
       await ctx.reply("\u274C \u041D\u0435\u0442 \u0441\u0432\u043E\u0431\u043E\u0434\u043D\u044B\u0445 \u043A\u043B\u044E\u0447\u0435\u0439. \u041E\u0431\u0440\u0430\u0442\u0438\u0442\u0435\u0441\u044C \u0432 \u043F\u043E\u0434\u0434\u0435\u0440\u0436\u043A\u0443.", { reply_markup: mainMenuKb() });
       return;
@@ -59941,11 +59948,13 @@ userBot.on("message:text", async (ctx, next) => {
       await ctx.reply("\u274C \u041F\u0440\u043E\u043C\u043E\u043A\u043E\u0434 \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D \u0438\u043B\u0438 \u0443\u0436\u0435 \u0438\u0441\u043F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u043D.", { reply_markup: backToMainKb() });
       return;
     }
-    const key = promo.tariff.includes("free") ? await getRandomFreeKey() : await getRandomPremiumKey();
+    const isFreeTariff2 = promo.tariff && promo.tariff.includes("free");
+    const key = isFreeTariff2 ? (await getRandomFreeKey() || await getRandomPremiumKey()) : (await getRandomPremiumKey() || await getRandomFreeKey());
     if (!key) {
-      await ctx.reply("\u274C \u041D\u0435\u0442 \u043A\u043B\u044E\u0447\u0435\u0439 \u0432 \u0431\u0430\u0437\u0435. \u041E\u0431\u0440\u0430\u0442\u0438\u0442\u0435\u0441\u044C \u043A \u043F\u043E\u0434\u0434\u0435\u0440\u0436\u043A\u0435.", { reply_markup: backToMainKb() });
+      await ctx.reply("\u274C \u041D\u0435\u0442 \u043A\u043B\u044E\u0447\u0435\u0439 \u0432 \u0431\u0430\u0437\u0435. \u041E\u0431\u0440\u0430\u0442\u0438\u0442\u0435 \u043A \u043F\u043E\u0434\u0434\u0435\u0440\u0436\u043A\u0435.", { reply_markup: backToMainKb() });
       return;
     }
+    await db.update(usersTable).set({ balance: 0 }).where(eq(usersTable.telegramId, String(uid)));
     await setSubscription(String(uid), promo.tariff, promo.days, key);
     const domain = getSubDomain();
     const subLink = domain ? `${domain}/sub/${uid}` : `https://laenfaer.onrender.com/sub/${uid}`;
