@@ -38519,14 +38519,17 @@ var E={},cur='home',D={};
 function $(s){return document.querySelector(s)}
 function toast(m){var t=$('#T');t.textContent=m;t.classList.add('show');setTimeout(function(){t.classList.remove('show')},1800)}
 function go(p){if(p===cur)return;var o=E[cur],n=E[p];if(o){o.classList.remove('on');o.style.display='none'}if(n){n.style.display='';requestAnimationFrame(function(){requestAnimationFrame(function(){n.classList.add('on')})})}document.querySelectorAll('.nav-i').forEach(function(b){b.classList.toggle('on',b.dataset.p===p)});cur=p}
-function cpy(id){var el=$('#'+id);if(!el)return;navigator.clipboard.writeText(el.textContent).then(function(){if(Tg)Tg.HapticFeedback.notificationOccurred('success');toast('Скопировано!')})}
+function cpy(id){var el=$('#'+id);if(!el)return;navigator.clipboard.writeText(el.textContent).then(function(){if(Tg)Tg.HapticFeedback.notificationOccurred('success');toast('Скопировано!')}).catch(function(){toast('Не удалось скопировать')})}
 document.querySelectorAll('.nav-i').forEach(function(b){b.addEventListener('click',function(){go(b.dataset.p)})});
 document.addEventListener('click',function(e){var b=e.target.closest('[data-copy]');if(b)cpy(b.dataset.copy)});
+document.addEventListener('click',function(e){if(e.target.closest('#p-sup .btn-g')){toast('Откройте бота для создания тикета');window.open('https://t.me/laenfaer_vpn_bot','_blank')}});
+document.addEventListener('click',function(e){if(e.target.closest('.link-refresh')){toast('Обновлено!')}});
+document.addEventListener('click',function(e){if(e.target.closest('#p-bal .c:last-child')){var el=e.target.closest('#p-bal .c:last-child');var h=el.querySelector('.st span');if(h){h.textContent=h.textContent==='▼'?'▲':'▼'}}});
 
 if(!uid){document.getElementById('S').innerHTML='<div class="c" style="text-align:center;margin-top:40px"><div style="font-size:36px;margin-bottom:10px">&#128274;</div><div style="font-size:16px;font-weight:800">Откройте из Telegram</div></div>';}
 else{
 fetch('/api/profile/'+uid).then(function(r){return r.json()}).then(function(d){
-D=d;var N=d.name||'Пользователь',U=d.username||'',H=d.hasActiveSub,DY=d.daysLeft||0,Ta=d.tariff||'',SL=d.subLink||'',SC=d.serverCount||0,RC=d.refCount||0,TP=d.totalPaid||0,BL=d.balance||0,ED=d.expireDate||'',SRV=d.servers||[];
+D=d;var N=d.name||'Пользователь',U=d.username||'',H=d.hasActiveSub,DY=d.daysLeft||0,Ta=d.tariff||'',SL=d.subLink||'',SC=d.serverCount||0,RC=d.refCount||0,TP=d.totalPaid||0,BL=d.balance||0,ED=d.expireDate||'',EDD=d.expireDateDisplay||ED,SRV=d.servers||[];
 var h='';
 
 /* HOME */
@@ -38536,10 +38539,10 @@ h+='<div style="margin-bottom:18px"><div class="hero-title">Добро пожа�
 
 /* Status + Traffic */
 h+='<div class="c">';
-h+='<div class="status-row"><div class="status-dot"></div><div class="status-text">'+(H?'НОРМА':'НЕТ АКТИВА')+'</div><div class="status-badge">'+(H?Ta:'ПРОБНЫЙ ПЕРИОД')+'</div></div>';
+h+='<div class="status-row"><div class="status-dot" style="background:'+(H?'#8BC53F':'#f87171')+';box-shadow:0 0 8px '+(H?'rgba(139,197,63,.5)':'rgba(248,113,113,.5)')+'"></div><div class="status-text" style="color:'+(H?'#8BC53F':'#f87171')+'">'+(H?'НОРМА':'НЕТ АКТИВА')+'</div><div class="status-badge" style="'+(H?'':'background:rgba(248,113,113,.1);color:#f87171;border-color:rgba(248,113,113,.15)')+'">'+(H?Ta:'ПРОБНЫЙ ПЕРИОД')+'</div></div>';
 h+='<div class="traffic-header"><div><div class="traffic-title">Расход трафика</div><div class="traffic-sub">0 МБ / ∞ ГБ</div></div><div class="traffic-pct">0%</div></div>';
 h+='<div class="progress"><div class="progress-fill" style="width:0%"></div></div>';
-h+='<div class="progress-labels"><span>0 МБ</span><span>2.5 ГБ</span><span>5.0 ГБ</span><span>7.5 ГБ</span><span>10.0 ГБ</span></div>';
+h+='<div class="progress-labels"><span>0</span><span>Безлимит</span></div>';
 h+='</div>';
 
 /* Device */
@@ -38547,12 +38550,12 @@ h+='<div class="c-sm"><div class="device-card"><div class="device-icon">&#128187
 
 /* Tariff + Days */
 h+='<div class="tariff-row">';
-h+='<div class="tariff-box"><div class="tariff-label">&#127873; Тариф</div><div class="tariff-value">'+(H?Ta:'Нет')+'</div><div class="tariff-sub">'+ED+'</div></div>';
-h+='<div class="tariff-box"><div class="tariff-label">&#128197; Осталось</div><div class="tariff-value" style="color:#8BC53F">'+DY+' <span style="font-size:11px;color:rgba(255,255,255,.3)">дн.</span></div><div class="tariff-sub">до '+ED+'</div></div>';
+h+='<div class="tariff-box"><div class="tariff-label">&#127873; Тариф</div><div class="tariff-value">'+(H?Ta:'Нет')+'</div><div class="tariff-sub">'+EDD+'</div></div>';
+h+='<div class="tariff-box"><div class="tariff-label">&#128197; Осталось</div><div class="tariff-value" style="color:#8BC53F">'+DY+' <span style="font-size:11px;color:rgba(255,255,255,.3)">дн.</span></div><div class="tariff-sub">до '+EDD+'</div></div>';
 h+='</div>';
 
 /* Timer */
-h+='<div class="timer-card"><div class="timer-label">&#9201; Осталось</div><div class="timer-digits"><div class="timer-d" id="td">00</div><div class="timer-sep">:</div><div class="timer-d" id="th">00</div><div class="timer-sep">:</div><div class="timer-d" id="tm">00</div><div class="timer-sep">:</div><div class="timer-d" id="ts">00</div></div><div class="timer-exp">Действует до: '+ED+'</div></div>';
+h+='<div class="timer-card"><div class="timer-label">&#9201; Осталось</div><div class="timer-digits"><div class="timer-d" id="td">00</div><div class="timer-sep">:</div><div class="timer-d" id="th">00</div><div class="timer-sep">:</div><div class="timer-d" id="tm">00</div><div class="timer-sep">:</div><div class="timer-d" id="ts">00</div></div><div class="timer-exp">Действует до: '+EDD+'</div></div>';
 
 if(SL){h+='<div class="link-box"><div class="link-text" id="sl">'+SL+'</div><button class="link-copy" data-copy="sl">&#128203;</button></div>';}
 if(H&&SL){h+='<a class="btn btn-o" href="'+SL+'" target="_blank">Управление подпиской &#8594;</a>';}
@@ -38564,14 +38567,14 @@ h+='<div style="font-size:22px;font-weight:900;margin-bottom:16px">Подпис�
 if(H){
 h+='<div class="c"><div class="status-row"><div class="status-dot"></div><div class="status-text">НОРМА</div><div class="status-badge">'+Ta+'</div></div>';
 h+='<div style="font-size:16px;font-weight:800;margin-bottom:10px">'+Ta+'</div>';
-h+='<div class="c-sm" style="background:rgba(139,197,63,.04);border-color:rgba(139,197,63,.1)"><div style="font-size:13px;font-weight:700;color:#8BC53F;margin-bottom:4px">Текущий план</div><div style="font-size:11px;color:rgba(255,255,255,.35);line-height:1.5">Действует до '+ED+'. Автобновление подписки каждые 12 часов.</div><div style="margin-top:8px;font-size:12px;font-weight:700;color:#8BC53F">'+DY+' дн. осталось</div></div>';
-h+='<div class="traffic-header" style="margin-top:10px"><div class="traffic-title">Трафик</div><div>0 МБ / ∞ ГБ <span style="color:#8BC53F;cursor:pointer">&#128260; Обновить</span></div></div>';
+h+='<div class="c-sm" style="background:rgba(139,197,63,.04);border-color:rgba(139,197,63,.1)"><div style="font-size:13px;font-weight:700;color:#8BC53F;margin-bottom:4px">Текущий план</div><div style="font-size:11px;color:rgba(255,255,255,.35);line-height:1.5">Действует до '+EDD+'. Автобновление подписки каждые 12 часов.</div><div style="margin-top:8px;font-size:12px;font-weight:700;color:#8BC53F">'+DY+' дн. осталось</div></div>';
+h+='<div class="traffic-header" style="margin-top:10px"><div class="traffic-title">Трафик</div><div>0 МБ / ∞ ГБ <span class="link-refresh" style="color:#8BC53F;cursor:pointer">&#128260; Обновить</span></div></div>';
 h+='<div class="progress"><div class="progress-fill" style="width:0%"></div></div>';
 if(SL){h+='<div class="link-box"><div class="link-text" id="sl2">'+SL+'</div><button class="link-copy" data-copy="sl2">&#128203;</button></div>';}
 h+='</div>';
 
 /* Timer */
-h+='<div class="timer-card"><div class="timer-label">&#9201; Осталось</div><div class="timer-digits"><div class="timer-d" id="td2">00</div><div class="timer-sep">:</div><div class="timer-d" id="th2">00</div><div class="timer-sep">:</div><div class="timer-d" id="tm2">00</div><div class="timer-sep">:</div><div class="timer-d" id="ts2">00</div></div><div class="timer-exp">Действует до: '+ED+'</div></div>';
+h+='<div class="timer-card"><div class="timer-label">&#9201; Осталось</div><div class="timer-digits"><div class="timer-d" id="td2">00</div><div class="timer-sep">:</div><div class="timer-d" id="th2">00</div><div class="timer-sep">:</div><div class="timer-d" id="tm2">00</div><div class="timer-sep">:</div><div class="timer-d" id="ts2">00</div></div><div class="timer-exp">Действует до: '+EDD+'</div></div>';
 
 h+='<a class="btn btn-g" href="'+(SL||'#')+'" target="_blank">Выберите тариф для продолжения &#8594;</a>';
 }else{
@@ -38582,7 +38585,7 @@ h+='</div></div>';
 /* BALANCE */
 h+='<div class="page" id="p-bal" style="display:none"><div class="hbar"><div class="hbar-logo">&#9889;</div><div class="hbar-name">LAENFAER VPN</div><div class="hbar-bell">&#128276;</div><div class="hbar-lang">&#127479;&#127482; RU</div></div><div class="anim">';
 h+='<div style="font-size:22px;font-weight:900;margin-bottom:16px">Баланс</div>';
-h+='<div class="c"><div class="tariff-label">Текущий баланс</div><div style="font-size:32px;font-weight:900;color:#8BC53F">'+BL+'.00 &#8381;</div></div>';
+h+='<div class="c"><div class="tariff-label">Текущий баланс</div><div style="font-size:32px;font-weight:900;color:#8BC53F">'+Number(BL).toFixed(0)+' &#8381;</div></div>';
 
 h+='<div class="c"><div class="st">Промокод</div><div class="promo-row"><input class="promo-input" placeholder="Введите промокод" id="promoInput"><button class="promo-btn" id="promoBtn">Активировать</button></div></div>';
 
@@ -38622,7 +38625,7 @@ function updateTimers(){var el=document.getElementById('td');if(!el)return;if(!D
 updateTimers();setInterval(updateTimers,1000);
 
 /* Promo button */
-var pb=document.getElementById('promoBtn');if(pb)pb.addEventListener('click',function(){var v=document.getElementById('promoInput');if(v&&v.value.trim())toast('Промокод "'+v.value.trim()+'" отправлен!')});
+var pb=document.getElementById('promoBtn');if(pb)pb.addEventListener('click',function(){var v=document.getElementById('promoInput');if(v&&v.value.trim()){fetch('/api/promo/'+uid+'?code='+encodeURIComponent(v.value.trim())).then(function(r){return r.json()}).then(function(r){toast(r.message||'Промокод применён!');if(r.ok&&r.subLink){D.subLink=r.subLink;SL=r.subLink}}).catch(function(){toast('Ошибка сети')}}});
 
 }).catch(function(){document.getElementById('S').innerHTML='<div class="c" style="text-align:center;margin-top:40px"><div style="font-size:15px;font-weight:800;color:#f87171">Ошибка загрузки</div></div>'});
 }
@@ -38646,12 +38649,13 @@ app.get("/api/profile/:userId", async (req, res) => {
     const hasActiveSub = s && new Date(s.expiresAt) > now;
     const daysLeft = hasActiveSub ? Math.ceil((new Date(s.expiresAt) - now) / 86400000) : 0;
     const tariff = hasActiveSub ? s.tariff : "";
-    const expireDate = hasActiveSub ? new Date(s.expiresAt).toLocaleDateString("ru-RU") : "";
+    const expireDate = hasActiveSub ? new Date(s.expiresAt).toISOString() : "";
+    const expireDateDisplay = hasActiveSub ? new Date(s.expiresAt).toLocaleDateString("ru-RU") : "";
     const subLink = hasActiveSub && domain ? domain + "/sub/" + userId : "";
     res.json({
       name: u?.name || "Пользователь",
       username: u?.username || "",
-      hasActiveSub, daysLeft, tariff, expireDate, subLink,
+      hasActiveSub, daysLeft, tariff, expireDate, expireDateDisplay, subLink,
       serverCount: 50,
       refCount: u?.refBalance || 0,
       refCode: userId,
@@ -38668,6 +38672,28 @@ app.get("/api/profile/:userId", async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Internal error" });
+  }
+});
+
+// Promo code API for mini-app
+app.get("/api/promo/:userId", async (req, res) => {
+  try {
+    const userId = String(req.params.userId);
+    const code = String(req.query.code || "").trim().toUpperCase();
+    if (!code) return res.json({ ok: false, message: "Введите промокод" });
+    const promo = await activatePromoCode(code);
+    if (!promo) return res.json({ ok: false, message: "Промокод не найден или уже использован" });
+    const key = await getRandomPremiumKey() || await getRandomFreeKey();
+    if (!key) return res.json({ ok: false, message: "Нет свободных ключей, обратитесь в поддержку" });
+    const days = promo.days || 30;
+    const tariff = promo.tariff || "30days";
+    await setSubscription(userId, tariff, days, key);
+    const domain = getSubDomain();
+    const subLink = domain ? domain + "/sub/" + userId : "";
+    res.json({ ok: true, message: "Промокод применён! Подписка активирована на " + days + " дн.", subLink });
+  } catch (err) {
+    console.error("[PROMO_API]", err);
+    res.status(500).json({ ok: false, message: "Ошибка сервера" });
   }
 });
 
@@ -57212,12 +57238,15 @@ async function savePromoCode(code, days, tariff, maxUses) {
   if (rows.length > 0) {
     try { codes = JSON.parse(rows[0].value); } catch { codes = {}; }
   }
+  const existing = codes[code] || codes[code.toUpperCase()];
+  if (existing) return false;
   codes[code] = { days: Number(days), tariff, maxUses, used: 0, createdAt: Date.now() };
   if (rows.length > 0) {
     await db.update(settingsTable).set({ value: JSON.stringify(codes) }).where(eq(settingsTable.key, "promo_codes"));
   } else {
-    await db.insert(settingsTable).values({ key: "promo_codes", value: JSON.stringify(codes) });
+    await db.insert(settingsTable).values({ key: "promo_codes", value: JSON.stringify(codes) }).onConflictDoUpdate({ target: settingsTable.key, set: { value: JSON.stringify(codes) } });
   }
+  return true;
 }
 async function activatePromoCode(code) {
   const rows = await db.select().from(settingsTable).where(eq(settingsTable.key, "promo_codes"));
@@ -57526,6 +57555,8 @@ if (!ADMIN_BOT_TOKEN) throw new Error("ADMIN_BOT_TOKEN is required");
 var adminNotifier = new Bot(ADMIN_BOT_TOKEN);
 var ADMIN_ID = Number(process.env.ADMIN_ID);
 var userStates = /* @__PURE__ */ new Map();
+var withdrawData = /* @__PURE__ */ new Map();
+var withdrawPending = /* @__PURE__ */ new Map();
 var lastRefNotif = /* @__PURE__ */ new Map();
 function getWelcomeText(firstName) {
   return `\u{1F525} \u041F\u0440\u0438\u0432\u0435\u0442, ${firstName}! \u{1F525}
@@ -57756,7 +57787,6 @@ userBot.callbackQuery("open_withdraw", async (ctx) => {
     await ctx.answerCallbackQuery({ text: "У вас нет баланса для вывода", show_alert: true });
     return;
   }
-  await ctx.answerCallbackQuery();
   const refBal = bal.refBalance || 0;
   if (refBal < 1000) {
     await ctx.answerCallbackQuery({ text: "Минимальная сумма вывода 1000₽. Ваш реферальный баланс: " + refBal + "₽", show_alert: true });
@@ -57765,38 +57795,6 @@ userBot.callbackQuery("open_withdraw", async (ctx) => {
   userStates.set(ctx.from.id, "withdraw_mode_phone");
   await ctx.answerCallbackQuery();
   await ctx.reply("<b>\u{1F4B8} Вывод через СБП</b>\n\nРеферальный баланс: <b>" + refBal + "\u20BD</b>\n\nШаг 1/3: Введите номер телефона СБП:", { parse_mode: "HTML" });
-});
-userBot.callbackQuery("open_profile", async (ctx) => {
-  const userId = ctx.from.id;
-  const status = await getSubscriptionStatus(String(userId));
-  const bal = await getUserBalanceInfo(String(userId));
-  const user = await getUser(String(userId));
-  const refCountRows = await db.select().from(referralCountsTable).where(eq(referralCountsTable.userId, String(userId))).limit(1);
-  const refCount = refCountRows[0]?.count || 0;
-  const regDate = user?.createdAt ? new Date(user.createdAt).toLocaleDateString("ru-RU") : "—";
-  const botUsername = ctx.me.username;
-  const refLink = `https://t.me/${botUsername}?start=ref_${userId}`;
-  await ctx.answerCallbackQuery();
-  await ctx.reply(
-    `\u{1F464} <b>\u041B\u0418\u0427\u041D\u042B\u0419 \u041A\u0410\u0411\u0418\u041D\u0415\u0422</b>
-
-\u{1F464} \u0418\u043C\u044F: <b>${ctx.from.first_name}</b>
-\u{1F194} ID: <code>${userId}</code>
-\u{1F4C5} \u0420\u0435\u0433\u0438\u0441\u0442\u0440\u0430\u0446\u0438\u044F: <b>${regDate}</b>
-
-\u{1F4B3} \u041F\u043E\u043F\u043E\u043B\u043D\u0435\u043D\u043E \u0432\u0441\u0435\u0433\u043E: <b>${bal.totalPaid}\u20BD</b>
-\u{1F91D} \u0420\u0435\u0444\u0435\u0440\u0430\u043B\u044C\u043D\u044B\u0439 \u0431\u0430\u043B\u0430\u043D\u0441: <b>${bal.refBalance || 0}\u20BD</b>
-
-\u{1F465} \u0420\u0435\u0444\u0435\u0440\u0430\u043B\u044B: <b>${refCount} \u0447\u0435\u043B.</b>
-\u{1F517} \u0412\u0430\u0448\u0430 \u0441\u0441\u044B\u043B\u043A\u0430:
-<code>${refLink}</code>
-
-\u{1F4CB} <b>\u041F\u041E\u0414\u041F\u0418\u0421\u041A\u0410:</b>
-${status}
-
-\u{1F447} \u0414\u043E\u043F\u043E\u043B\u043D\u0438\u0442\u0435\u043B\u044C\u043D\u044B\u0435 \u0440\u0430\u0437\u0434\u0435\u043B\u044B:`,
-    { parse_mode: "HTML", reply_markup: profileKb() }
-  );
 });
 userBot.callbackQuery("check_sub_again", async (ctx) => {
   const userId = ctx.from.id;
@@ -58230,6 +58228,29 @@ ${text2}`,
     await ctx.reply("\u2705 \u0421\u043E\u043E\u0431\u0449\u0435\u043D\u0438\u0435 \u043E\u0442\u043F\u0440\u0430\u0432\u043B\u0435\u043D\u043E \u0430\u0434\u043C\u0438\u043D\u0438\u0441\u0442\u0440\u0430\u0442\u043E\u0440\u0443. \u041E\u0436\u0438\u0434\u0430\u0439 \u043E\u0442\u0432\u0435\u0442\u0430...", { reply_markup: activeSupportKb() });
     return;
   }
+  if (state === "waiting_promo_code") {
+    const code = text2.trim().toUpperCase();
+    userStates.delete(userId);
+    const promo = await activatePromoCode(code);
+    if (!promo) {
+      await ctx.reply("\u274C \u041F\u0440\u043E\u043C\u043E\u043A\u043E\u0434 \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D \u0438\u043B\u0438 \u0443\u0436\u0435 \u0438\u0441\u043F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u043D.", { reply_markup: mainMenuKb() });
+      return;
+    }
+    const key = await getRandomPremiumKey() || await getRandomFreeKey();
+    if (!key) {
+      await ctx.reply("\u274C \u041D\u0435\u0442 \u0441\u0432\u043E\u0431\u043E\u0434\u043D\u044B\u0445 \u043A\u043B\u044E\u0447\u0435\u0439. \u041E\u0431\u0440\u0430\u0442\u0438\u0442\u0435\u0441\u044C \u0432 \u043F\u043E\u0434\u0434\u0435\u0440\u0436\u043A\u0443.", { reply_markup: mainMenuKb() });
+      return;
+    }
+    const days = promo.days || 30;
+    const tariff = promo.tariff || "30days";
+    const expiresAt = await setSubscription(String(userId), tariff, days, key);
+    userStates.set(userId, `key:${key}`);
+    await ctx.reply(
+      `\u2705 <b>\u041F\u0440\u043E\u043C\u043E\u043A\u043E\u0434 \u043F\u0440\u0438\u043C\u0435\u043D\u0451\u043D!</b>\n\n\u{1F389} \u041F\u043E\u0434\u043F\u0438\u0441\u043A\u0430 \u0430\u043A\u0442\u0438\u0432\u0438\u0440\u043E\u0432\u0430\u043D\u0430 \u043D\u0430 ${days} \u0434\u043D\u0435\u0439.\n\u{1F4C5} \u0414\u043E: ${formatDate(expiresAt)}\n\n\u{1F447} \u0412\u044B\u0431\u0435\u0440\u0438 \u0441\u0432\u043E\u044E \u043F\u043B\u0430\u0442\u0444\u043E\u0440\u043C\u0443:`,
+      { parse_mode: "HTML", reply_markup: connectKb() }
+    );
+    return;
+  }
   try {
     await ctx.deleteMessage();
   } catch {
@@ -58573,6 +58594,7 @@ adminBot.callbackQuery(/.*/, async (ctx) => {
     return;
   }
   if (data === "admin_promo_menu") {
+    adminStates.delete(ADMIN_ID2);
     await showPromoMenu(ctx);
     return;
   }
@@ -58588,9 +58610,10 @@ adminBot.callbackQuery(/.*/, async (ctx) => {
   if (data === "promo_set_free") {
     const state = adminStates.get(ADMIN_ID2);
     if (state && state.startsWith("promo_tariff_")) {
-      const parts = state.replace("promo_tariff_", "").split("_");
-      const code = parts[0];
-      const days = parts[1];
+      const rest = state.replace("promo_tariff_", "");
+      const lastUnderscore = rest.lastIndexOf("_");
+      const code = rest.substring(0, lastUnderscore);
+      const days = rest.substring(lastUnderscore + 1);
       adminStates.set(ADMIN_ID2, `promo_max_${code}_${days}_free_3days`);
       await ctx.editMessageText(`\u2705 \u0422\u0438\u043F: \u0411\u0435\u0441\u043F\u043B\u0430\u0442\u043D\u0430\u044F\n\n\u0412\u0432\u0435\u0434\u0438\u0442\u0435 \u043B\u0438\u043C\u0438\u0442 \u0438\u0441\u043F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u043D\u0438\u0439 (\u043F\u043E \u0443\u043C\u043E\u043B\u0447\u0430\u043D\u0438\u044E: 999):`, { reply_markup: adminBackKb() });
       return;
@@ -58601,9 +58624,10 @@ adminBot.callbackQuery(/.*/, async (ctx) => {
   if (data === "promo_set_prem") {
     const state = adminStates.get(ADMIN_ID2);
     if (state && state.startsWith("promo_tariff_")) {
-      const parts = state.replace("promo_tariff_", "").split("_");
-      const code = parts[0];
-      const days = parts[1];
+      const rest = state.replace("promo_tariff_", "");
+      const lastUnderscore = rest.lastIndexOf("_");
+      const code = rest.substring(0, lastUnderscore);
+      const days = rest.substring(lastUnderscore + 1);
       adminStates.set(ADMIN_ID2, `promo_max_${code}_${days}_30days`);
       await ctx.editMessageText(`\u2705 \u0422\u0438\u043F: Premium\n\n\u0412\u0432\u0435\u0434\u0438\u0442\u0435 \u043B\u0438\u043C\u0438\u0442 \u0438\u0441\u043F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u043D\u0438\u0439 (\u043F\u043E \u0443\u043C\u043E\u043B\u0447\u0430\u043D\u0438\u044E: 999):`, { reply_markup: adminBackKb() });
       return;
@@ -59175,10 +59199,13 @@ ${escapeHtml(text2)}`,
     return;
   }
   if (state.startsWith("promo_max_")) {
-    const parts = state.replace("promo_max_", "").split("_");
-    const code = parts[0];
-    const days = parts[1];
-    const tariff = parts[2];
+    const rest = state.replace("promo_max_", "");
+    const lastUnderscore1 = rest.lastIndexOf("_");
+    const tariff = rest.substring(lastUnderscore1 + 1);
+    const beforeTariff = rest.substring(0, lastUnderscore1);
+    const lastUnderscore2 = beforeTariff.lastIndexOf("_");
+    const days = beforeTariff.substring(lastUnderscore2 + 1);
+    const code = beforeTariff.substring(0, lastUnderscore2);
     adminStates.delete(ADMIN_ID2);
     const maxUses = parseInt(text2.trim(), 10) || 999;
     await savePromoCode(code, days, tariff, maxUses);
@@ -59886,7 +59913,8 @@ async function registerCommands() {
     { command: "profile", description: "\u{1F464} \u041B\u0438\u0447\u043D\u044B\u0439 \u043A\u0430\u0431\u0438\u043D\u0435\u0442" },
     { command: "shop", description: "\u{1F6D2} \u041A\u0443\u043F\u0438\u0442\u044C \u043F\u043E\u0434\u043F\u0438\u0441\u043A\u0443" },
     { command: "support", description: "\u{1F91D} \u041D\u0430\u043F\u0438\u0441\u0430\u0442\u044C \u0432 \u043F\u043E\u0434\u0434\u0435\u0440\u0436\u043A\u0443" },
-    { command: "status", description: "\u{1F4CA} \u0421\u0442\u0430\u0442\u0443\u0441 \u0441\u0435\u0440\u0432\u0435\u0440\u043E\u0432" }
+    { command: "status", description: "\u{1F4CA} \u0421\u0442\u0430\u0442\u0443\u0441 \u0441\u0435\u0440\u0432\u0435\u0440\u043E\u0432" },
+    { command: "withdraw", description: "\u{1F4B8} \u0412\u044B\u0432\u043E\u0434 \u0441\u0440\u0435\u0434\u0441\u0442\u0432" }
   ]);
   await adminBot.api.setMyCommands([
     { command: "start", description: "\u{1F6E0} \u041F\u0430\u043D\u0435\u043B\u044C \u0443\u043F\u0440\u0430\u0432\u043B\u0435\u043D\u0438\u044F" },
@@ -59897,33 +59925,6 @@ async function registerCommands() {
   ]);
   logger.info("Bot commands registered");
 }
-
-userBot.command("withdraw", async (ctx) => {
-  const userId = String(ctx.from.id);
-  const bal = await getUserBalanceInfo(userId);
-  if (bal.balance <= 0) {
-    await ctx.reply("У вас нет доступного баланса.", { parse_mode: "HTML" });
-    return;
-  }
-  await ctx.reply("<b>Вывод через СБП</b>\n\nДоступно: <b>" + bal.balance + "\u20BD</b>\n\nОтправьте номер телефона:\n<code>+7XXXXXXXXXX</code>", { parse_mode: "HTML" });
-  const uid = ctx.from.id;
-  const once = userBot.on("message:text", async (ctx2) => {
-    if (ctx2.from.id !== uid) return;
-    const phone = ctx2.message.text.trim();
-    if (!/^\+?[78]\d{10}$/.test(phone.replace(/\s/g,""))) {
-      await ctx2.reply("Неверный формат. Пример: +79991234567");
-      return;
-    }
-    const b = await getUserBalanceInfo(userId);
-    if (b.balance <= 0) { await ctx2.reply("Баланс исчерпан."); return; }
-    await db.update(usersTable).set({ balance: 0 }).where(eq(usersTable.telegramId, userId));
-    try { await adminNotifier.api.sendMessage(Number(ADMIN_ID), "<b>ВЫВОД СБП</b>\nID: <code>" + userId + "</code>\nСумма: <b>" + b.balance + "\u20BD</b>\nНомер: <b>" + phone + "</b>", { parse_mode: "HTML" }); } catch {}
-    await ctx2.reply("Заявка принята! Переведём <b>" + b.balance + "\u20BD</b> на " + phone, { parse_mode: "HTML" });
-  });
-});
-
-const withdrawPending = new Map();
-const withdrawData = new Map();
 
 userBot.on("message:text", async (ctx, next) => {
   const uid = ctx.from.id;
