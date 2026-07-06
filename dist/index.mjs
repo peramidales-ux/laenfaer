@@ -38402,12 +38402,12 @@ app.post("/api/cabinet/auth", async (req, res) => {
     if (!found) {
       await db.insert(usersTable).values({ telegramId: "email_" + email.replace(/[^a-z0-9]/gi, "_"), name: email.split("@")[0], email, emailPass: hash, emailVerifyCode: codeHash, emailVerifyExpiry: new Date(Date.now() + 15 * 60000) });
     }
-    try {
-      const nodemailer = await import("nodemailer");
-      const transporter = nodemailer.default.createTransport({ host: process.env.SMTP_HOST || "smtp.mail.ru", port: Number(process.env.SMTP_PORT) || 465, secure: process.env.SMTP_SECURE === "true", auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS } });
-      await transporter.sendMail({ from: "LAENFAER VPN <" + (process.env.SMTP_USER || "noreply@laenfaer.onrender.com") + ">", to: email, subject: "Код подтверждения LAENFAER VPN", text: "Ваш код: " + code, html: "<div style='font-family:sans-serif;padding:20px'><h2 style='color:#E8B34C'>LAENFAER VPN</h2><p>Код подтверждения:</p><div style='font-size:32px;font-weight:900;letter-spacing:8px;color:#E8B34C;margin:20px 0'>" + code + "</div><p style='color:#999;font-size:12px'>Код действителен 15 минут</p></div>" });
-    } catch (e) { console.error("[SMTP]", e.message); }
     res.json({ ok: true, needVerify: true, email });
+    // Send email async (don't await)
+    import("nodemailer").then(nm => {
+      const transporter = nm.default.createTransport({ host: process.env.SMTP_HOST || "smtp.mail.ru", port: Number(process.env.SMTP_PORT) || 465, secure: process.env.SMTP_SECURE === "true", auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS } });
+      transporter.sendMail({ from: "LAENFAER VPN <" + (process.env.SMTP_USER || "noreply@laenfaer.onrender.com") + ">", to: email, subject: "Код подтверждения LAENFAER VPN", text: "Ваш код: " + code, html: "<div style='font-family:sans-serif;padding:20px'><h2 style='color:#E8B34C'>LAENFAER VPN</h2><p>Код подтверждения:</p><div style='font-size:32px;font-weight:900;letter-spacing:8px;color:#E8B34C;margin:20px 0'>" + code + "</div><p style='color:#999;font-size:12px'>Код действителен 15 минут</p></div>" }).then(() => console.log("[SMTP] sent to", email)).catch(e => console.error("[SMTP]", e.message));
+    }).catch(e => console.error("[SMTP import]", e.message));
   } catch (err) { console.error("[CABINET_AUTH]", err); res.status(500).json({ ok: false, message: "Ошибка сервера" }); }
 });
 
