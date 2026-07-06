@@ -37716,13 +37716,13 @@ function pageShell(title, desc, body, extra) {
 <style>
 :root{--bg:#0A1512;--bg-el:#10241D;--bg-card:#0E1F19;--text:#EAF2ED;--dim:#9FB8AC;--accent:#E8B34C;--accent-s:#F2CE85;--signal:#2DD4BF;--border:rgba(234,242,237,.09);--radius:14px;--serif:"Space Grotesk","Inter",sans-serif;--body:"Inter",-apple-system,sans-serif;--mono:"JetBrains Mono",monospace}
 *{box-sizing:border-box;margin:0;padding:0}
-html{scroll-behavior:smooth}
-body{background:var(--bg);color:var(--text);font-family:var(--body);line-height:1.6;font-size:16px;-webkit-font-smoothing:antialiased;min-height:100vh;overflow-x:hidden}
+html{scroll-behavior:smooth;overflow-x:hidden}
+body{background:var(--bg);color:var(--text);font-family:var(--body);line-height:1.6;font-size:16px;-webkit-font-smoothing:antialiased;min-height:100vh;overflow-x:hidden;width:100%}
 body::before{content:"";position:fixed;inset:0;background-image:radial-gradient(ellipse at 20% 0%,rgba(232,179,76,.06),transparent 55%),radial-gradient(ellipse at 90% 30%,rgba(45,212,191,.05),transparent 50%);pointer-events:none;z-index:0}
 a{color:inherit;text-decoration:none}
 img{max-width:100%;display:block}
-.wrap{max-width:1120px;margin:0 auto;padding:0 24px;position:relative;z-index:1}
-h1,h2,h3{font-family:var(--serif);font-weight:600;letter-spacing:-.01em}
+.wrap{max-width:1120px;margin:0 auto;padding:0 24px;position:relative;z-index:1;overflow:hidden}
+h1,h2,h3{font-family:var(--serif);font-weight:600;letter-spacing:-.01em;overflow-wrap:break-word;word-wrap:break-word}
 h1{font-size:clamp(2.2rem,5vw,3.6rem);line-height:1.08}
 h2{font-size:clamp(1.6rem,3vw,2.3rem);margin-bottom:16px}
 h3{font-size:1.25rem;margin-bottom:10px}
@@ -37760,8 +37760,8 @@ nav.nk a:hover{color:var(--text)}
 .cta-row{display:flex;gap:14px;flex-wrap:wrap}
 .badge{display:inline-block;font-family:var(--mono);font-size:.72rem;padding:4px 10px;border-radius:999px;border:1px solid var(--border);color:var(--dim);margin-right:8px;margin-bottom:8px}
 /* path diagram */
-.pdiag{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:28px}
-.pdiag svg{width:100%;height:auto}
+.pdiag{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:28px;overflow:hidden}
+.pdiag svg{width:100%;height:auto;max-width:100%;display:block}
 .p-line{stroke:var(--signal);stroke-width:2;fill:none;stroke-dasharray:6 8;animation:dash 3.2s linear infinite}
 @keyframes dash{to{stroke-dashoffset:-140}}
 .p-label{font-family:var(--mono);font-size:11px;fill:var(--dim)}
@@ -37771,8 +37771,8 @@ section{padding:56px 0}
 .card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:26px;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
 .card .num{font-family:var(--mono);color:var(--signal);font-size:.8rem;margin-bottom:10px;display:block}
 /* tables */
-table{width:100%;border-collapse:collapse;margin:20px 0}
-th,td{text-align:left;padding:14px 16px;border-bottom:1px solid var(--border);font-size:.94rem}
+table{width:100%;border-collapse:collapse;margin:20px 0;display:block;overflow-x:auto}
+th,td{text-align:left;padding:14px 16px;border-bottom:1px solid var(--border);font-size:.94rem;white-space:nowrap}
 th{font-family:var(--mono);font-size:.78rem;text-transform:uppercase;letter-spacing:.06em;color:var(--dim)}
 /* FAQ */
 .faq{border-bottom:1px solid var(--border);padding:18px 0}
@@ -37885,20 +37885,117 @@ app.get("/", async (_req, res) => {
 </div>
 </div></section>
 
+<section><div class="wrap">
+<span class="eyebrow">Тарифы</span>
+<h2>Выберите свой план</h2>
+<div class="g3">
+<div class="glass"><span class="num">Пробный</span><h3>0 ₽ / 3 дня</h3><p>Бесплатный пробный период. 1 устройство. Полный доступ ко всем серверам.</p><a href="https://t.me/laenfaer_vpn_bot?start=free" class="btn btn-p" style="margin-top:16px;width:100%;justify-content:center">Попробовать</a></div>
+<div class="glass glass-glow" style="border-color:rgba(232,179,76,.2)"><span class="num" style="color:var(--accent)">Популярный</span><h3>249 ₽ / 30 дней</h3><p>1 устройство. Все серверы. Автовыбор. Поддержка 24/7.</p><a href="https://t.me/laenfaer_vpn_bot" class="btn btn-p" style="margin-top:16px;width:100%;justify-content:center">Купить</a></div>
+<div class="glass"><span class="num">Максимум</span><h3>1270 ₽ / 180 дней</h3><p>1 устройство. Скидка 15%. Все серверы. Приоритетная поддержка.</p><a href="https://t.me/laenfaer_vpn_bot" class="btn btn-g" style="margin-top:16px;width:100%;justify-content:center">Выбрать</a></div>
+</div>
+<div style="margin-top:24px;text-align:center"><a href="/pricing" style="color:var(--accent);font-size:.9rem;font-weight:600">Все тарифы и скидки &rarr;</a></div>
+</div></section>
+
+<section><div class="wrap">
+<span class="eyebrow">Серверы</span>
+<h2>8 стран, 50+ серверов</h2>
+<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:16px">
+<div class="glass" style="padding:20px"><div style="display:flex;align-items:center;gap:10px;margin-bottom:8px"><span style="font-size:24px">&#127465;&#127466;</span><h3 style="margin:0">Германия</h3></div><p style="font-size:.85rem">Франкфурт &middot; 12 серверов &middot; 15-25 мс</p></div>
+<div class="glass" style="padding:20px"><div style="display:flex;align-items:center;gap:10px;margin-bottom:8px"><span style="font-size:24px">&#127475;&#127473;</span><h3 style="margin:0">Нидерланды</h3></div><p style="font-size:.85rem">Амстердам &middot; 8 серверов &middot; 20-30 мс</p></div>
+<div class="glass" style="padding:20px"><div style="display:flex;align-items:center;gap:10px;margin-bottom:8px"><span style="font-size:24px">&#127467;&#127470;</span><h3 style="margin:0">Финляндия</h3></div><p style="font-size:.85rem">Хельсинки &middot; 6 серверов &middot; 18-28 мс</p></div>
+<div class="glass" style="padding:20px"><div style="display:flex;align-items:center;gap:10px;margin-bottom:8px"><span style="font-size:24px">&#127479;&#127482;</span><h3 style="margin:0">Россия</h3></div><p style="font-size:.85rem">Москва &middot; 10 серверов &middot; 5-15 мс</p></div>
+<div class="glass" style="padding:20px"><div style="display:flex;align-items:center;gap:10px;margin-bottom:8px"><span style="font-size:24px">&#127467;&#127479;</span><h3 style="margin:0">Франция</h3></div><p style="font-size:.85rem">Париж &middot; 5 серверов &middot; 25-35 мс</p></div>
+<div class="glass" style="padding:20px"><div style="display:flex;align-items:center;gap:10px;margin-bottom:8px"><span style="font-size:24px">&#127480;&#127466;</span><h3 style="margin:0">Швеция</h3></div><p style="font-size:.85rem">Стокгольм &middot; 4 сервера &middot; 22-32 мс</p></div>
+<div class="glass" style="padding:20px"><div style="display:flex;align-items:center;gap:10px;margin-bottom:8px"><span style="font-size:24px">&#127468;&#127463;</span><h3 style="margin:0">Великобритания</h3></div><p style="font-size:.85rem">Лондон &middot; 4 сервера &middot; 30-40 мс</p></div>
+<div class="glass" style="padding:20px"><div style="display:flex;align-items:center;gap:10px;margin-bottom:8px"><span style="font-size:24px">&#127481;&#127480;</span><h3 style="margin:0">Швейцария</h3></div><p style="font-size:.85rem">Цюрих &middot; 3 сервера &middot; 22-32 мс</p></div>
+</div>
+</div></section>
+
+<section><div class="wrap">
+<span class="eyebrow">Сравнение</span>
+<h2>LAENFAER vs другие VPN</h2>
+<div style="overflow-x:auto">
+<table>
+<thead><tr><th>Функция</th><th>LAENFAER</th><th>NordVPN</th><th>ExpressVPN</th></tr></thead>
+<tbody>
+<tr><td>Протокол</td><td style="color:var(--accent)">VLESS Reality</td><td>OpenVPN/WireGuard</td><td>Lightway</td></tr>
+<tr><td>Маскировка трафика</td><td style="color:var(--signal)">&#10003; Полная</td><td>&#10007; Частичная</td><td>&#10007; Частичная</td></tr>
+<tr><td>Скорость</td><td style="color:var(--accent)">до 1 Гбит/с</td><td>до 670 Мбит/с</td><td>до 600 Мбит/с</td></tr>
+<tr><td>Цена от</td><td style="color:var(--accent)">10 ₽/день</td><td>~300 ₽/мес</td><td>~500 ₽/мес</td></tr>
+<tr><td>Бесплатный период</td><td style="color:var(--signal)">&#10003; 3 дня</td><td>&#10007; Нет</td><td>&#10007; Нет</td></tr>
+<tr><td>Подключение</td><td style="color:var(--accent)">Telegram-бот</td><td>Приложение</td><td>Приложение</td></tr>
+<tr><td>Логирование</td><td style="color:var(--signal)">&#10003; Нет</td><td>Частичное</td><td>Частичное</td></tr>
+</tbody>
+</table>
+</div>
+</div></section>
+
+<section><div class="wrap">
+<span class="eyebrow">Безопасность</span>
+<h2>Ваша приватность &mdash; наш приоритет</h2>
+<div class="g3">
+<div class="glass glass-glow"><span class="num">&#128274;</span><h3>VLESS + Reality</h3><p>TLS-хендшейк маскируется под реальный сайт. Провайдер не может определить VPN-трафик даже при глубоком анализе пакетов.</p></div>
+<div class="glass glass-glow"><span class="num">&#128274;</span><h3>Без логов</h3><p>Мы не храним историю вашего трафика, DNS-запросы или метаданные соединений. Только данные для авторизации.</p></div>
+<div class="glass glass-glow"><span class="num">&#128274;</span><h3>Шифрование AES-256</h3><p>Весь трафик шифруется военными алгоритмами. Даже если данные будут перехвачены, их невозможно расшифровать.</p></div>
+</div>
+</div></section>
+
+<section><div class="wrap">
+<span class="eyebrow">Платформы</span>
+<h2>Работает на всех устройствах</h2>
+<div class="g3">
+<div class="glass" style="text-align:center"><div style="font-size:40px;margin-bottom:12px">&#128241;</div><h3>Android</h3><p>HappProxy, v2rayTun, Nekobox. Поддержка VLESS Reality из коробки.</p></div>
+<div class="glass" style="text-align:center"><div style="font-size:40px;margin-bottom:12px">&#128241;</div><h3>iOS / iPhone</h3><p>Happ, Shadowrocket. Настройка за 2 минуты через QR-код.</p></div>
+<div class="glass" style="text-align:center"><div style="font-size:40px;margin-bottom:12px">&#128187;</div><h3>Windows / macOS</h3><p>INCY, v2rayN, V2Box. Полная поддержка всех протоколов.</p></div>
+</div>
+<div style="margin-top:24px;text-align:center"><a href="/setup" style="color:var(--accent);font-size:.9rem;font-weight:600">Подробные инструкции по настройке &rarr;</a></div>
+</div></section>
+
+<section><div class="wrap">
+<span class="eyebrow">Реферальная программа</span>
+<h2>Зарабатывайте с друзьями</h2>
+<div class="g2">
+<div class="glass glass-glow">
+<h3>25% от оплаты друзей</h3><p>Приглашайте друзей по вашей ссылке и получайте 25% от каждой их оплаты на свой баланс. Деньги можно использовать для оплаты подписки или вывести через СБП.</p>
+<div style="margin-top:16px">
+<span class="badge">Минимум для вывода: 1000 ₽</span>
+<span class="badge">Вывод через СБП</span>
+<span class="badge">Без ограничений</span>
+</div>
+</div>
+<div class="glass">
+<h3>Как это работает?</h3>
+<div style="margin-top:12px">
+<p style="margin-bottom:12px"><strong style="color:var(--text)">1.</strong> Получите реферальную ссылку у бота</p>
+<p style="margin-bottom:12px"><strong style="color:var(--text)">2.</strong> Поделитесь с друзьями</p>
+<p style="margin-bottom:12px"><strong style="color:var(--text)">3.</strong> друг оплачивает подписку</p>
+<p><strong style="color:var(--text)">4.</strong> Вы получаете 25% на баланс</p>
+</div>
+</div>
+</div>
+</div></section>
+
 <section><div class="wrap" style="text-align:center;background:var(--bg-el);border-radius:var(--radius);padding:56px 24px;border:1px solid var(--border)">
+<span class="eyebrow">Начать</span>
 <h2>Подключите LAENFAER за 2 минуты</h2>
-<p style="max-width:50ch;margin:0 auto 24px">Бесплатный пробный период 3 дня, карта не нужна.</p>
+<p style="max-width:50ch;margin:0 auto 24px">Бесплатный пробный период 3 дня. Без привязки карты. Подключение через Telegram-бота.</p>
+<div class="cta-row" style="justify-content:center">
 <a href="https://t.me/laenfaer_vpn_bot" class="btn btn-p">Открыть в Telegram</a>
+<a href="/pricing" class="btn btn-g">Смотреть тарифы</a>
+</div>
 </div></section>
 
 <section><div class="wrap">
 <span class="eyebrow">FAQ</span>
 <h2>Часто задаваемые вопросы</h2>
-<details class="faq"><summary>Какие приложения поддерживаются?</summary><p>HappProxy (Android), Happ (iPhone/iPad), INCY (все платформы), v2rayTun и другие клиенты с поддержкой VLESS Reality.</p></details>
-<details class="faq"><summary>Безопасен ли VPN?</summary><p>Да. Мы используем протокол VLESS с технологией Reality, который маскирует VPN-трафик под обычное HTTPS-соединение. Ваш провайдер не сможет определить использование VPN.</p></details>
+<details class="faq"><summary>Какие приложения поддерживаются?</summary><p>HappProxy (Android), Happ (iPhone/iPad), INCY (все платформы), v2rayTun, Nekobox, V2Box и другие клиенты с поддержкой VLESS Reality.</p></details>
+<details class="faq"><summary>Безопасен ли VPN?</summary><p>Да. Мы используем протокол VLESS с технологией Reality, который маскирует VPN-трафик под обычное HTTPS-соединение. Ваш провайдер не сможет определить использование VPN даже при глубоком анализе пакетов.</p></details>
 <details class="faq"><summary>Сколько устройств можно подключить?</summary><p>Зависит от тарифа. На бесплатном пробном &mdash; 1 устройство. На платных тарифах &mdash; от 1 до 5 устройств одновременно.</p></details>
-<details class="faq"><summary>Как оплатить подписку?</summary><p>Оплата через СБП, банковские карты или криптовалюту. Оплата проходит через защищённые платёжные шлюзы.</p></details>
-<details class="faq"><summary>Есть ли реферальная программа?</summary><p>Да! Приглашайте друзей и получайте 25% от их оплаты на свой баланс. Баланс можно использовать для оплаты VPN или вывести деньгами.</p></details>
+<details class="faq"><summary>Как оплатить подписку?</summary><p>Оплата через СБП (ЮKassa), банковские карты или криптовалюту (USDT, BTC). Оплата проходит через защищённые платёжные шлюзы.</p></details>
+<details class="faq"><summary>Есть ли реферальная программа?</summary><p>Да! Приглашайте друзей и получайте 25% от их оплаты на свой баланс. Баланс можно использовать для оплаты VPN или вывести деньгами через СБП.</p></details>
+<details class="faq"><summary>Что такое VLESS Reality?</summary><p>VLESS &mdash; лёгкий протокол туннелирования. Reality &mdash; технология маскировки TLS-хендшейка под реальный сайт. Вместе они создают трафик, который неотличим от обычного HTTPS.</p></details>
+<details class="faq"><summary>Какой пинг до серверов?</summary><p>Пинг зависит от вашего местоположения. Из Москвы: Германия 15-25 мс, Финляндия 18-28 мс, Нидерланды 20-30 мс. Автоматический выбор сервера находит оптимальный вариант.</p></details>
+<details class="faq"><summary>Можно ли использовать для стриминга?</summary><p>Да! Скорость до 1 Гбит/с позволяет смотреть YouTube 4K, Netflix, стримить игры и загружать большие файлы без задержек.</p></details>
 </div></section>
 `, `<script type="application/ld+json">${faqLD}</script>`));
 });
