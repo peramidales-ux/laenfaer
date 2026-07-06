@@ -59215,8 +59215,8 @@ ${escapeHtml(text2)}`,
     await ctx.reply(`\u2705 \u041A\u043E\u0434: <code>${code}</code> | \u0414\u043D\u0435\u0439: ${days}\n\n\u0412\u044B\u0431\u0435\u0440\u0438\u0442\u0435 \u0442\u0438\u043F \u043F\u043E\u0434\u043F\u0438\u0441\u043A\u0438:`, {
       parse_mode: "HTML",
       reply_markup: new InlineKeyboard3()
-        .text("\u{1F381} \u0411\u0435\u0441\u043F\u043B\u0430\u0442\u043D\u0430\u044F (free_3days)", "promo_set_free")
-        .text("\u2B50 Premium (30days)", "promo_set_prem").row()
+        .text("\u{1F381} \u0411\u0435\u0441\u043F\u043B\u0430\u0442\u043D\u0430\u044F", "promo_set_free")
+        .text("\u2B50 Premium", "promo_set_prem").row()
         .text("\u{1F519} \u041E\u0442\u043C\u0435\u043D\u0430", "admin_promo_menu")
     });
     return;
