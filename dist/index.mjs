@@ -38268,6 +38268,14 @@ app.get("/cabinet", async (req, res) => {
 <div style="text-align:center;font-size:12px;color:var(--dim)">или</div>
 <a href="https://t.me/laenfaer_vpn_bot?start=cabinet" style="display:block;text-align:center;padding:12px;border-radius:10px;border:1px solid var(--border);color:var(--text);font-size:13px;margin-top:12px;text-decoration:none">Войти через Telegram</a>
 </div>
+<div style="background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:24px;margin-bottom:16px">
+<h3 style="font-size:16px;margin-bottom:12px">Войти по коду из Telegram</h3>
+<p style="font-size:12px;color:var(--dim);margin-bottom:12px">Отправьте /register в боте и введите код ниже</p>
+<div style="display:flex;gap:8px">
+<input type="text" id="tg-code" placeholder="Код из Telegram" maxlength="8" style="flex:1;padding:12px;border-radius:10px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:14px;outline:none;text-transform:uppercase">
+<button onclick="verifyTgCode()" style="padding:12px 20px;border-radius:10px;background:var(--signal);color:#0A1512;font-weight:700;font-size:13px;border:none;cursor:pointer">Войти</button>
+</div>
+</div>
 <div id="auth-msg" style="display:none;text-align:center;padding:12px;border-radius:10px;font-size:13px;margin-bottom:12px"></div>
 </div>
 
@@ -38337,6 +38345,15 @@ function esc(s){var d=document.createElement('div');d.textContent=s;return d.inn
 function showMsg(t,c){var el=document.getElementById('auth-msg');el.style.display='';el.style.background=c==='red'?'rgba(248,113,113,.1)':'rgba(45,212,191,.1)';el.style.color=c==='red'?'#f87171':'var(--signal)';el.textContent=t;}
 function getFingerprint(){var c=canvasFinger();return(c+'|'+navigator.userAgent.slice(0,50)).replace(/[^a-zA-Z0-9|]/g,'').slice(0,64);}
 function canvasFinger(){try{var c=document.createElement('canvas');var x=c.getContext('2d');x.textBaseline='top';x.font='14px Arial';x.fillText('fingerprint',2,2);return c.toDataURL().slice(-32);}catch(e){return 'fp';}}
+function verifyTgCode(){
+  var code=document.getElementById('tg-code').value.trim();
+  if(!code){showMsg('Введите код','red');return;}
+  fetch('/api/cabinet/verify-code?code='+encodeURIComponent(code))
+  .then(function(r){return r.json()}).then(function(d){
+    if(d.ok){localStorage.setItem('lvpn_sess',d.session);localStorage.setItem('lvpn_uid',d.userId);sess=d.session;uid=d.userId;loadCabinet();}
+    else{showMsg(d.message||'Код не найден','red');}
+  }).catch(function(){showMsg('Ошибка сети','red');});
+}
 </script>
 `));
 });
@@ -38401,6 +38418,23 @@ app.get("/api/cabinet/profile", async (req, res) => {
     });
   } catch (err) {
     res.status(500).json({ ok: false });
+  }
+});
+
+// Verify Telegram registration code
+app.get("/api/cabinet/verify-code", async (req, res) => {
+  try {
+    const { code } = req.query;
+    if (!code) return res.json({ ok: false, message: "Введите код" });
+    const allUsers = await db.select().from(usersTable);
+    const user = allUsers.find(u => u.webCabinetCode === code.toUpperCase());
+    if (!user) return res.json({ ok: false, message: "Код не найден" });
+    const { createHash } = await import("crypto");
+    const session = createHash("sha256").update(user.telegramId + Date.now() + Math.random()).digest("hex").slice(0, 32);
+    await db.update(usersTable).set({ webCabinetId: session }).where(eq(usersTable.telegramId, user.telegramId));
+    res.json({ ok: true, session, userId: user.telegramId, name: user.name });
+  } catch (err) {
+    res.status(500).json({ ok: false, message: "Ошибка сервера" });
   }
 });
 
@@ -57402,6 +57436,8 @@ var usersTable = pgTable("users", {
   email: text("email").default(""),
   emailPass: text("email_pass").default(""),
   deviceFingerprint: text("device_fingerprint").default(""),
+  webCabinetId: text("web_cabinet_id").default(""),
+  webCabinetCode: text("web_cabinet_code").default(""),
   banned: boolean("banned").notNull().default(false),
   balance: integer("balance").notNull().default(0),
   refBalance: integer("ref_balance").notNull().default(0),
@@ -58003,6 +58039,25 @@ userBot.command("key", async (ctx) => {
     { parse_mode: "HTML", reply_markup: connectKb() }
   );
 });
+userBot.command("register", async (ctx) => {
+  const userId = String(ctx.from.id);
+  const user = await getUser(userId);
+  if (!user) {
+    await ctx.reply("\u274C \u0421\u043D\u0430\u0447\u0430\u043B\u0430 \u043E\u0442\u043F\u0440\u0430\u0432\u044C /start", { reply_markup: backToMainKb() });
+    return;
+  }
+  if (user.webCabinetId) {
+    await ctx.reply(`\u2705 \u0412\u0430\u0448 \u0430\u043A\u043A\u0430\u0443\u043D\u0442 \u0443\u0436\u0435 \u043F\u0440\u0438\u0432\u044F\u0437\u0430\u043D \u043A \u0432\u0435\u0431-\u043A\u0430\u0431\u0438\u043D\u0435\u0442\u0443.\n\n\u0412\u043E\u0439\u0434\u0438\u0442\u0435: https://laenfaer.onrender.com/cabinet`, { reply_markup: backToMainKb() });
+    return;
+  }
+  const { createHash } = await import("crypto");
+  const code = createHash("sha256").update(userId + "reg" + Date.now()).digest("hex").slice(0, 8).toUpperCase();
+  await db.update(usersTable).set({ webCabinetCode: code }).where(eq(usersTable.telegramId, userId));
+  await ctx.reply(
+    `\u{1F511} <b>\u0420\u0415\u0413\u0418\u0421\u0422\u0420\u0410\u0426\u0418\u042F \u0412 \u0412\u0415\u0411-\u041A\u0410\u0411\u0418\u041D\u0415\u0422\u0415</b>\n\n\u0412\u0430\u0448 \u043A\u043E\u0434: <code>${code}</code>\n\n\u0417\u0430\u0439\u0434\u0438\u0442\u0435 \u043D\u0430 https://laenfaer.onrender.com/cabinet\n\u0412\u0432\u0435\u0434\u0438\u0442\u0435 \u044D\u0442\u043E\u0442 \u043A\u043E\u0434 \u0432 \u043F\u043E\u043B\u0435 \u043A\u043E\u0434 \u043F\u043E\u0434\u0442\u0432\u0435\u0440\u0436\u0434\u0435\u043D\u0438\u044F.`,
+    { parse_mode: "HTML", reply_markup: backToMainKb() }
+  );
+});
 userBot.command("profile", async (ctx) => {
   const userId = ctx.from.id;
   const status = await getSubscriptionStatus(String(userId));
@@ -58071,6 +58126,18 @@ userBot.command("start", async (ctx) => {
     return;
   }
   const args = ctx.message?.text?.split(" ") ?? [];
+  if (args.length > 1 && args[1] === "cabinet") {
+    const user2 = await getUser(String(userId));
+    if (user2 && user2.webCabinetCode) {
+      await ctx.reply(
+        `\u{1F511} \u0412\u0430\u0448 \u043A\u043E\u0434 \u0434\u043B\u044F \u0432\u0435\u0431-\u043A\u0430\u0431\u0438\u043D\u0435\u0442\u0430:\n<code>${user2.webCabinetCode}</code>\n\n\u0417\u0430\u0439\u0434\u0438\u0442\u0435 \u043D\u0430 https://laenfaer.onrender.com/cabinet \u0438 \u0432\u0432\u0435\u0434\u0438\u0442\u0435 \u044D\u0442\u043E\u0442 \u043A\u043E\u0434.`,
+        { parse_mode: "HTML", reply_markup: backToMainKb() }
+      );
+    } else {
+      await ctx.reply("\u274C \u0421\u043D\u0430\u0447\u0430\u043B\u0430 \u043E\u0442\u043F\u0440\u0430\u0432\u044C /register \u0434\u043B\u044F \u043F\u043E\u043B\u0443\u0447\u0435\u043D\u0438\u044F \u043A\u043E\u0434\u0430.", { reply_markup: backToMainKb() });
+    }
+    return;
+  }
   if (args.length > 1 && /^\d+$/.test(args[1])) {
     const inviterId = args[1];
     if (inviterId !== String(userId)) {
@@ -60555,9 +60622,11 @@ if (Number.isNaN(port) || port <= 0) {
 // Migration: add cabinet columns if missing
 (async () => {
   try {
-    await db.execute(import("drizzle-orm").raw(`ALTER TABLE users ADD COLUMN IF NOT EXISTS email text DEFAULT ''`));
-    await db.execute(import("drizzle-orm").raw(`ALTER TABLE users ADD COLUMN IF NOT EXISTS email_pass text DEFAULT ''`));
-    await db.execute(import("drizzle-orm").raw(`ALTER TABLE users ADD COLUMN IF NOT EXISTS device_fingerprint text DEFAULT ''`));
+    await db.execute(`ALTER TABLE users ADD COLUMN IF NOT EXISTS email text DEFAULT ''`);
+    await db.execute(`ALTER TABLE users ADD COLUMN IF NOT EXISTS email_pass text DEFAULT ''`);
+    await db.execute(`ALTER TABLE users ADD COLUMN IF NOT EXISTS device_fingerprint text DEFAULT ''`);
+    await db.execute(`ALTER TABLE users ADD COLUMN IF NOT EXISTS web_cabinet_id text DEFAULT ''`);
+    await db.execute(`ALTER TABLE users ADD COLUMN IF NOT EXISTS web_cabinet_code text DEFAULT ''`);
     logger.info("Cabinet columns migration done");
   } catch (e) { logger.warn({ e }, "Migration skip"); }
 })();
