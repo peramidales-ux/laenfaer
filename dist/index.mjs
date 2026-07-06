@@ -58694,21 +58694,82 @@ adminBot.callbackQuery(/.*/, async (ctx) => {
   if (data === "admin_balances") {
     const allUsers = await db.select().from(usersTable);
     const withBalance = allUsers.filter(u => (u.balance || 0) > 0 || (u.refBalance || 0) > 0).sort((a, b) => ((b.balance || 0) + (b.refBalance || 0)) - ((a.balance || 0) + (a.refBalance || 0)));
-    if (!withBalance.length) {
-      await ctx.editMessageText("\u{1F4B0} \u041D\u0435\u0442 \u043F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u0435\u043B\u0435\u0439 \u0441 \u0431\u0430\u043B\u0430\u043D\u0441\u043E\u043C.", { reply_markup: adminBackKb() });
-      return;
-    }
     let text2 = "\u{1F4B0} <b>\u0411\u0430\u043B\u0430\u043D\u0441\u044B \u043F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u0435\u043B\u0435\u0439:</b>\n\n";
+    if (!withBalance.length) text2 += "\u041D\u0435\u0442 \u043F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u0435\u043B\u0435\u0439 \u0441 \u0431\u0430\u043B\u0430\u043D\u0441\u043E\u043C.\n\n";
     const kb = new InlineKeyboard2();
     for (const u of withBalance.slice(0, 15)) {
       const bal = u.balance || 0;
       const ref = u.refBalance || 0;
       const total = bal + ref;
-      text2 += `\u{1F464} ${escapeHtml(u.name)} | ID: <code>${u.telegramId}</code>\n\u{1F4B0} \u0411\u0430\u043B\u0430\u043D\u0441: ${bal}\u20BD | \u{1F91D} \u0420\u0435\u0444.: ${ref}\u20BD | \u{1F4CA} \u0418\u0442\u043E\u0433: ${total}\u20BD\n\n`;
-      kb.text(`${u.name.slice(0, 16)} — ${total}\u20BD`, `reset_bal_${u.telegramId}`).row();
+      text2 += `\u{1F464} ${escapeHtml(u.name)} | ID: <code>${u.telegramId}</code>\n\u{1F4B0} \u0411\u0430\u043B: ${bal}\u20BD | \u{1F91D} \u0420\u0435\u0444: ${ref}\u20BD | \u{1F4CA} \u0418\u0442\u043E\u0433: ${total}\u20BD\n\n`;
+      kb.text(`${u.name.slice(0, 16)} — ${total}\u20BD`, `bal_manage_${u.telegramId}`).row();
     }
+    kb.text("\u{1F50D} \u041D\u0430\u0439\u0442\u0438 \u043F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u0435\u043B\u044F", "bal_search_user").row();
     kb.text("\u{1F519} \u041D\u0430\u0437\u0430\u0434", "to_admin_menu");
     await ctx.editMessageText(text2, { parse_mode: "HTML", reply_markup: kb });
+    return;
+  }
+  if (data === "bal_search_user") {
+    adminStates.set(ADMIN_ID2, "waiting_bal_search");
+    await ctx.editMessageText("\u{1F50D} \u041E\u0442\u043F\u0440\u0430\u0432\u044C\u0442\u0435 \u0418\u0414, \u0438\u043C\u044F \u0438\u043B\u0438 @username:", { reply_markup: new InlineKeyboard2().text("\u{1F519} \u041D\u0430\u0437\u0430\u0434", "admin_balances") });
+    return;
+  }
+  if (data.startsWith("bal_manage_")) {
+    const uid = data.replace("bal_manage_", "");
+    const user = await getUser(uid);
+    if (!user) { await ctx.answerCallbackQuery({ text: "\u274C \u041D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D", show_alert: true }); return; }
+    const sub = await getSubscription(uid);
+    const hasActive = sub && new Date(sub.expiresAt) > new Date();
+    const left = hasActive ? daysLeft(sub.expiresAt) : 0;
+    const bal = await getUserBalanceInfo(uid);
+    const banned = user.banned ? " \u{1F6AB} \u0417\u0410\u0411\u041B" : "";
+    let text2 = `\u{1F464} <b>${escapeHtml(user.name)}</b>${banned}\n\u{1F194} ID: <code>${uid}</code>\n\u{1F464} @${user.username || "-"}\n\n\u{1F4CB} \u041F\u043E\u0434\u043F\u0438\u0441\u043A\u0430: ${hasActive ? `\u{1F7E2} ${sub.tariff} (${left} \u0434\u043D.)` : "\u{1F534} \u041D\u0435\u0442"}\n\u{1F4B0} \u0411\u0430\u043B\u0430\u043D\u0441: ${bal.balance || 0}\u20BD\n\u{1F91D} \u0420\u0435\u0444. \u0431\u0430\u043B\u0430\u043D\u0441: ${bal.refBalance || 0}\u20BD`;
+    const kb = new InlineKeyboard2();
+    if (user.banned) { kb.text("\u2705 \u0420\u0430\u0437\u0431\u0430\u043D\u0438\u0442\u044C", `bal_unban_${uid}`).row(); }
+    else { kb.text("\u{1F6AB} \u0417\u0430\u0431\u043B\u043E\u043A\u0438\u0440\u043E\u0432\u0430\u0442\u044C", `bal_ban_${uid}`).row(); }
+    kb.text("\u{1F504} \u041E\u0431\u043D\u0443\u043B\u0438\u0442\u044C \u0431\u0430\u043B\u0430\u043D\u0441", `reset_bal_${uid}`).text("\u{1F4B5} \u0414\u043E\u0431\u0430\u0432\u0438\u0442\u044C \u0434\u043D\u0438", `bal_give_days_${uid}`).row();
+    kb.text("\u{1F519} \u041A \u0441\u043F\u0438\u0441\u043A\u0443", "admin_balances");
+    await ctx.editMessageText(text2, { parse_mode: "HTML", reply_markup: kb });
+    return;
+  }
+  if (data.startsWith("bal_ban_")) {
+    const uid = data.replace("bal_ban_", "");
+    await db.update(usersTable).set({ banned: true }).where(eq(usersTable.telegramId, uid));
+    await ctx.answerCallbackQuery({ text: "\u{1F6AB} \u041F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u0435\u043B\u044C \u0437\u0430\u0431\u043B\u043E\u043A\u0438\u0440\u043E\u0432\u0430\u043D", show_alert: true });
+    const user = await getUser(uid);
+    const sub = await getSubscription(uid);
+    const hasActive = sub && new Date(sub.expiresAt) > new Date();
+    const left = hasActive ? daysLeft(sub.expiresAt) : 0;
+    const bal = await getUserBalanceInfo(uid);
+    let text2 = `\u{1F464} <b>${escapeHtml(user.name)}</b> \u{1F6AB} \u0417\u0410\u0411\u041B\n\u{1F194} ID: <code>${uid}</code>\n\u{1F464} @${user.username || "-"}\n\n\u{1F4CB} \u041F\u043E\u0434\u043F\u0438\u0441\u043A\u0430: ${hasActive ? `\u{1F7E2} ${sub.tariff} (${left} \u0434\u043D.)` : "\u{1F534} \u041D\u0435\u0442"}\n\u{1F4B0} \u0411\u0430\u043B\u0430\u043D\u0441: ${bal.balance || 0}\u20BD\n\u{1F91D} \u0420\u0435\u0444. \u0431\u0430\u043B\u0430\u043D\u0441: ${bal.refBalance || 0}\u20BD`;
+    const kb = new InlineKeyboard2();
+    kb.text("\u2705 \u0420\u0430\u0437\u0431\u0430\u043D\u0438\u0442\u044C", `bal_unban_${uid}`).row();
+    kb.text("\u{1F504} \u041E\u0431\u043D\u0443\u043B\u0438\u0442\u044C \u0431\u0430\u043B\u0430\u043D\u0441", `reset_bal_${uid}`).text("\u{1F4B5} \u0414\u043E\u0431\u0430\u0432\u0438\u0442\u044C \u0434\u043D\u0438", `bal_give_days_${uid}`).row();
+    kb.text("\u{1F519} \u041A \u0441\u043F\u0438\u0441\u043A\u0443", "admin_balances");
+    await ctx.editMessageText(text2, { parse_mode: "HTML", reply_markup: kb });
+    return;
+  }
+  if (data.startsWith("bal_unban_")) {
+    const uid = data.replace("bal_unban_", "");
+    await db.update(usersTable).set({ banned: false }).where(eq(usersTable.telegramId, uid));
+    await ctx.answerCallbackQuery({ text: "\u2705 \u0420\u0430\u0437\u0431\u0430\u043D\u0438\u0442\u0435\u043B\u0435\u043D", show_alert: true });
+    const user = await getUser(uid);
+    const sub = await getSubscription(uid);
+    const hasActive = sub && new Date(sub.expiresAt) > new Date();
+    const left = hasActive ? daysLeft(sub.expiresAt) : 0;
+    const bal = await getUserBalanceInfo(uid);
+    let text2 = `\u{1F464} <b>${escapeHtml(user.name)}</b>\n\u{1F194} ID: <code>${uid}</code>\n\u{1F464} @${user.username || "-"}\n\n\u{1F4CB} \u041F\u043E\u0434\u043F\u0438\u0441\u043A\u0430: ${hasActive ? `\u{1F7E2} ${sub.tariff} (${left} \u0434\u043D.)` : "\u{1F534} \u041D\u0435\u0442"}\n\u{1F4B0} \u0411\u0430\u043B\u0430\u043D\u0441: ${bal.balance || 0}\u20BD\n\u{1F91D} \u0420\u0435\u0444. \u0431\u0430\u043B\u0430\u043D\u0441: ${bal.refBalance || 0}\u20BD`;
+    const kb = new InlineKeyboard2();
+    kb.text("\u{1F6AB} \u0417\u0430\u0431\u043B\u043E\u043A\u0438\u0440\u043E\u0432\u0430\u0442\u044C", `bal_ban_${uid}`).row();
+    kb.text("\u{1F504} \u041E\u0431\u043D\u0443\u043B\u0438\u0442\u044C \u0431\u0430\u043B\u0430\u043D\u0441", `reset_bal_${uid}`).text("\u{1F4B5} \u0414\u043E\u0431\u0430\u0432\u0438\u0442\u044C \u0434\u043D\u0438", `bal_give_days_${uid}`).row();
+    kb.text("\u{1F519} \u041A \u0441\u043F\u0438\u0441\u043A\u0443", "admin_balances");
+    await ctx.editMessageText(text2, { parse_mode: "HTML", reply_markup: kb });
+    return;
+  }
+  if (data.startsWith("bal_give_days_")) {
+    const uid = data.replace("bal_give_days_", "");
+    adminStates.set(ADMIN_ID2, `bal_give_days_${uid}`);
+    await ctx.editMessageText(`\u{1F4B5} \u0412\u0432\u0435\u0434\u0438\u0442\u0435 \u043A\u043E\u043B\u0438\u0447\u0435\u0441\u0442\u0432\u043E \u0434\u043D\u0435\u0439 \u0434\u043B\u044F ID <code>${uid}</code>:`, { parse_mode: "HTML", reply_markup: new InlineKeyboard2().text("\u{1F519} \u041E\u0442\u043C\u0435\u043D\u0430", `bal_manage_${uid}`) });
     return;
   }
   if (data.startsWith("reset_bal_")) {
@@ -59228,6 +59289,41 @@ adminBot.on("message:text", async (ctx) => {
     }
     kb.text("\u{1F519} \u041D\u0430\u0437\u0430\u0434", "to_admin_menu");
     await ctx.reply(text2out, { parse_mode: "HTML", reply_markup: kb });
+    return;
+  }
+  if (adminStates.get(ADMIN_ID2) === "waiting_bal_search") {
+    adminStates.delete(ADMIN_ID2);
+    const q = text2.trim();
+    const allUsers = await db.select().from(usersTable);
+    const found = allUsers.filter(u => String(u.telegramId) === q || (u.username && u.username.toLowerCase() === q.toLowerCase()) || (u.name && u.name.toLowerCase().includes(q.toLowerCase())));
+    if (!found.length) {
+      await ctx.reply("\u274C \u041D\u0438\u0447\u0435\u0433\u043E \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D\u043E.", { reply_markup: new InlineKeyboard2().text("\u{1F519} \u041D\u0430\u0437\u0430\u0434", "admin_balances") });
+      return;
+    }
+    const kb = new InlineKeyboard2();
+    let text2out = `\u{1F50D} \u041D\u0430\u0439\u0434\u0435\u043D\u043E: <b>${found.length}</b>\n\n`;
+    for (const u of found.slice(0, 10)) {
+      const bal = u.balance || 0;
+      const ref = u.refBalance || 0;
+      const total = bal + ref;
+      text2out += `\u{1F464} ${escapeHtml(u.name)} | ID: <code>${u.telegramId}</code>\n\u{1F4B0} ${bal}\u20BD | \u{1F91D} ${ref}\u20BD | \u{1F4CA} ${total}\u20BD\n\n`;
+      kb.text(`${u.name.slice(0, 20)} →`, `bal_manage_${u.telegramId}`).row();
+    }
+    kb.text("\u{1F519} \u041A \u0441\u043F\u0438\u0441\u043A\u0443", "admin_balances");
+    await ctx.reply(text2out, { parse_mode: "HTML", reply_markup: kb });
+    return;
+  }
+  const balGiveMatch = adminStates.get(ADMIN_ID2);
+  if (balGiveMatch && balGiveMatch.startsWith("bal_give_days_")) {
+    const uid = balGiveMatch.replace("bal_give_days_", "");
+    adminStates.delete(ADMIN_ID2);
+    const days = parseInt(text2.trim(), 10);
+    if (!Number.isInteger(days) || days <= 0) {
+      await ctx.reply("\u274C \u0412\u0432\u0435\u0434\u0438\u0442\u0435 \u0447\u0438\u0441\u043B\u043E > 0");
+      return;
+    }
+    await addDaysToSubscription(uid, "premium", days, null);
+    await ctx.reply(`\u2705 \u041F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u0435\u043B\u044E <code>${uid}</code> \u0434\u043E\u0431\u0430\u0432\u043B\u0435\u043D\u043E <b>${days}</b> \u0434\u043D.`, { parse_mode: "HTML", reply_markup: new InlineKeyboard2().text("\u{1F519} \u041A \u043F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u0435\u043B\u044E", `bal_manage_${uid}`).text("\u{1F519} \u041A \u0441\u043F\u0438\u0441\u043A\u0443", "admin_balances") });
     return;
   }
   if (adminDirectMode.has(ADMIN_ID2)) {
