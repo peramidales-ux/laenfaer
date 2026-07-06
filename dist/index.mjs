@@ -38249,9 +38249,10 @@ app.get("/privacy", async (req, res) => {
 
 // ===== CABINET =====
 app.get("/cabinet", async (req, res) => {
-  res.setHeader("Content-Type","text/html; charset=utf-8").send(pageShell("Личный кабинет | LAENFAER VPN","Управление подпиской, ключами и аккаунтом LAENFAER VPN.",`
+  res.setHeader("Content-Type","text/html; charset=utf-8").send(pageShell("Личный кабинет | LAENFAER VPN","Управление подпиской и аккаунтом LAENFAER VPN.",`
 <div style="max-width:500px;margin:0 auto;padding:40px 20px">
-<h1 style="font-size:28px;font-weight:800;margin-bottom:24px;text-align:center">Личный кабинет</h1>
+<h1 style="font-size:28px;font-weight:800;margin-bottom:8px;text-align:center">Личный кабинет</h1>
+<p style="text-align:center;font-size:13px;color:var(--dim);margin-bottom:24px">Управляйте подпиской, отслеживайте статус</p>
 
 <div id="auth-form">
 <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:24px;margin-bottom:16px">
@@ -38260,23 +38261,26 @@ app.get("/cabinet", async (req, res) => {
 <label style="display:block;font-size:12px;color:var(--dim);margin-bottom:6px">Email</label>
 <input type="email" id="reg-email" placeholder="your@email.com" style="width:100%;padding:12px;border-radius:10px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:14px;outline:none">
 </div>
-<div style="margin-bottom:16px">
+<div id="pass-field" style="margin-bottom:16px">
 <label style="display:block;font-size:12px;color:var(--dim);margin-bottom:6px">Пароль</label>
 <input type="password" id="reg-pass" placeholder="Минимум 6 символов" style="width:100%;padding:12px;border-radius:10px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:14px;outline:none">
 </div>
-<button onclick="doAuth()" style="width:100%;padding:12px;border-radius:10px;background:var(--accent);color:#161006;font-weight:700;font-size:14px;border:none;cursor:pointer;margin-bottom:12px">Войти / Зарегистрироваться</button>
-<div style="text-align:center;font-size:12px;color:var(--dim)">или</div>
-<a href="https://t.me/laenfaer_vpn_bot?start=cabinet" style="display:block;text-align:center;padding:12px;border-radius:10px;border:1px solid var(--border);color:var(--text);font-size:13px;margin-top:12px;text-decoration:none">Войти через Telegram</a>
-</div>
-<div style="background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:24px;margin-bottom:16px">
-<h3 style="font-size:16px;margin-bottom:12px">Войти по коду из Telegram</h3>
-<p style="font-size:12px;color:var(--dim);margin-bottom:12px">Отправьте /register в боте и введите код ниже</p>
-<div style="display:flex;gap:8px">
-<input type="text" id="tg-code" placeholder="Код из Telegram" maxlength="8" style="flex:1;padding:12px;border-radius:10px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:14px;outline:none;text-transform:uppercase">
-<button onclick="verifyTgCode()" style="padding:12px 20px;border-radius:10px;background:var(--signal);color:#0A1512;font-weight:700;font-size:13px;border:none;cursor:pointer">Войти</button>
-</div>
+<button onclick="doAuth()" id="auth-btn" style="width:100%;padding:12px;border-radius:10px;background:var(--accent);color:#161006;font-weight:700;font-size:14px;border:none;cursor:pointer;margin-bottom:8px">Войти / Зарегистрироваться</button>
+<p style="font-size:11px;color:var(--dim);text-align:center">На вашу почту придёт код подтверждения</p>
 </div>
 <div id="auth-msg" style="display:none;text-align:center;padding:12px;border-radius:10px;font-size:13px;margin-bottom:12px"></div>
+</div>
+
+<div id="verify-form" style="display:none">
+<div style="background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:24px;margin-bottom:16px">
+<h3 style="font-size:16px;margin-bottom:8px">Подтверждение почты</h3>
+<p style="font-size:12px;color:var(--dim);margin-bottom:16px">Код отправлен на <b id="verify-email"></b></p>
+<div style="margin-bottom:16px">
+<label style="display:block;font-size:12px;color:var(--dim);margin-bottom:6px">Код из письма</label>
+<input type="text" id="verify-code" placeholder="6-значный код" maxlength="6" style="width:100%;padding:12px;border-radius:10px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:18px;text-align:center;letter-spacing:8px;outline:none">
+</div>
+<button onclick="doVerify()" style="width:100%;padding:12px;border-radius:10px;background:var(--signal);color:#0A1512;font-weight:700;font-size:14px;border:none;cursor:pointer">Подтвердить</button>
+</div>
 </div>
 
 <div id="cabinet-panel" style="display:none">
@@ -38294,13 +38298,18 @@ app.get("/cabinet", async (req, res) => {
 </div>
 
 <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:20px;margin-bottom:12px">
-<h3 style="font-size:16px;margin-bottom:12px">VPN-ключ</h3>
-<div id="cab-key" style="font-size:13px;color:var(--dim)">Загрузка...</div>
+<h3 style="font-size:16px;margin-bottom:12px">Устройства</h3>
+<div id="cab-devices" style="font-size:13px;color:var(--dim)">Загрузка...</div>
+</div>
+
+<div style="background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:20px;margin-bottom:12px">
+<h3 style="font-size:16px;margin-bottom:12px">Подключить VPN</h3>
+<div id="cab-connect" style="font-size:13px;color:var(--dim)">Загрузка...</div>
 </div>
 
 <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:20px">
-<h3 style="font-size:16px;margin-bottom:12px">Устройства</h3>
-<div id="cab-devices" style="font-size:13px;color:var(--dim)">Загрузка...</div>
+<h3 style="font-size:16px;margin-bottom:12px">Пополнить баланс</h3>
+<div id="cab-balance" style="font-size:13px;color:var(--dim)">Загрузка...</div>
 </div>
 </div>
 </div>
@@ -38313,58 +38322,69 @@ if(sess&&uid){loadCabinet();}
 function doAuth(){
   var email=document.getElementById('reg-email').value.trim();
   var pass=document.getElementById('reg-pass').value;
-  if(!email||!pass){showMsg('Введите email и пароль','red');return;}
-  if(pass.length<6){showMsg('Пароль минимум 6 символов','red');return;}
-  var fp=getFingerprint();
-  fetch('/api/cabinet/auth',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:email,pass:pass,fingerprint:fp})})
+  if(!email){showMsg('Введите email','red');return;}
+  if(!pass||pass.length<6){showMsg('Пароль минимум 6 символов','red');return;}
+  document.getElementById('auth-btn').textContent='Отправка...';
+  document.getElementById('auth-btn').disabled=true;
+  fetch('/api/cabinet/auth',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:email,pass:pass})})
+  .then(function(r){return r.json()}).then(function(d){
+    document.getElementById('auth-btn').textContent='Войти / Зарегистрироваться';
+    document.getElementById('auth-btn').disabled=false;
+    if(d.ok){
+      if(d.needVerify){
+        document.getElementById('auth-form').style.display='none';
+        document.getElementById('verify-form').style.display='';
+        document.getElementById('verify-email').textContent=email;
+      } else {
+        localStorage.setItem('lvpn_sess',d.session);
+        localStorage.setItem('lvpn_uid',d.userId);
+        sess=d.session;uid=d.userId;loadCabinet();
+      }
+    } else {showMsg(d.message||'Ошибка','red');}
+  }).catch(function(){showMsg('Ошибка сети','red');document.getElementById('auth-btn').textContent='Войти / Зарегистрироваться';document.getElementById('auth-btn').disabled=false;});
+}
+
+function doVerify(){
+  var code=document.getElementById('verify-code').value.trim();
+  var email=document.getElementById('reg-email').value.trim();
+  if(!code||code.length!==6){showMsg('Введите 6-значный код','red');return;}
+  fetch('/api/cabinet/verify',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:email,code:code})})
   .then(function(r){return r.json()}).then(function(d){
     if(d.ok){localStorage.setItem('lvpn_sess',d.session);localStorage.setItem('lvpn_uid',d.userId);sess=d.session;uid=d.userId;loadCabinet();}
-    else{showMsg(d.message||'Ошибка','red');}
+    else{showMsg(d.message||'Неверный код','red');}
   }).catch(function(){showMsg('Ошибка сети','red');});
 }
 
-function doLogout(){localStorage.removeItem('lvpn_sess');localStorage.removeItem('lvpn_uid');document.getElementById('auth-form').style.display='';document.getElementById('cabinet-panel').style.display='none';}
+function doLogout(){localStorage.removeItem('lvpn_sess');localStorage.removeItem('lvpn_uid');document.getElementById('auth-form').style.display='';document.getElementById('verify-form').style.display='none';document.getElementById('cabinet-panel').style.display='none';}
 
 function loadCabinet(){
   if(!sess||!uid)return;
   document.getElementById('auth-form').style.display='none';
+  document.getElementById('verify-form').style.display='none';
   document.getElementById('cabinet-panel').style.display='';
   fetch('/api/cabinet/profile?session='+sess+'&uid='+uid).then(function(r){return r.json()}).then(function(d){
     if(!d.ok){doLogout();return;}
-    document.getElementById('cab-info').innerHTML='<b>'+esc(d.name)+'</b><br>ID: '+d.userId+'<br>Email: '+(d.email||'нет');
-    var sub=d.hasActiveSub?'<span style="color:var(--signal)">'+esc(d.tariffLabel)+'</span><br>Дней: '+d.daysLeft+'<br>До: '+d.expireDate:'<span style="color:#f87171">Нет активной подписки</span>';
+    document.getElementById('cab-info').innerHTML='<b>'+esc(d.name)+'</b><br>Email: '+(d.email||'нет')+'<br>ID: '+d.userId;
+    var sub=d.hasActiveSub?'<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><div style="width:8px;height:8px;border-radius:50%;background:var(--signal)"></div><span style="color:var(--signal);font-weight:600">'+esc(d.tariffLabel)+'</span></div><div style="font-size:12px;color:var(--dim)">Действует до: '+d.expireDate+'</div>':'<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px"><div style="width:8px;height:8px;border-radius:50%;background:#f87171"></div><span style="color:#f87171;font-weight:600">Нет активной подписки</span></div><a href="/pricing" style="display:inline-block;background:var(--accent);color:#161006;padding:10px 20px;border-radius:8px;font-size:13px;font-weight:600;text-decoration:none">Выбрать тариф</a>';
     document.getElementById('cab-sub').innerHTML=sub;
-    var key=d.key?'<code style="font-size:11px;word-break:break-all">'+esc(d.key)+'</code><br><button onclick="cpyKey()" style="margin-top:8px;background:var(--accent);color:#161006;padding:8px 16px;border-radius:8px;border:none;font-size:12px;font-weight:600;cursor:pointer">Скопировать</button>':'Нет ключа';
-    document.getElementById('cab-key').innerHTML=key;
-    document.getElementById('cab-devices').innerHTML='Устройств: '+d.deviceCount+'/1<br><span style="font-size:11px;color:var(--dim)">Fingerprint: '+d.fingerprint+'</span>';
+    document.getElementById('cab-devices').innerHTML='Устройств: '+d.deviceCount+'/1';
+    var connect=d.hasActiveSub?'<p style="font-size:13px;color:var(--dim);margin-bottom:12px">Для подключения скачайте приложение и вставьте ссылку подписки</p><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><a href="/setup/android" style="text-align:center;padding:12px;background:rgba(139,197,63,.08);border-radius:10px;text-decoration:none;color:var(--text);font-size:12px;font-weight:600">Android</a><a href="/setup/ios" style="text-align:center;padding:12px;background:rgba(139,197,63,.08);border-radius:10px;text-decoration:none;color:var(--text);font-size:12px;font-weight:600">iPhone</a><a href="/setup/windows" style="text-align:center;padding:12px;background:rgba(139,197,63,.08);border-radius:10px;text-decoration:none;color:var(--text);font-size:12px;font-weight:600">Windows</a><a href="/setup/macos" style="text-align:center;padding:12px;background:rgba(139,197,63,.08);border-radius:10px;text-decoration:none;color:var(--text);font-size:12px;font-weight:600">macOS</a></div>':'<p style="font-size:13px;color:var(--dim)">Купите подписку для подключения VPN</p>';
+    document.getElementById('cab-connect').innerHTML=connect;
+    document.getElementById('cab-balance').innerHTML='<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px"><span style="font-size:24px;font-weight:800;color:var(--accent)">'+d.balance+' &#8381;</span></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><a href="/pricing" style="text-align:center;padding:10px;background:var(--accent);color:#161006;border-radius:8px;font-size:12px;font-weight:600;text-decoration:none">Пополнить</a><a href="https://t.me/laenfaer_vpn_bot" style="text-align:center;padding:10px;background:rgba(139,197,63,.08);border-radius:8px;font-size:12px;font-weight:600;text-decoration:none;color:var(--text)">Через Telegram</a></div>';
   }).catch(function(){});
 }
-
-function cpyKey(){var el=document.querySelector('#cab-key code');if(el)navigator.clipboard.writeText(el.textContent).then(function(){alert('Скопировано!')});}
 function esc(s){var d=document.createElement('div');d.textContent=s;return d.innerHTML;}
 function showMsg(t,c){var el=document.getElementById('auth-msg');el.style.display='';el.style.background=c==='red'?'rgba(248,113,113,.1)':'rgba(45,212,191,.1)';el.style.color=c==='red'?'#f87171':'var(--signal)';el.textContent=t;}
-function getFingerprint(){var c=canvasFinger();return(c+'|'+navigator.userAgent.slice(0,50)).replace(/[^a-zA-Z0-9|]/g,'').slice(0,64);}
-function canvasFinger(){try{var c=document.createElement('canvas');var x=c.getContext('2d');x.textBaseline='top';x.font='14px Arial';x.fillText('fingerprint',2,2);return c.toDataURL().slice(-32);}catch(e){return 'fp';}}
-function verifyTgCode(){
-  var code=document.getElementById('tg-code').value.trim();
-  if(!code){showMsg('Введите код','red');return;}
-  fetch('/api/cabinet/verify-code?code='+encodeURIComponent(code))
-  .then(function(r){return r.json()}).then(function(d){
-    if(d.ok){localStorage.setItem('lvpn_sess',d.session);localStorage.setItem('lvpn_uid',d.userId);sess=d.session;uid=d.userId;loadCabinet();}
-    else{showMsg(d.message||'Код не найден','red');}
-  }).catch(function(){showMsg('Ошибка сети','red');});
-}
 </script>
 `));
 });
 
-// Cabinet API
+// Cabinet API - Auth
 app.post("/api/cabinet/auth", async (req, res) => {
   try {
-    const { email, pass, fingerprint } = req.body;
+    const { email, pass } = req.body;
     if (!email || !pass) return res.json({ ok: false, message: "Email и пароль обязательны" });
     if (pass.length < 6) return res.json({ ok: false, message: "Пароль минимум 6 символов" });
-    const fp = (fingerprint || "").slice(0, 64);
     const { createHash } = await import("crypto");
     const hash = createHash("sha256").update(pass).digest("hex").slice(0, 32);
     const allUsers = await db.select().from(usersTable);
@@ -38372,27 +38392,43 @@ app.post("/api/cabinet/auth", async (req, res) => {
     if (user) {
       if (user.emailPass !== hash) return res.json({ ok: false, message: "Неверный пароль" });
       if (user.banned) return res.json({ ok: false, message: "Аккаунт заблокирован" });
-    } else {
-      if (fp) {
-        const dupFp = allUsers.find(u => u.deviceFingerprint === fp);
-        if (dupFp) return res.json({ ok: false, message: "На этом устройстве уже есть аккаунт. Войдите через Telegram." });
-      }
-      await db.update(usersTable).set({ email, emailPass: hash, deviceFingerprint: fp }).where(eq(usersTable.telegramId, "0"));
-      user = allUsers.find(u => u.email === email);
-      if (!user) {
-        await db.insert(usersTable).values({ telegramId: "email_" + Date.now(), name: email.split("@")[0], email, emailPass: hash, deviceFingerprint: fp });
-        const allUsers2 = await db.select().from(usersTable);
-        user = allUsers2.find(u => u.email === email);
-      }
+      const session = createHash("sha256").update(email + Date.now() + Math.random()).digest("hex").slice(0, 32);
+      return res.json({ ok: true, session, userId: user.telegramId, needVerify: false });
     }
-    const session = createHash("sha256").update(email + Date.now() + Math.random()).digest("hex").slice(0, 32);
-    res.json({ ok: true, session, userId: user.telegramId });
-  } catch (err) {
-    console.error("[CABINET_AUTH]", err);
-    res.status(500).json({ ok: false, message: "Ошибка сервера" });
-  }
+    const code = String(Math.floor(100000 + Math.random() * 900000));
+    const codeHash = createHash("sha256").update(code).digest("hex").slice(0, 16);
+    await db.update(usersTable).set({ emailVerifyCode: codeHash, emailVerifyExpiry: new Date(Date.now() + 15 * 60000) }).where(eq(usersTable.telegramId, "email_" + email.replace(/[^a-z0-9]/gi, "_")));
+    const found = allUsers.find(u => u.email === email);
+    if (!found) {
+      await db.insert(usersTable).values({ telegramId: "email_" + email.replace(/[^a-z0-9]/gi, "_"), name: email.split("@")[0], email, emailPass: hash, emailVerifyCode: codeHash, emailVerifyExpiry: new Date(Date.now() + 15 * 60000) });
+    }
+    try {
+      const nodemailer = await import("nodemailer");
+      const transporter = nodemailer.default.createTransport({ host: process.env.SMTP_HOST || "smtp.gmail.com", port: Number(process.env.SMTP_PORT) || 587, secure: false, auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS } });
+      await transporter.sendMail({ from: "LAENFAER VPN <" + (process.env.SMTP_USER || "noreply@laenfaer.onrender.com") + ">", to: email, subject: "Код подтверждения LAENFAER VPN", text: "Ваш код: " + code, html: "<div style='font-family:sans-serif;padding:20px'><h2 style='color:#E8B34C'>LAENFAER VPN</h2><p>Код подтверждения:</p><div style='font-size:32px;font-weight:900;letter-spacing:8px;color:#E8B34C;margin:20px 0'>" + code + "</div><p style='color:#999;font-size:12px'>Код действителен 15 минут</p></div>" });
+    } catch (e) { console.error("[SMTP]", e.message); }
+    res.json({ ok: true, needVerify: true, email });
+  } catch (err) { console.error("[CABINET_AUTH]", err); res.status(500).json({ ok: false, message: "Ошибка сервера" }); }
 });
 
+// Cabinet API - Verify code
+app.post("/api/cabinet/verify", async (req, res) => {
+  try {
+    const { email, code } = req.body;
+    if (!email || !code) return res.json({ ok: false, message: "Введите код" });
+    const { createHash } = await import("crypto");
+    const codeHash = createHash("sha256").update(code).digest("hex").slice(0, 16);
+    const allUsers = await db.select().from(usersTable);
+    const user = allUsers.find(u => u.email === email && u.emailVerifyCode === codeHash);
+    if (!user) return res.json({ ok: false, message: "Неверный код" });
+    if (new Date(user.emailVerifyExpiry) < new Date()) return res.json({ ok: false, message: "Код истёк. Запросите новый." });
+    await db.update(usersTable).set({ emailVerified: true, emailVerifyCode: "", emailVerifyExpiry: new Date(0) }).where(eq(usersTable.telegramId, user.telegramId));
+    const session = createHash("sha256").update(email + Date.now() + Math.random()).digest("hex").slice(0, 32);
+    res.json({ ok: true, session, userId: user.telegramId });
+  } catch (err) { res.status(500).json({ ok: false, message: "Ошибка сервера" }); }
+});
+
+// Cabinet API - Profile
 app.get("/api/cabinet/profile", async (req, res) => {
   try {
     const { session, uid } = req.query;
@@ -38403,39 +38439,8 @@ app.get("/api/cabinet/profile", async (req, res) => {
     const hasActiveSub = sub && new Date(sub.expiresAt) > new Date();
     const daysLeft = hasActiveSub ? Math.ceil((new Date(sub.expiresAt) - Date.now()) / 86400000) : 0;
     const tariffLabel = hasActiveSub ? (sub.tariff && sub.tariff.includes("free") ? "Бесплатный (" + daysLeft + " дн.)" : "Premium (" + daysLeft + " дн.)") : "";
-    res.json({
-      ok: true,
-      userId: uid,
-      name: user.name,
-      email: user.email || "",
-      hasActiveSub,
-      daysLeft,
-      tariffLabel,
-      expireDate: hasActiveSub ? new Date(sub.expiresAt).toLocaleDateString("ru-RU") : "",
-      key: sub?.key || "",
-      deviceCount: user.deviceFingerprint ? 1 : 0,
-      fingerprint: user.deviceFingerprint ? user.deviceFingerprint.slice(0, 8) + "..." : "нет",
-    });
-  } catch (err) {
-    res.status(500).json({ ok: false });
-  }
-});
-
-// Verify Telegram registration code
-app.get("/api/cabinet/verify-code", async (req, res) => {
-  try {
-    const { code } = req.query;
-    if (!code) return res.json({ ok: false, message: "Введите код" });
-    const allUsers = await db.select().from(usersTable);
-    const user = allUsers.find(u => u.webCabinetCode === code.toUpperCase());
-    if (!user) return res.json({ ok: false, message: "Код не найден" });
-    const { createHash } = await import("crypto");
-    const session = createHash("sha256").update(user.telegramId + Date.now() + Math.random()).digest("hex").slice(0, 32);
-    await db.update(usersTable).set({ webCabinetId: session }).where(eq(usersTable.telegramId, user.telegramId));
-    res.json({ ok: true, session, userId: user.telegramId, name: user.name });
-  } catch (err) {
-    res.status(500).json({ ok: false, message: "Ошибка сервера" });
-  }
+    res.json({ ok: true, userId: uid, name: user.name, email: user.email || "", hasActiveSub, daysLeft, tariffLabel, expireDate: hasActiveSub ? new Date(sub.expiresAt).toLocaleDateString("ru-RU") : "", balance: user.balance || 0, deviceCount: user.deviceFingerprint ? 1 : 0 });
+  } catch (err) { res.status(500).json({ ok: false }); }
 });
 
 // ===== TERMS =====
@@ -57435,6 +57440,9 @@ var usersTable = pgTable("users", {
   username: text("username").notNull().default(""),
   email: text("email").default(""),
   emailPass: text("email_pass").default(""),
+  emailVerified: boolean("email_verified").default(false),
+  emailVerifyCode: text("email_verify_code").default(""),
+  emailVerifyExpiry: timestamp("email_verify_expiry"),
   deviceFingerprint: text("device_fingerprint").default(""),
   webCabinetId: text("web_cabinet_id").default(""),
   webCabinetCode: text("web_cabinet_code").default(""),
@@ -60624,6 +60632,9 @@ if (Number.isNaN(port) || port <= 0) {
   try {
     await db.execute(`ALTER TABLE users ADD COLUMN IF NOT EXISTS email text DEFAULT ''`);
     await db.execute(`ALTER TABLE users ADD COLUMN IF NOT EXISTS email_pass text DEFAULT ''`);
+    await db.execute(`ALTER TABLE users ADD COLUMN IF NOT EXISTS email_verified boolean DEFAULT false`);
+    await db.execute(`ALTER TABLE users ADD COLUMN IF NOT EXISTS email_verify_code text DEFAULT ''`);
+    await db.execute(`ALTER TABLE users ADD COLUMN IF NOT EXISTS email_verify_expiry timestamp`);
     await db.execute(`ALTER TABLE users ADD COLUMN IF NOT EXISTS device_fingerprint text DEFAULT ''`);
     await db.execute(`ALTER TABLE users ADD COLUMN IF NOT EXISTS web_cabinet_id text DEFAULT ''`);
     await db.execute(`ALTER TABLE users ADD COLUMN IF NOT EXISTS web_cabinet_code text DEFAULT ''`);
