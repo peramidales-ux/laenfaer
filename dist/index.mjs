@@ -38649,7 +38649,7 @@ app.get("/api/profile/:userId", async (req, res) => {
     const hasActiveSub = s && new Date(s.expiresAt) > now;
     const daysLeft = hasActiveSub ? Math.ceil((new Date(s.expiresAt) - now) / 86400000) : 0;
     const tariff = hasActiveSub ? s.tariff : "";
-    const isFreeSub = hasActiveSub && s.tariff && (s.tariff.includes("free") || /^free/i.test(s.tariff));
+    const isFreeSub = hasActiveSub && s.tariff && (s.tariff.includes("free") || /^free/i.test(s.tariff) || s.tariff === "3days" || s.tariff === "7days");
     const tariffLabel = hasActiveSub ? (isFreeSub ? `Бесплатный (${daysLeft} дн.)` : `Premium (${daysLeft} дн.)`) : "";
     const expireDate = hasActiveSub ? new Date(s.expiresAt).toISOString() : "";
     const expireDateDisplay = hasActiveSub ? new Date(s.expiresAt).toLocaleDateString("ru-RU") : "";
@@ -57599,7 +57599,7 @@ async function getSubscriptionStatus(telegramId) {
   const sub = await getSubscription(telegramId);
   if (sub) {
     const left = daysLeft(sub.expiresAt);
-    const isFree = sub.tariff && (sub.tariff.includes("free") || /^free/i.test(sub.tariff));
+    const isFree = sub.tariff && (sub.tariff.includes("free") || /^free/i.test(sub.tariff) || sub.tariff === "3days" || sub.tariff === "7days");
     const name = isFree ? `Бесплатный (${left} дн.)` : `Premium (${left} дн.)`;
     if (left > 0) {
       return `\u{1F7E2} \u0410\u041A\u0422\u0418\u0412\u041D\u0410
@@ -58242,7 +58242,7 @@ ${text2}`,
       await ctx.reply("\u274C \u041F\u0440\u043E\u043C\u043E\u043A\u043E\u0434 \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D \u0438\u043B\u0438 \u0443\u0436\u0435 \u0438\u0441\u043F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u043D.", { reply_markup: mainMenuKb() });
       return;
     }
-    const isFreeTariff = promo.tariff && (promo.tariff.includes("free") || /^free/i.test(promo.tariff));
+    const isFreeTariff = promo.tariff && (promo.tariff.includes("free") || /^free/i.test(promo.tariff) || promo.tariff === "3days" || promo.tariff === "7days");
     const key = isFreeTariff ? (await getRandomFreeKey() || await getRandomPremiumKey()) : (await getRandomPremiumKey() || await getRandomFreeKey());
     if (!key) {
       await ctx.reply("\u274C \u041D\u0435\u0442 \u0441\u0432\u043E\u0431\u043E\u0434\u043D\u044B\u0445 \u043A\u043B\u044E\u0447\u0435\u0439. \u041E\u0431\u0440\u0430\u0442\u0438\u0442\u0435\u0441\u044C \u0432 \u043F\u043E\u0434\u0434\u0435\u0440\u0436\u043A\u0443.", { reply_markup: mainMenuKb() });
@@ -59948,7 +59948,7 @@ userBot.on("message:text", async (ctx, next) => {
       await ctx.reply("\u274C \u041F\u0440\u043E\u043C\u043E\u043A\u043E\u0434 \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D \u0438\u043B\u0438 \u0443\u0436\u0435 \u0438\u0441\u043F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u043D.", { reply_markup: backToMainKb() });
       return;
     }
-    const isFreeTariff2 = promo.tariff && promo.tariff.includes("free");
+    const isFreeTariff2 = promo.tariff && (promo.tariff.includes("free") || promo.tariff === "3days" || promo.tariff === "7days");
     const key = isFreeTariff2 ? (await getRandomFreeKey() || await getRandomPremiumKey()) : (await getRandomPremiumKey() || await getRandomFreeKey());
     if (!key) {
       await ctx.reply("\u274C \u041D\u0435\u0442 \u043A\u043B\u044E\u0447\u0435\u0439 \u0432 \u0431\u0430\u0437\u0435. \u041E\u0431\u0440\u0430\u0442\u0438\u0442\u0435 \u043A \u043F\u043E\u0434\u0434\u0435\u0440\u0436\u043A\u0435.", { reply_markup: backToMainKb() });
