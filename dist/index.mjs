@@ -38294,6 +38294,10 @@ User-agent: YandexBot
 Allow: /`);
 });
 
+app.get("/google33238c7c022f9eee.html", async (req, res) => {
+  res.setHeader("Content-Type","text/html; charset=utf-8").send("google-site-verification: google33238c7c022f9eee.html");
+});
+
 app.get("/profile/:userId", async (req, res) => {
   try {
     const userId = req.params.userId;
