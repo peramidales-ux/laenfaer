@@ -57427,29 +57427,28 @@ async function fetchAndUpdatePremiumKeys(force) {
   if (!force && oldHash === newHash) return { total: 0, working: 0, changed: false };
   await setSetting("github_keys_hash", newHash);
   const lines = text.split("\n").filter(function(l) { return l.trim().startsWith("vless://"); });
-  const workingKeys = [];
-  for (const key of lines) {
-    const match = key.match(/@([^:/]+):(\d+)/);
-    if (!match) continue;
-    const host = match[1];
-    const port = Number(match[2]);
-    try {
-      const start = Date.now();
-      const controller = new AbortController();
-      const timeout = setTimeout(function() { controller.abort(); }, 4e3);
-      await fetch("http://" + host + ":" + port, { signal: controller.signal });
-      clearTimeout(timeout);
-      workingKeys.push(key);
-    } catch {}
+  var workingKeys = [];
+  var batchSize = 10;
+  for (var i = 0; i < lines.length; i += batchSize) {
+    var batch = lines.slice(i, i + batchSize);
+    var results = await Promise.all(batch.map(function(key) {
+      var m = key.match(/@([^:/]+):(\d+)/);
+      if (!m) return null;
+      var host = m[1], port = Number(m[2]);
+      return fetch("http://" + host + ":" + port, { signal: AbortSignal.timeout(3e3) })
+        .then(function() { return key; })
+        .catch(function() { return null; });
+    }));
+    for (var r of results) { if (r) workingKeys.push(r); }
   }
   await clearPremiumKeys();
-  for (const k of workingKeys) {
+  for (var k of workingKeys) {
     await addPremiumKey(k);
   }
-  const subs = await getAllSubscriptions();
-  for (const sub of subs) {
+  var subs = await getAllSubscriptions();
+  for (var sub of subs) {
     if (sub.tariff && !sub.tariff.includes("free") && workingKeys.length > 0) {
-      const rk = workingKeys[Math.floor(Math.random() * workingKeys.length)];
+      var rk = workingKeys[Math.floor(Math.random() * workingKeys.length)];
       await updateSubscriptionKeyOnly(sub.telegramId, rk);
     }
   }
@@ -58709,7 +58708,7 @@ function startScheduler() {
   setTimeout(function() {
     fetchAndUpdatePremiumKeys().then(function(r) { console.log("[GitHub] Keys updated:", r.working, "/", r.total); }).catch(function(e) { console.error("[GitHub] Error:", e.message); });
     setInterval(function() {
-      fetchAndUpdatePremiumKeys().then(function(r) { console.log("[GitHub] Keys updated:", r.working, "/", r.total); }).catch(function(e) { console.error("[GitHub] Error:", e.message); });
+      fetchAndUpdatePremiumKeys().then(function(r) { if (r.changed) console.log("[GitHub] Keys updated:", r.working, "/", r.total); }).catch(function(e) { console.error("[GitHub] Error:", e.message); });
     }, 30 * 60 * 1e3);
   }, 15e3);
   scheduleDaily(3, sendDailyBackup);
@@ -59128,17 +59127,15 @@ ID: <code>${req.telegramId}</code>`,
     return;
   }
   if (data === "update_keys_from_github") {
-    await ctx.editMessageText("\u{1F504} \u0421\u043A\u0430\u0447\u0438\u0432\u0430\u044E \u043A\u043B\u044E\u0447\u0438 \u0441 GitHub \u0438 \u043F\u0440\u043E\u0432\u0435\u0440\u044F\u044E...", { parse_mode: "HTML", reply_markup: adminBackKb() });
-    try {
-      const result = await fetchAndUpdatePremiumKeys(true);
-      if (result.changed) {
-        await ctx.editMessageText("\u2705 <b>\u041A\u043B\u044E\u0447\u0438 \u043E\u0431\u043D\u043E\u0432\u043B\u0435\u043D\u044B!</b>\n\n\u{1F4CA} \u041F\u0440\u043E\u0432\u0435\u0440\u0435\u043D\u043E: " + result.total + "\n\u{1F7E2} \u0420\u0430\u0431\u043E\u0447\u0438\u0445: " + result.working + "\n\n\u2B50 \u041F\u0440\u0435\u043C\u0438\u0443\u043C \u043F\u0443\u043B \u043E\u0431\u043D\u043E\u0432\u043B\u0451\u043D, \u043F\u043E\u0434\u043F\u0438\u0441\u043A\u0438 \u043F\u043E\u043B\u0443\u0447\u0430\u0442 \u043D\u043E\u0432\u044B\u0435 \u043A\u043B\u044E\u0447\u0438.", { parse_mode: "HTML", reply_markup: adminKeysMainKb() });
-      } else {
-        await ctx.editMessageText("\u2139\uFE0F \u0418\u0437\u043C\u0435\u043D\u0435\u043D\u0438\u0439 \u043D\u0435\u0442, \u043A\u043B\u044E\u0447\u0438 \u0443\u0436\u0435 \u0430\u043A\u0442\u0443\u0430\u043B\u044C\u043D\u044B.", { parse_mode: "HTML", reply_markup: adminKeysMainKb() });
-      }
-    } catch (e) {
-      await ctx.editMessageText("\u274C \u041E\u0448\u0438\u0431\u043A\u0430: " + e.message, { parse_mode: "HTML", reply_markup: adminKeysMainKb() });
-    }
+    await ctx.editMessageText("\u{1F504} \u0421\u043A\u0430\u0447\u0438\u0432\u0430\u044E \u043A\u043B\u044E\u0447\u0438 \u0441 GitHub \u0438 \u043F\u0440\u043E\u0432\u0435\u0440\u044F\u044E \u043A\u0430\u0436\u0434\u044B\u0439... \u23F3 \u041D\u0435 \u0437\u0430\u043A\u0440\u044B\u0432\u0430\u0439\u0442\u0435 \u0431\u043E\u0442\u0430!", { parse_mode: "HTML", reply_markup: adminBackKb() });
+    fetchAndUpdatePremiumKeys(true).then(function(result) {
+      var msg = result.changed
+        ? "\u2705 <b>\u041A\u043B\u044E\u0447\u0438 \u043E\u0431\u043D\u043E\u0432\u043B\u0435\u043D\u044B!</b>\n\n\u{1F4CA} \u041F\u0440\u043E\u0432\u0435\u0440\u0435\u043D\u043E: " + result.total + "\n\u{1F7E2} \u0420\u0430\u0431\u043E\u0447\u0438\u0445: " + result.working + "\n\n\u2B50 \u041F\u0440\u0435\u043C\u0438\u0443\u043C \u043F\u0443\u043B \u043E\u0431\u043D\u043E\u0432\u043B\u0451\u043D."
+        : "\u2139\uFE0F \u0418\u0437\u043C\u0435\u043D\u0435\u043D\u0438\u0439 \u043D\u0435\u0442, \u043A\u043B\u044E\u0447\u0438 \u0443\u0436\u0435 \u0430\u043A\u0442\u0443\u0430\u043B\u044C\u043D\u044B.";
+      ctx.editMessageText(msg, { parse_mode: "HTML", reply_markup: adminKeysMainKb() }).catch(function() {});
+    }).catch(function(e) {
+      ctx.editMessageText("\u274C \u041E\u0448\u0438\u0431\u043A\u0430: " + e.message, { parse_mode: "HTML", reply_markup: adminKeysMainKb() }).catch(function() {});
+    });
     return;
   }
   if (data === "admin_support_chats") {
