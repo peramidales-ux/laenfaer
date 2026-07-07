@@ -38250,38 +38250,69 @@ app.get("/privacy", async (req, res) => {
 // ===== CABINET =====
 app.get("/cabinet", async (req, res) => {
   res.setHeader("Content-Type","text/html; charset=utf-8").send(pageShell("Личный кабинет | LAENFAER VPN","Управление подпиской и аккаунтом LAENFAER VPN.",`
-<div style="max-width:500px;margin:0 auto;padding:40px 20px">
-<h1 style="font-size:28px;font-weight:800;margin-bottom:8px;text-align:center">Личный кабинет</h1>
-<p style="text-align:center;font-size:13px;color:var(--dim);margin-bottom:24px">Управляйте подпиской, отслеживайте статус</p>
+<div style="max-width:420px;margin:0 auto;padding:40px 20px">
+<h1 style="font-size:26px;font-weight:800;margin-bottom:6px;text-align:center">Личный кабинет</h1>
+<p style="text-align:center;font-size:12px;color:var(--dim);margin-bottom:28px">Управляйте подпиской и статусом</p>
 
-<div id="auth-form">
+<div id="view-menu">
+<div style="background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:28px;text-align:center">
+<div style="font-size:36px;margin-bottom:16px">&#9889;</div>
+<h3 style="font-size:18px;margin-bottom:8px">Добро пожаловать</h3>
+<p style="font-size:13px;color:var(--dim);margin-bottom:24px">Войдите или создайте аккаунт</p>
+<button onclick="showView('login')" style="width:100%;padding:13px;border-radius:10px;background:var(--accent);color:#161006;font-weight:700;font-size:14px;border:none;cursor:pointer;margin-bottom:10px">Войти</button>
+<button onclick="showView('register')" style="width:100%;padding:13px;border-radius:10px;border:1px solid var(--border);color:var(--text);background:transparent;font-weight:600;font-size:14px;cursor:pointer">Зарегистрироваться</button>
+</div>
+</div>
+
+<div id="view-login" style="display:none">
 <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:24px;margin-bottom:16px">
-<h3 style="font-size:16px;margin-bottom:16px">Вход / Регистрация</h3>
+<h3 style="font-size:17px;margin-bottom:18px">Вход в аккаунт</h3>
+<div style="margin-bottom:12px">
+<label style="display:block;font-size:12px;color:var(--dim);margin-bottom:6px">Email</label>
+<input type="email" id="login-email" placeholder="your@email.com" style="width:100%;padding:12px;border-radius:10px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:14px;outline:none">
+</div>
+<div style="margin-bottom:18px">
+<label style="display:block;font-size:12px;color:var(--dim);margin-bottom:6px">Пароль</label>
+<input type="password" id="login-pass" placeholder="Ваш пароль" style="width:100%;padding:12px;border-radius:10px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:14px;outline:none">
+</div>
+<button onclick="doLogin()" id="login-btn" style="width:100%;padding:13px;border-radius:10px;background:var(--accent);color:#161006;font-weight:700;font-size:14px;border:none;cursor:pointer">Войти</button>
+<p style="text-align:center;margin-top:14px;font-size:12px;color:var(--dim)">Нет аккаунта? <a href="#" onclick="showView('register');return false" style="color:var(--accent)">Зарегистрироваться</a></p>
+</div>
+</div>
+
+<div id="view-register" style="display:none">
+<div style="background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:24px;margin-bottom:16px">
+<h3 style="font-size:17px;margin-bottom:18px">Регистрация</h3>
+<div style="margin-bottom:12px">
+<label style="display:block;font-size:12px;color:var(--dim);margin-bottom:6px">Имя</label>
+<input type="text" id="reg-name" placeholder="Как вас зовут" style="width:100%;padding:12px;border-radius:10px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:14px;outline:none">
+</div>
 <div style="margin-bottom:12px">
 <label style="display:block;font-size:12px;color:var(--dim);margin-bottom:6px">Email</label>
 <input type="email" id="reg-email" placeholder="your@email.com" style="width:100%;padding:12px;border-radius:10px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:14px;outline:none">
 </div>
-<div id="pass-field" style="margin-bottom:16px">
+<div style="margin-bottom:18px">
 <label style="display:block;font-size:12px;color:var(--dim);margin-bottom:6px">Пароль</label>
 <input type="password" id="reg-pass" placeholder="Минимум 6 символов" style="width:100%;padding:12px;border-radius:10px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:14px;outline:none">
 </div>
-<button onclick="doAuth()" id="auth-btn" style="width:100%;padding:12px;border-radius:10px;background:var(--accent);color:#161006;font-weight:700;font-size:14px;border:none;cursor:pointer;margin-bottom:8px">Войти / Зарегистрироваться</button>
-<p style="font-size:11px;color:var(--dim);text-align:center">На вашу почту придёт код подтверждения</p>
+<button onclick="doRegister()" id="reg-btn" style="width:100%;padding:13px;border-radius:10px;background:var(--signal);color:#0A1512;font-weight:700;font-size:14px;border:none;cursor:pointer">Создать аккаунт</button>
+<p style="text-align:center;margin-top:14px;font-size:12px;color:var(--dim)">Уже есть аккаунт? <a href="#" onclick="showView('login');return false" style="color:var(--accent)">Войти</a></p>
 </div>
-<div id="auth-msg" style="display:none;text-align:center;padding:12px;border-radius:10px;font-size:13px;margin-bottom:12px"></div>
 </div>
 
-<div id="verify-form" style="display:none">
+<div id="view-verify" style="display:none">
 <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:24px;margin-bottom:16px">
-<h3 style="font-size:16px;margin-bottom:8px">Подтверждение почты</h3>
+<h3 style="font-size:17px;margin-bottom:8px">Подтверждение почты</h3>
 <p style="font-size:12px;color:var(--dim);margin-bottom:16px">Код отправлен на <b id="verify-email"></b></p>
-<div style="margin-bottom:16px">
-<label style="display:block;font-size:12px;color:var(--dim);margin-bottom:6px">Код из письма</label>
-<input type="text" id="verify-code" placeholder="6-значный код" maxlength="6" style="width:100%;padding:12px;border-radius:10px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:18px;text-align:center;letter-spacing:8px;outline:none">
+<div style="margin-bottom:18px">
+<input type="text" id="verify-code" placeholder="6-значный код" maxlength="6" style="width:100%;padding:14px;border-radius:10px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:22px;text-align:center;letter-spacing:10px;outline:none">
 </div>
-<button onclick="doVerify()" style="width:100%;padding:12px;border-radius:10px;background:var(--signal);color:#0A1512;font-weight:700;font-size:14px;border:none;cursor:pointer">Подтвердить</button>
+<button onclick="doVerify()" style="width:100%;padding:13px;border-radius:10px;background:var(--signal);color:#0A1512;font-weight:700;font-size:14px;border:none;cursor:pointer">Подтвердить</button>
+<p style="text-align:center;margin-top:14px;font-size:12px;color:var(--dim)">Не пришёл? Проверьте папку «Спам»</p>
 </div>
 </div>
+
+<div id="auth-msg" style="display:none;text-align:center;padding:12px;border-radius:10px;font-size:13px;margin-bottom:12px"></div>
 
 <div id="cabinet-panel" style="display:none">
 <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:20px;margin-bottom:12px">
@@ -38289,27 +38320,19 @@ app.get("/cabinet", async (req, res) => {
 <h3 style="font-size:16px;margin:0">Профиль</h3>
 <button onclick="doLogout()" style="background:none;border:1px solid var(--border);color:var(--dim);padding:6px 12px;border-radius:8px;font-size:11px;cursor:pointer">Выйти</button>
 </div>
-<div id="cab-info" style="font-size:13px;color:var(--dim)">Загрузка...</div>
+<div id="cab-info" style="font-size:13px;color:var(--dim)">...</div>
 </div>
-
 <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:20px;margin-bottom:12px">
 <h3 style="font-size:16px;margin-bottom:12px">Подписка</h3>
-<div id="cab-sub" style="font-size:13px;color:var(--dim)">Загрузка...</div>
+<div id="cab-sub" style="font-size:13px;color:var(--dim)">...</div>
 </div>
-
-<div style="background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:20px;margin-bottom:12px">
-<h3 style="font-size:16px;margin-bottom:12px">Устройства</h3>
-<div id="cab-devices" style="font-size:13px;color:var(--dim)">Загрузка...</div>
-</div>
-
 <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:20px;margin-bottom:12px">
 <h3 style="font-size:16px;margin-bottom:12px">Подключить VPN</h3>
-<div id="cab-connect" style="font-size:13px;color:var(--dim)">Загрузка...</div>
+<div id="cab-connect" style="font-size:13px;color:var(--dim)">...</div>
 </div>
-
 <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:20px">
-<h3 style="font-size:16px;margin-bottom:12px">Пополнить баланс</h3>
-<div id="cab-balance" style="font-size:13px;color:var(--dim)">Загрузка...</div>
+<h3 style="font-size:16px;margin-bottom:12px">Баланс</h3>
+<div id="cab-balance" style="font-size:13px;color:var(--dim)">...</div>
 </div>
 </div>
 </div>
@@ -38317,66 +38340,153 @@ app.get("/cabinet", async (req, res) => {
 <script>
 var sess=localStorage.getItem('lvpn_sess');
 var uid=localStorage.getItem('lvpn_uid');
-if(sess&&uid){loadCabinet();}
+if(sess&&uid)loadCabinet();
 
-function doAuth(){
-  var email=document.getElementById('reg-email').value.trim();
-  var pass=document.getElementById('reg-pass').value;
-  if(!email){showMsg('Введите email','red');return;}
-  if(!pass||pass.length<6){showMsg('Пароль минимум 6 символов','red');return;}
-  document.getElementById('auth-btn').textContent='Отправка...';
-  document.getElementById('auth-btn').disabled=true;
+function showView(v){document.getElementById('view-menu').style.display='none';document.getElementById('view-login').style.display='none';document.getElementById('view-register').style.display='none';document.getElementById('view-verify').style.display='none';document.getElementById('cabinet-panel').style.display='none';document.getElementById('view-'+v).style.display='';}
+
+function doLogin(){
+  var email=document.getElementById('login-email').value.trim();
+  var pass=document.getElementById('login-pass').value;
+  if(!email||!pass){showMsg('Введите email и пароль','red');return;}
+  document.getElementById('login-btn').textContent='Вход...';document.getElementById('login-btn').disabled=true;
   fetch('/api/cabinet/auth',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:email,pass:pass})})
   .then(function(r){return r.json()}).then(function(d){
-    document.getElementById('auth-btn').textContent='Войти / Зарегистрироваться';
-    document.getElementById('auth-btn').disabled=false;
+    document.getElementById('login-btn').textContent='Войти';document.getElementById('login-btn').disabled=false;
     if(d.ok){
-      if(d.needVerify){
-        document.getElementById('auth-form').style.display='none';
-        document.getElementById('verify-form').style.display='';
-        document.getElementById('verify-email').textContent=email;
-      } else {
-        localStorage.setItem('lvpn_sess',d.session);
-        localStorage.setItem('lvpn_uid',d.userId);
-        sess=d.session;uid=d.userId;loadCabinet();
-      }
-    } else {showMsg(d.message||'Ошибка','red');}
-  }).catch(function(){showMsg('Ошибка сети','red');document.getElementById('auth-btn').textContent='Войти / Зарегистрироваться';document.getElementById('auth-btn').disabled=false;});
+      if(d.needVerify){showView('verify');document.getElementById('verify-email').textContent=email;}
+      else{localStorage.setItem('lvpn_sess',d.session);localStorage.setItem('lvpn_uid',d.userId);sess=d.session;uid=d.userId;loadCabinet();}
+    }else showMsg(d.message||'Ошибка','red');
+  }).catch(function(){showMsg('Ошибка сети','red');document.getElementById('login-btn').textContent='Войти';document.getElementById('login-btn').disabled=false;});
+}
+
+function doRegister(){
+  var name=document.getElementById('reg-name').value.trim();
+  var email=document.getElementById('reg-email').value.trim();
+  var pass=document.getElementById('reg-pass').value;
+  if(!name||!email||!pass){showMsg('Заполните все поля','red');return;}
+  if(pass.length<6){showMsg('Пароль минимум 6 символов','red');return;}
+  document.getElementById('reg-btn').textContent='Отправка...';document.getElementById('reg-btn').disabled=true;
+  fetch('/api/cabinet/register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:name,email:email,pass:pass})})
+  .then(function(r){return r.json()}).then(function(d){
+    document.getElementById('reg-btn').textContent='Создать аккаунт';document.getElementById('reg-btn').disabled=false;
+    if(d.ok){showView('verify');document.getElementById('verify-email').textContent=email;}
+    else showMsg(d.message||'Ошибка','red');
+  }).catch(function(){showMsg('Ошибка сети','red');document.getElementById('reg-btn').textContent='Создать аккаунт';document.getElementById('reg-btn').disabled=false;});
 }
 
 function doVerify(){
   var code=document.getElementById('verify-code').value.trim();
-  var email=document.getElementById('reg-email').value.trim();
+  var email=document.getElementById('login-email')?.value?.trim()||document.getElementById('reg-email')?.value?.trim()||'';
   if(!code||code.length!==6){showMsg('Введите 6-значный код','red');return;}
   fetch('/api/cabinet/verify',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:email,code:code})})
   .then(function(r){return r.json()}).then(function(d){
     if(d.ok){localStorage.setItem('lvpn_sess',d.session);localStorage.setItem('lvpn_uid',d.userId);sess=d.session;uid=d.userId;loadCabinet();}
-    else{showMsg(d.message||'Неверный код','red');}
+    else showMsg(d.message||'Неверный код','red');
   }).catch(function(){showMsg('Ошибка сети','red');});
 }
 
-function doLogout(){localStorage.removeItem('lvpn_sess');localStorage.removeItem('lvpn_uid');document.getElementById('auth-form').style.display='';document.getElementById('verify-form').style.display='none';document.getElementById('cabinet-panel').style.display='none';}
+function doLogout(){localStorage.removeItem('lvpn_sess');localStorage.removeItem('lvpn_uid');showView('menu');}
 
 function loadCabinet(){
   if(!sess||!uid)return;
-  document.getElementById('auth-form').style.display='none';
-  document.getElementById('verify-form').style.display='none';
-  document.getElementById('cabinet-panel').style.display='';
+  document.getElementById('view-menu').style.display='none';document.getElementById('view-login').style.display='none';document.getElementById('view-register').style.display='none';document.getElementById('view-verify').style.display='none';document.getElementById('cabinet-panel').style.display='';
   fetch('/api/cabinet/profile?session='+sess+'&uid='+uid).then(function(r){return r.json()}).then(function(d){
     if(!d.ok){doLogout();return;}
-    document.getElementById('cab-info').innerHTML='<b>'+esc(d.name)+'</b><br>Email: '+(d.email||'нет')+'<br>ID: '+d.userId;
-    var sub=d.hasActiveSub?'<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><div style="width:8px;height:8px;border-radius:50%;background:var(--signal)"></div><span style="color:var(--signal);font-weight:600">'+esc(d.tariffLabel)+'</span></div><div style="font-size:12px;color:var(--dim)">Действует до: '+d.expireDate+'</div>':'<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px"><div style="width:8px;height:8px;border-radius:50%;background:#f87171"></div><span style="color:#f87171;font-weight:600">Нет активной подписки</span></div><a href="/pricing" style="display:inline-block;background:var(--accent);color:#161006;padding:10px 20px;border-radius:8px;font-size:13px;font-weight:600;text-decoration:none">Выбрать тариф</a>';
+    document.getElementById('cab-info').innerHTML='<b>'+esc(d.name)+'</b><br>Email: '+(d.email||'');
+    var sub=d.hasActiveSub?'<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><div style="width:8px;height:8px;border-radius:50%;background:var(--signal)"></div><span style="color:var(--signal);font-weight:600">'+esc(d.tariffLabel)+'</span></div><div style="font-size:12px;color:var(--dim)">До: '+d.expireDate+'</div>':'<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px"><div style="width:8px;height:8px;border-radius:50%;background:#f87171"></div><span style="color:#f87171;font-weight:600">Нет активной подписки</span></div><a href="/pricing" style="display:inline-block;background:var(--accent);color:#161006;padding:10px 20px;border-radius:8px;font-size:13px;font-weight:600;text-decoration:none">Выбрать тариф</a>';
     document.getElementById('cab-sub').innerHTML=sub;
-    document.getElementById('cab-devices').innerHTML='Устройств: '+d.deviceCount+'/1';
-    var connect=d.hasActiveSub?'<p style="font-size:13px;color:var(--dim);margin-bottom:12px">Для подключения скачайте приложение и вставьте ссылку подписки</p><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><a href="/setup/android" style="text-align:center;padding:12px;background:rgba(139,197,63,.08);border-radius:10px;text-decoration:none;color:var(--text);font-size:12px;font-weight:600">Android</a><a href="/setup/ios" style="text-align:center;padding:12px;background:rgba(139,197,63,.08);border-radius:10px;text-decoration:none;color:var(--text);font-size:12px;font-weight:600">iPhone</a><a href="/setup/windows" style="text-align:center;padding:12px;background:rgba(139,197,63,.08);border-radius:10px;text-decoration:none;color:var(--text);font-size:12px;font-weight:600">Windows</a><a href="/setup/macos" style="text-align:center;padding:12px;background:rgba(139,197,63,.08);border-radius:10px;text-decoration:none;color:var(--text);font-size:12px;font-weight:600">macOS</a></div>':'<p style="font-size:13px;color:var(--dim)">Купите подписку для подключения VPN</p>';
+    var connect=d.hasActiveSub?'<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><a href="/setup/android" style="text-align:center;padding:12px;background:rgba(139,197,63,.08);border-radius:10px;text-decoration:none;color:var(--text);font-size:12px;font-weight:600">Android</a><a href="/setup/ios" style="text-align:center;padding:12px;background:rgba(139,197,63,.08);border-radius:10px;text-decoration:none;color:var(--text);font-size:12px;font-weight:600">iPhone</a><a href="/setup/windows" style="text-align:center;padding:12px;background:rgba(139,197,63,.08);border-radius:10px;text-decoration:none;color:var(--text);font-size:12px;font-weight:600">Windows</a><a href="/setup/macos" style="text-align:center;padding:12px;background:rgba(139,197,63,.08);border-radius:10px;text-decoration:none;color:var(--text);font-size:12px;font-weight:600">macOS</a></div>':'<a href="/pricing" style="display:inline-block;background:var(--accent);color:#161006;padding:10px 20px;border-radius:8px;font-size:13px;font-weight:600;text-decoration:none">Купить подписку</a>';
     document.getElementById('cab-connect').innerHTML=connect;
-    document.getElementById('cab-balance').innerHTML='<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px"><span style="font-size:24px;font-weight:800;color:var(--accent)">'+d.balance+' &#8381;</span></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><a href="/pricing" style="text-align:center;padding:10px;background:var(--accent);color:#161006;border-radius:8px;font-size:12px;font-weight:600;text-decoration:none">Пополнить</a><a href="https://t.me/laenfaer_vpn_bot" style="text-align:center;padding:10px;background:rgba(139,197,63,.08);border-radius:8px;font-size:12px;font-weight:600;text-decoration:none;color:var(--text)">Через Telegram</a></div>';
+    document.getElementById('cab-balance').innerHTML='<div style="font-size:24px;font-weight:800;color:var(--accent);margin-bottom:12px">'+d.balance+' &#8381;</div><a href="/pricing" style="display:inline-block;background:var(--accent);color:#161006;padding:10px 20px;border-radius:8px;font-size:13px;font-weight:600;text-decoration:none">Пополнить</a>';
   }).catch(function(){});
 }
 function esc(s){var d=document.createElement('div');d.textContent=s;return d.innerHTML;}
 function showMsg(t,c){var el=document.getElementById('auth-msg');el.style.display='';el.style.background=c==='red'?'rgba(248,113,113,.1)':'rgba(45,212,191,.1)';el.style.color=c==='red'?'#f87171':'var(--signal)';el.textContent=t;}
 </script>
 `));
+});
+
+// Cabinet API - Register
+app.post("/api/cabinet/register", async (req, res) => {
+  try {
+    const { name, email, pass } = req.body;
+    if (!name || !email || !pass) return res.json({ ok: false, message: "Заполните все поля" });
+    if (pass.length < 6) return res.json({ ok: false, message: "Пароль минимум 6 символов" });
+    const { createHash } = await import("crypto");
+    const hash = createHash("sha256").update(pass).digest("hex").slice(0, 32);
+    const allUsers = await db.select().from(usersTable);
+    const existing = allUsers.find(u => u.email === email);
+    if (existing) return res.json({ ok: false, message: "Email уже зарегистрирован. Войдите." });
+    const code = String(Math.floor(100000 + Math.random() * 900000));
+    const codeHash = createHash("sha256").update(code).digest("hex").slice(0, 16);
+    const tid = "email_" + email.replace(/[^a-z0-9]/gi, "_");
+    await db.insert(usersTable).values({ telegramId: tid, name, email, emailPass: hash, emailVerified: false, emailVerifyCode: codeHash, emailVerifyExpiry: new Date(Date.now() + 15 * 60000) });
+    res.json({ ok: true, needVerify: true, email });
+    import("nodemailer").then(nm => {
+      const t = nm.default.createTransport({ host: process.env.SMTP_HOST, port: Number(process.env.SMTP_PORT) || 465, secure: process.env.SMTP_SECURE === "true", auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS } });
+      t.sendMail({ from: "LAENFAER VPN <" + process.env.SMTP_USER + ">", to: email, subject: "Код подтверждения LAENFAER VPN", text: "Код: " + code, html: "<div style='font-family:sans-serif;padding:20px'><h2 style='color:#E8B34C'>LAENFAER VPN</h2><p>Код подтверждения:</p><div style='font-size:32px;font-weight:900;letter-spacing:8px;color:#E8B34C;margin:20px 0'>" + code + "</div><p style='color:#999;font-size:12px'>Действителен 15 минут</p></div>" }).then(() => console.log("[SMTP] sent to", email)).catch(e => console.error("[SMTP]", e.message));
+    }).catch(() => {});
+  } catch (err) { console.error("[REGISTER]", err); res.status(500).json({ ok: false }); }
+});
+
+// Cabinet API - Login
+app.post("/api/cabinet/auth", async (req, res) => {
+  try {
+    const { email, pass } = req.body;
+    if (!email || !pass) return res.json({ ok: false, message: "Введите email и пароль" });
+    const { createHash } = await import("crypto");
+    const hash = createHash("sha256").update(pass).digest("hex").slice(0, 32);
+    const allUsers = await db.select().from(usersTable);
+    const user = allUsers.find(u => u.email === email);
+    if (!user) return res.json({ ok: false, message: "Аккаунт не найден. Зарегистрируйтесь." });
+    if (user.emailPass !== hash) return res.json({ ok: false, message: "Неверный пароль" });
+    if (user.banned) return res.json({ ok: false, message: "Аккаунт заблокирован" });
+    if (!user.emailVerified) {
+      const code = String(Math.floor(100000 + Math.random() * 900000));
+      const codeHash = createHash("sha256").update(code).digest("hex").slice(0, 16);
+      await db.update(usersTable).set({ emailVerifyCode: codeHash, emailVerifyExpiry: new Date(Date.now() + 15 * 60000) }).where(eq(usersTable.telegramId, user.telegramId));
+      res.json({ ok: true, needVerify: true, email });
+      import("nodemailer").then(nm => {
+        const t = nm.default.createTransport({ host: process.env.SMTP_HOST, port: Number(process.env.SMTP_PORT) || 465, secure: process.env.SMTP_SECURE === "true", auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS } });
+        t.sendMail({ from: "LAENFAER VPN <" + process.env.SMTP_USER + ">", to: email, subject: "Код подтверждения LAENFAER VPN", text: "Код: " + code, html: "<div style='font-family:sans-serif;padding:20px'><h2 style='color:#E8B34C'>LAENFAER VPN</h2><p>Код подтверждения:</p><div style='font-size:32px;font-weight:900;letter-spacing:8px;color:#E8B34C;margin:20px 0'>" + code + "</div><p style='color:#999;font-size:12px'>Действителен 15 минут</p></div>" }).then(() => console.log("[SMTP] sent to", email)).catch(e => console.error("[SMTP]", e.message));
+      }).catch(() => {});
+      return;
+    }
+    const session = createHash("sha256").update(email + Date.now() + Math.random()).digest("hex").slice(0, 32);
+    res.json({ ok: true, session, userId: user.telegramId, needVerify: false });
+  } catch (err) { console.error("[CABINET_AUTH]", err); res.status(500).json({ ok: false }); }
+});
+
+// Cabinet API - Verify
+app.post("/api/cabinet/verify", async (req, res) => {
+  try {
+    const { email, code } = req.body;
+    if (!email || !code) return res.json({ ok: false, message: "Введите код" });
+    const { createHash } = await import("crypto");
+    const codeHash = createHash("sha256").update(code).digest("hex").slice(0, 16);
+    const allUsers = await db.select().from(usersTable);
+    const user = allUsers.find(u => u.email === email && u.emailVerifyCode === codeHash);
+    if (!user) return res.json({ ok: false, message: "Неверный код" });
+    if (new Date(user.emailVerifyExpiry) < new Date()) return res.json({ ok: false, message: "Код истёк" });
+    await db.update(usersTable).set({ emailVerified: true, emailVerifyCode: "", emailVerifyExpiry: new Date(0) }).where(eq(usersTable.telegramId, user.telegramId));
+    const session = createHash("sha256").update(email + Date.now() + Math.random()).digest("hex").slice(0, 32);
+    res.json({ ok: true, session, userId: user.telegramId });
+  } catch (err) { res.status(500).json({ ok: false }); }
+});
+
+// Cabinet API - Profile
+app.get("/api/cabinet/profile", async (req, res) => {
+  try {
+    const { session, uid } = req.query;
+    if (!session || !uid) return res.json({ ok: false });
+    const user = await getUser(uid);
+    if (!user) return res.json({ ok: false });
+    const sub = await getSubscription(uid);
+    const hasActiveSub = sub && new Date(sub.expiresAt) > new Date();
+    const daysLeft = hasActiveSub ? Math.ceil((new Date(sub.expiresAt) - Date.now()) / 86400000) : 0;
+    const tariffLabel = hasActiveSub ? (sub.tariff && sub.tariff.includes("free") ? "Бесплатный (" + daysLeft + " дн.)" : "Premium (" + daysLeft + " дн.)") : "";
+    res.json({ ok: true, userId: uid, name: user.name, email: user.email || "", hasActiveSub, daysLeft, tariffLabel, expireDate: hasActiveSub ? new Date(sub.expiresAt).toLocaleDateString("ru-RU") : "", balance: user.balance || 0, deviceCount: user.deviceFingerprint ? 1 : 0 });
+  } catch (err) { res.status(500).json({ ok: false }); }
 });
 
 // Cabinet API - Auth
