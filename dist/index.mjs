@@ -57711,34 +57711,27 @@ function daysLeft(expiresAt) {
   return Math.ceil(ms / 864e5);
 }
 async function checkKeyStatus(key) {
-  if (!key) return "\u26AA \u041D\u0435\u0442 \u043A\u043B\u044E\u0447\u0430";
+  if (!key) return { online: false, ping: null };
   try {
     const match = key.match(/@([^:/]+):(\d+)/);
-    if (!match) return "\u26A0\uFE0F \u0424\u043E\u0440\u043C\u0430\u0442 \u043A\u043B\u044E\u0447\u0430 \u043D\u0435\u0438\u0437\u0432\u0435\u0441\u0442\u0435\u043D";
+    if (!match) return { online: false, ping: null };
     const host = match[1];
     const port2 = Number(match[2]);
-    let httpStatus = "\u2753";
+    const start = Date.now();
     try {
       const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 4e3);
-      const resp = await fetch(`http://${host}:${port2}`, { signal: controller.signal });
+      const timeout = setTimeout(() => controller.abort(), 5e3);
+      await fetch(`http://${host}:${port2}`, { signal: controller.signal });
       clearTimeout(timeout);
-      httpStatus = (resp.ok || resp.status === 400 || resp.status === 403 || resp.status === 407) ? "\u{1F7E2} \u041E\u043D\u043B\u0430\u0439\u043D" : `\u{1F534} HTTP ${resp.status}`;
+      const ping = Date.now() - start;
+      return { online: true, ping };
     } catch {
-      httpStatus = "\u{1F534} HTTP Fail";
+      const ping = Date.now() - start;
+      if (ping < 5000) return { online: true, ping };
+      return { online: false, ping: null };
     }
-    let pingMs = "\u2014";
-    try {
-      const { execSync } = await import("child_process");
-      const result = execSync(`ping -c 1 -W 3 ${host}`, { timeout: 5e3 }).toString();
-      const match2 = result.match(/time=(\d+\.?\d*)/);
-      pingMs = match2 ? `${match2[1]}ms` : "\u2014";
-    } catch {
-      pingMs = "timeout";
-    }
-    return `${httpStatus} | \u{1F4E1} ${pingMs}`;
   } catch {
-    return "\u26A0\uFE0F \u041E\u0448\u0438\u0431\u043A\u0430 \u043F\u0440\u043E\u0432\u0435\u0440\u043A\u0438";
+    return { online: false, ping: null };
   }
 }
 var TARIFF_CONFIG = {
@@ -59169,7 +59162,8 @@ ID: <code>${req.telegramId}</code>`,
       return;
     }
     const status = await checkKeyStatus(sub.key);
-    await ctx.answerCallbackQuery({ text: `\u0421\u0442\u0430\u0442\u0443\u0441 \u043A\u043B\u044E\u0447\u0430: ${status}`, show_alert: true });
+    const statusText = status.online ? `\u{1F7E2} \u041E\u043D\u043B\u0430\u0439\u043D ${status.ping}\u043C\u0441` : "\u{1F534} \u041E\u0444\u0444\u043B\u0430\u0439\u043D";
+    await ctx.answerCallbackQuery({ text: `\u0421\u0442\u0430\u0442\u0443\u0441 \u043A\u043B\u044E\u0447\u0430: ${statusText}`, show_alert: true });
     return;
   }
   if (data.startsWith("select_free_key_")) {
@@ -59981,10 +59975,11 @@ async function showUserProfile(ctx, userId) {
 `;
     if (sub.key) {
       const status = await checkKeyStatus(sub.key);
+      const statusText = status.online ? `\u{1F7E2} \u041E\u043D\u043B\u0430\u0439\u043D ${status.ping}\u043C\u0441` : "\u{1F534} \u041E\u0444\u0444\u043B\u0430\u0439\u043D";
       text2 += `
 \u{1F511} <b>\u041A\u041B\u042E\u0427:</b>
 <code>${escapeHtml(sub.key.slice(0, 80))}${sub.key.length > 80 ? "..." : ""}</code>
-\u{1F4E1} <b>\u0421\u0422\u0410\u0422\u0423\u0421:</b> ${status}
+\u{1F4E1} <b>\u0421\u0422\u0410\u0422\u0423\u0421:</b> ${statusText}
 `;
     }
   } else {
@@ -60087,13 +60082,21 @@ async function checkAllKeys(ctx) {
   text2 += "\u{1F381} <b>\u0411\u0415\u0421\u041F\u041B\u0410\u0422\u041D\u042B\u0415 \u041A\u041B\u042E\u0427\u0418:</b>\n";
   if (freeKeys.length) {
     freeStatuses.forEach((s, i) => {
-      text2 += `${i + 1}. ${s}\n`;
+      if (s.online) {
+        text2 += `${i + 1}. \u26A1 #${i + 1}  \u{1F7E2} ${s.ping}\u043C\u0441\n`;
+      } else {
+        text2 += `${i + 1}. \u26A1 #${i + 1}  \u{1F534} offline\n`;
+      }
     });
   } else text2 += "\u26A0\uFE0F \u041D\u0435\u0442 \u0431\u0435\u0441\u043F\u043B\u0430\u0442\u043D\u044B\u0445 \u043A\u043B\u044E\u0447\u0435\u0439\n";
   text2 += "\n\u2B50 <b>PREMIUM \u041A\u041B\u042E\u0427\u0418:</b>\n";
   if (premiumKeys.length) {
     premStatuses.forEach((s, i) => {
-      text2 += `${i + 1}. ${s}\n`;
+      if (s.online) {
+        text2 += `${i + 1}. \u26A1 #${i + 1}  \u{1F7E2} ${s.ping}\u043C\u0441\n`;
+      } else {
+        text2 += `${i + 1}. \u26A1 #${i + 1}  \u{1F534} offline\n`;
+      }
     });
   } else text2 += "\u26A0\uFE0F \u041D\u0435\u0442 Premium \u043A\u043B\u044E\u0447\u0435\u0439\n";
   const msgText = text2.slice(0, 4e3);
