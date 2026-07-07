@@ -57723,7 +57723,7 @@ async function checkKeyStatus(key) {
       const timeout = setTimeout(() => controller.abort(), 4e3);
       const resp = await fetch(`http://${host}:${port2}`, { signal: controller.signal });
       clearTimeout(timeout);
-      httpStatus = resp.ok ? "\u{1F7E2} HTTP OK" : `\u{1F7E1} HTTP ${resp.status}`;
+      httpStatus = (resp.ok || resp.status === 400 || resp.status === 403 || resp.status === 407) ? "\u{1F7E2} \u041E\u043D\u043B\u0430\u0439\u043D" : `\u{1F534} HTTP ${resp.status}`;
     } catch {
       httpStatus = "\u{1F534} HTTP Fail";
     }
