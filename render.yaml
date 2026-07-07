@@ -16,13 +16,3 @@ services:
         sync: false
       - key: DATABASE_URL
         sync: false
-      - key: SMTP_HOST
-        value: smtp.mail.ru
-      - key: SMTP_PORT
-        value: "465"
-      - key: SMTP_USER
-        value: REDACTED_EMAIL
-      - key: SMTP_PASS
-        value: REDACTED_SMTP_PASS
-      - key: SMTP_SECURE
-        value: "true"
