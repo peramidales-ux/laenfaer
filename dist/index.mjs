@@ -38379,6 +38379,57 @@ function showMsg(t,c){var el=document.getElementById('auth-msg');el.style.displa
 `));
 });
 
+// Cabinet API - Register
+app.post("/api/cabinet/register", async (req, res) => {
+  try {
+    const { name, email, pass } = req.body;
+    if (!name || !email || !pass) return res.json({ ok: false, message: "Заполните все поля" });
+    if (pass.length < 6) return res.json({ ok: false, message: "Пароль минимум 6 символов" });
+    const { createHash } = await import("crypto");
+    const hash = createHash("sha256").update(pass).digest("hex").slice(0, 32);
+    const allUsers = await db.select().from(usersTable);
+    const existing = allUsers.find(u => u.email === email);
+    if (existing) return res.json({ ok: false, message: "Email уже зарегистрирован. Войдите." });
+    const code = String(Math.floor(100000 + Math.random() * 900000));
+    const codeHash = createHash("sha256").update(code).digest("hex").slice(0, 16);
+    const tid = "email_" + email.replace(/[^a-z0-9]/gi, "_");
+    await db.insert(usersTable).values({ telegramId: tid, name, email, emailPass: hash, emailVerified: false, emailVerifyCode: codeHash, emailVerifyExpiry: new Date(Date.now() + 15 * 60000) });
+    res.json({ ok: true, needVerify: true, email });
+    // Send email async via TLS (no nodemailer dependency)
+    const smtpHost = process.env.SMTP_HOST || "smtp.mail.ru";
+    const smtpPort = Number(process.env.SMTP_PORT) || 465;
+    const smtpUser = process.env.SMTP_USER || "REDACTED_EMAIL";
+    const smtpPass = process.env.SMTP_PASS || "REDACTED_SMTP_PASS";
+    import("tls").then(tls => {
+      const socket = tls.default.connect({ host: smtpHost, port: smtpPort, rejectUnauthorized: true }, () => {
+        let step = 0;
+        function s(line) { socket.write(line + "\r\n"); }
+        socket.on("data", (data) => {
+          for (const line of data.toString().split("\r\n")) {
+            if (!line) continue;
+            const c = parseInt(line.substring(0, 3), 10);
+            if (step === 0 && c === 220) { s("EHLO laenfaer.onrender.com"); step = 1; }
+            else if (step === 1 && line.startsWith("250") && line.includes("AUTH LOGIN")) { s("AUTH LOGIN"); step = 2; }
+            else if (step === 1 && !line.startsWith("250")) { /* skip */ }
+            else if (step === 2 && c === 334) { s(Buffer.from(smtpUser).toString("base64")); step = 3; }
+            else if (step === 3 && c === 334) { s(Buffer.from(smtpPass).toString("base64")); step = 4; }
+            else if (step === 4 && c === 235) { s("MAIL FROM:<" + smtpUser + ">"); step = 5; }
+            else if (step === 5 && c === 250) { s("RCPT TO:<" + email + ">"); step = 6; }
+            else if (step === 6 && c === 250) { s("DATA"); step = 7; }
+            else if (step === 7 && c === 354) {
+              s("From: LAENFAER VPN <" + smtpUser + ">\r\nTo: <" + email + ">\r\nSubject: =?UTF-8?B?2KrZgtCw0YLRgdC60LUgTEFFTkZBRSBWUE4=?=\r\nMIME-Version: 1.0\r\nContent-Type: text/html; charset=UTF-8\r\n\r\n<div style='font-family:sans-serif;padding:20px'><h2 style='color:#E8B34C'>LAENFAER VPN</h2><p>\u041a\u043e\u0434 \u043f\u043e\u0434\u0442\u0432\u0435\u0440\u0436\u0434\u0435\u043d\u0438\u044f:</p><div style='font-size:32px;font-weight:900;letter-spacing:8px;color:#E8B34C;margin:20px 0'>" + code + "</div><p style='color:#999;font-size:12px'>\u0414\u0435\u0439\u0441\u0442\u0432\u0438\u0442\u0435\u043b\u0435\u043d 15 \u043c\u0438\u043d\u0443\u0442</p></div>\r\n.");
+              step = 8;
+            }
+            else if (step === 8 && c === 250) { s("QUIT"); socket.end(); console.log("[SMTP] sent to", email); return; }
+          }
+        });
+        socket.on("error", (e) => console.error("[SMTP]", e.message));
+      });
+      socket.setTimeout(15000, () => { socket.destroy(); console.error("[SMTP] timeout"); });
+    }).catch(e => console.error("[SMTP import]", e.message));
+  } catch (err) { console.error("[REGISTER]", err); res.status(500).json({ ok: false }); }
+});
+
 // Cabinet API - Auth
 app.post("/api/cabinet/auth", async (req, res) => {
   try {
@@ -38403,10 +38454,37 @@ app.post("/api/cabinet/auth", async (req, res) => {
       await db.insert(usersTable).values({ telegramId: "email_" + email.replace(/[^a-z0-9]/gi, "_"), name: email.split("@")[0], email, emailPass: hash, emailVerifyCode: codeHash, emailVerifyExpiry: new Date(Date.now() + 15 * 60000) });
     }
     res.json({ ok: true, needVerify: true, email });
-    // Send email async (don't await)
-    import("nodemailer").then(nm => {
-      const transporter = nm.default.createTransport({ host: process.env.SMTP_HOST || "smtp.mail.ru", port: Number(process.env.SMTP_PORT) || 465, secure: process.env.SMTP_SECURE === "true", auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS } });
-      transporter.sendMail({ from: "LAENFAER VPN <" + (process.env.SMTP_USER || "noreply@laenfaer.onrender.com") + ">", to: email, subject: "Код подтверждения LAENFAER VPN", text: "Ваш код: " + code, html: "<div style='font-family:sans-serif;padding:20px'><h2 style='color:#E8B34C'>LAENFAER VPN</h2><p>Код подтверждения:</p><div style='font-size:32px;font-weight:900;letter-spacing:8px;color:#E8B34C;margin:20px 0'>" + code + "</div><p style='color:#999;font-size:12px'>Код действителен 15 минут</p></div>" }).then(() => console.log("[SMTP] sent to", email)).catch(e => console.error("[SMTP]", e.message));
+    // Send email async via TLS
+    const smtpHost2 = process.env.SMTP_HOST || "smtp.mail.ru";
+    const smtpPort2 = Number(process.env.SMTP_PORT) || 465;
+    const smtpUser2 = process.env.SMTP_USER || "REDACTED_EMAIL";
+    const smtpPass2 = process.env.SMTP_PASS || "REDACTED_SMTP_PASS";
+    import("tls").then(tls => {
+      const socket = tls.default.connect({ host: smtpHost2, port: smtpPort2, rejectUnauthorized: true }, () => {
+        let step = 0;
+        function s2(line) { socket.write(line + "\r\n"); }
+        socket.on("data", (data) => {
+          for (const line of data.toString().split("\r\n")) {
+            if (!line) continue;
+            const c = parseInt(line.substring(0, 3), 10);
+            if (step === 0 && c === 220) { s2("EHLO laenfaer.onrender.com"); step = 1; }
+            else if (step === 1 && line.startsWith("250") && line.includes("AUTH LOGIN")) { s2("AUTH LOGIN"); step = 2; }
+            else if (step === 1 && !line.startsWith("250")) { /* skip */ }
+            else if (step === 2 && c === 334) { s2(Buffer.from(smtpUser2).toString("base64")); step = 3; }
+            else if (step === 3 && c === 334) { s2(Buffer.from(smtpPass2).toString("base64")); step = 4; }
+            else if (step === 4 && c === 235) { s2("MAIL FROM:<" + smtpUser2 + ">"); step = 5; }
+            else if (step === 5 && c === 250) { s2("RCPT TO:<" + email + ">"); step = 6; }
+            else if (step === 6 && c === 250) { s2("DATA"); step = 7; }
+            else if (step === 7 && c === 354) {
+              s2("From: LAENFAER VPN <" + smtpUser2 + ">\r\nTo: <" + email + ">\r\nSubject: =?UTF-8?B?2KrZgtCw0YLRgdC60LUgTEFFTkZBRSBWUE4=?=\r\nMIME-Version: 1.0\r\nContent-Type: text/html; charset=UTF-8\r\n\r\n<div style='font-family:sans-serif;padding:20px'><h2 style='color:#E8B34C'>LAENFAER VPN</h2><p>\u041a\u043e\u0434 \u043f\u043e\u0434\u0442\u0432\u0435\u0440\u0436\u0434\u0435\u043d\u0438\u044f:</p><div style='font-size:32px;font-weight:900;letter-spacing:8px;color:#E8B34C;margin:20px 0'>" + code + "</div><p style='color:#999;font-size:12px'>\u0414\u0435\u0439\u0441\u0442\u0432\u0438\u0442\u0435\u043b\u0435\u043d 15 \u043c\u0438\u043d\u0443\u0442</p></div>\r\n.");
+              step = 8;
+            }
+            else if (step === 8 && c === 250) { s2("QUIT"); socket.end(); console.log("[SMTP] sent to", email); return; }
+          }
+        });
+        socket.on("error", (e) => console.error("[SMTP]", e.message));
+      });
+      socket.setTimeout(15000, () => { socket.destroy(); console.error("[SMTP] timeout"); });
     }).catch(e => console.error("[SMTP import]", e.message));
   } catch (err) { console.error("[CABINET_AUTH]", err); res.status(500).json({ ok: false, message: "Ошибка сервера" }); }
 });
