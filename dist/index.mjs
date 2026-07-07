@@ -38248,10 +38248,25 @@ app.get("/privacy", async (req, res) => {
 });
 
 // ===== SMTP Helper =====
+import { createTransport } from "nodemailer";
+const smtpTransport = createTransport({
+  host: process.env.SMTP_HOST || "smtp.mail.ru",
+  port: Number(process.env.SMTP_PORT) || 465,
+  secure: process.env.SMTP_SECURE !== "false",
+  auth: {
+    user: process.env.SMTP_USER || "REDACTED_EMAIL",
+    pass: process.env.SMTP_PASS || "REDACTED_SMTP_PASS"
+  }
+});
 function sendEmail(to, subject, html) {
   const code = html.match(/\d{6}/)?.[0] || "N/A";
-  console.log("[SMTP] Code for", to, ":", code);
-  return Promise.resolve();
+  console.log("[SMTP] Sending code", code, "to", to);
+  return smtpTransport.sendMail({
+    from: `"LAENFAER VPN" <${process.env.SMTP_USER || "REDACTED_EMAIL"}>`,
+    to,
+    subject,
+    html
+  });
 }
 
 // ===== CABINET =====
@@ -38473,66 +38488,6 @@ app.post("/api/cabinet/verify", async (req, res) => {
     const session = createHash("sha256").update(email + Date.now() + Math.random()).digest("hex").slice(0, 32);
     res.json({ ok: true, session, userId: user.telegramId });
   } catch (err) { res.status(500).json({ ok: false }); }
-});
-
-// Cabinet API - Profile
-app.get("/api/cabinet/profile", async (req, res) => {
-  try {
-    const { session, uid } = req.query;
-    if (!session || !uid) return res.json({ ok: false });
-    const user = await getUser(uid);
-    if (!user) return res.json({ ok: false });
-    const sub = await getSubscription(uid);
-    const hasActiveSub = sub && new Date(sub.expiresAt) > new Date();
-    const daysLeft = hasActiveSub ? Math.ceil((new Date(sub.expiresAt) - Date.now()) / 86400000) : 0;
-    const tariffLabel = hasActiveSub ? (sub.tariff && sub.tariff.includes("free") ? "Бесплатный (" + daysLeft + " дн.)" : "Premium (" + daysLeft + " дн.)") : "";
-    res.json({ ok: true, userId: uid, name: user.name, email: user.email || "", hasActiveSub, daysLeft, tariffLabel, expireDate: hasActiveSub ? new Date(sub.expiresAt).toLocaleDateString("ru-RU") : "", balance: user.balance || 0, deviceCount: user.deviceFingerprint ? 1 : 0 });
-  } catch (err) { res.status(500).json({ ok: false }); }
-});
-
-// Cabinet API - Auth
-app.post("/api/cabinet/auth", async (req, res) => {
-  try {
-    const { email, pass } = req.body;
-    if (!email || !pass) return res.json({ ok: false, message: "Email и пароль обязательны" });
-    if (pass.length < 6) return res.json({ ok: false, message: "Пароль минимум 6 символов" });
-    const { createHash } = await import("crypto");
-    const hash = createHash("sha256").update(pass).digest("hex").slice(0, 32);
-    const allUsers = await db.select().from(usersTable);
-    let user = allUsers.find(u => u.email === email);
-    if (user) {
-      if (user.emailPass !== hash) return res.json({ ok: false, message: "Неверный пароль" });
-      if (user.banned) return res.json({ ok: false, message: "Аккаунт заблокирован" });
-      const session = createHash("sha256").update(email + Date.now() + Math.random()).digest("hex").slice(0, 32);
-      return res.json({ ok: true, session, userId: user.telegramId, needVerify: false });
-    }
-    const code = String(Math.floor(100000 + Math.random() * 900000));
-    const codeHash = createHash("sha256").update(code).digest("hex").slice(0, 16);
-    await db.update(usersTable).set({ emailVerifyCode: codeHash, emailVerifyExpiry: new Date(Date.now() + 15 * 60000) }).where(eq(usersTable.telegramId, "email_" + email.replace(/[^a-z0-9]/gi, "_")));
-    const found = allUsers.find(u => u.email === email);
-    if (!found) {
-      await db.insert(usersTable).values({ telegramId: "email_" + email.replace(/[^a-z0-9]/gi, "_"), name: email.split("@")[0], email, emailPass: hash, emailVerifyCode: codeHash, emailVerifyExpiry: new Date(Date.now() + 15 * 60000) });
-    }
-    res.json({ ok: true, needVerify: true, email });
-    sendEmail(email, "Код подтверждения LAENFAER VPN", "<div style='font-family:sans-serif;padding:20px'><h2 style='color:#E8B34C'>LAENFAER VPN</h2><p>Код подтверждения:</p><div style='font-size:32px;font-weight:900;letter-spacing:8px;color:#E8B34C;margin:20px 0'>" + code + "</div><p style='color:#999;font-size:12px'>Действителен 15 минут</p></div>").catch(e => console.error("[SMTP]", e.message));
-  } catch (err) { console.error("[CABINET_AUTH]", err); res.status(500).json({ ok: false, message: "Ошибка сервера" }); }
-});
-
-// Cabinet API - Verify code
-app.post("/api/cabinet/verify", async (req, res) => {
-  try {
-    const { email, code } = req.body;
-    if (!email || !code) return res.json({ ok: false, message: "Введите код" });
-    const { createHash } = await import("crypto");
-    const codeHash = createHash("sha256").update(code).digest("hex").slice(0, 16);
-    const allUsers = await db.select().from(usersTable);
-    const user = allUsers.find(u => u.email === email && u.emailVerifyCode === codeHash);
-    if (!user) return res.json({ ok: false, message: "Неверный код" });
-    if (new Date(user.emailVerifyExpiry) < new Date()) return res.json({ ok: false, message: "Код истёк. Запросите новый." });
-    await db.update(usersTable).set({ emailVerified: true, emailVerifyCode: "", emailVerifyExpiry: new Date(0) }).where(eq(usersTable.telegramId, user.telegramId));
-    const session = createHash("sha256").update(email + Date.now() + Math.random()).digest("hex").slice(0, 32);
-    res.json({ ok: true, session, userId: user.telegramId });
-  } catch (err) { res.status(500).json({ ok: false, message: "Ошибка сервера" }); }
 });
 
 // Cabinet API - Profile
