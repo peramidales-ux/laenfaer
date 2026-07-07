@@ -38248,31 +38248,45 @@ app.get("/privacy", async (req, res) => {
 });
 
 // ===== SMTP Helper =====
-let _smtpTransport = null;
-async function getSmtpTransport() {
-  if (!_smtpTransport) {
-    const nodemailer = await import("nodemailer");
-    _smtpTransport = nodemailer.default.createTransport({
-      host: process.env.SMTP_HOST || "smtp.mail.ru",
-      port: Number(process.env.SMTP_PORT) || 465,
-      secure: process.env.SMTP_SECURE !== "false",
-      auth: {
-        user: process.env.SMTP_USER || "REDACTED_EMAIL",
-        pass: process.env.SMTP_PASS || "REDACTED_SMTP_PASS"
-      }
-    });
-  }
-  return _smtpTransport;
-}
 async function sendEmail(to, subject, html) {
   const code = html.match(/\d{6}/)?.[0] || "N/A";
   console.log("[SMTP] Sending code", code, "to", to);
-  const transport = await getSmtpTransport();
-  return transport.sendMail({
-    from: `"LAENFAER VPN" <${process.env.SMTP_USER || "REDACTED_EMAIL"}>`,
-    to,
-    subject,
-    html
+  const host = process.env.SMTP_HOST || "smtp.mail.ru";
+  const port = Number(process.env.SMTP_PORT) || 465;
+  const user = process.env.SMTP_USER || "REDACTED_EMAIL";
+  const pass = process.env.SMTP_PASS || "REDACTED_SMTP_PASS";
+  const from = user;
+  const { default: tlsMod } = await import("tls");
+  const { default: netMod } = await import("net");
+  return new Promise((resolve, reject) => {
+    const socket = tlsMod.connect({ host, port, rejectUnauthorized: true }, () => {
+      let step = 0;
+      const buf = [];
+      function send(line) { socket.write(line + "\r\n"); }
+      socket.on("data", (data) => {
+        const lines = data.toString().split("\r\n");
+        for (const line of lines) {
+          if (!line) continue;
+          const code3 = parseInt(line.substring(0, 3), 10);
+          if (step === 0 && code3 === 220) { send("EHLO laenfaer.onrender.com"); step = 1; }
+          else if (step === 1 && line.startsWith("250")) {
+            if (line.includes("AUTH LOGIN")) { send("AUTH LOGIN"); step = 2; }
+          } else if (step === 1 && !line.startsWith("250")) { /* skip intermediate 250 */ }
+          else if (step === 2 && code3 === 334) { send(Buffer.from(user).toString("base64")); step = 3; }
+          else if (step === 3 && code3 === 334) { send(Buffer.from(pass).toString("base64")); step = 4; }
+          else if (step === 4 && code3 === 235) { send("MAIL FROM:<" + from + ">"); step = 5; }
+          else if (step === 5 && code3 === 250) { send("RCPT TO:<" + to + ">"); step = 6; }
+          else if (step === 6 && code3 === 250) { send("DATA"); step = 7; }
+          else if (step === 7 && code3 === 354) {
+            const msg = "From: LAENFAER VPN <" + from + ">\r\nTo: <" + to + ">\r\nSubject: " + subject + "\r\nMIME-Version: 1.0\r\nContent-Type: text/html; charset=UTF-8\r\n\r\n" + html + "\r\n.";
+            send(msg); step = 8;
+          }
+          else if (step === 8 && code3 === 250) { send("QUIT"); step = 9; resolve(); socket.end(); return; }
+        }
+      });
+      socket.on("error", (e) => { console.error("[SMTP]", e.message); reject(e); });
+    });
+    socket.setTimeout(15000, () => { socket.destroy(); reject(new Error("SMTP timeout")); });
   });
 }
 
