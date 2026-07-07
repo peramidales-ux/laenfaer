@@ -57405,9 +57405,17 @@ async function updatePremiumKey(id, key) {
 }
 async function clearPremiumKeys() {
   await db.delete(premiumKeysTable);
+  await db.execute(`ALTER SEQUENCE premium_keys_id_seq RESTART WITH 1`);
 }
 async function clearFreeKeys() {
   await db.delete(freeKeysTable);
+  await db.execute(`ALTER SEQUENCE free_keys_id_seq RESTART WITH 1`);
+}
+async function deleteFreeKey(id) {
+  await db.delete(freeKeysTable).where(eq(freeKeysTable.id, id));
+}
+async function deletePremiumKey(id) {
+  await db.delete(premiumKeysTable).where(eq(premiumKeysTable.id, id));
 }
 async function getAllSubscriptions() {
   return db.select().from(subscriptionsTable);
@@ -57709,16 +57717,26 @@ async function checkKeyStatus(key) {
     if (!match) return "\u26A0\uFE0F \u0424\u043E\u0440\u043C\u0430\u0442 \u043A\u043B\u044E\u0447\u0430 \u043D\u0435\u0438\u0437\u0432\u0435\u0441\u0442\u0435\u043D";
     const host = match[1];
     const port2 = Number(match[2]);
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 4e3);
+    let httpStatus = "\u2753";
     try {
-      await fetch(`http://${host}:${port2}`, { signal: controller.signal });
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 4e3);
+      const resp = await fetch(`http://${host}:${port2}`, { signal: controller.signal });
       clearTimeout(timeout);
-      return "\u{1F7E2} \u041E\u043D\u043B\u0430\u0439\u043D";
+      httpStatus = resp.ok ? "\u{1F7E2} HTTP OK" : `\u{1F7E1} HTTP ${resp.status}`;
     } catch {
-      clearTimeout(timeout);
-      return "\u{1F534} \u041E\u0444\u0444\u043B\u0430\u0439\u043D / \u043D\u0435\u0434\u043E\u0441\u0442\u0443\u043F\u0435\u043D";
+      httpStatus = "\u{1F534} HTTP Fail";
     }
+    let pingMs = "\u2014";
+    try {
+      const { execSync } = await import("child_process");
+      const result = execSync(`ping -c 1 -W 3 ${host}`, { timeout: 5e3 }).toString();
+      const match2 = result.match(/time=(\d+\.?\d*)/);
+      pingMs = match2 ? `${match2[1]}ms` : "\u2014";
+    } catch {
+      pingMs = "timeout";
+    }
+    return `${httpStatus} | \u{1F4E1} ${pingMs}`;
   } catch {
     return "\u26A0\uFE0F \u041E\u0448\u0438\u0431\u043A\u0430 \u043F\u0440\u043E\u0432\u0435\u0440\u043A\u0438";
   }
@@ -59311,6 +59329,18 @@ ID: <code>${req.telegramId}</code>`,
       parse_mode: "HTML",
       reply_markup: adminBackKb()
     });
+    return;
+  }
+  if (data.startsWith("delete_free_key_")) {
+    const keyId = Number(data.replace("delete_free_key_", ""));
+    await deleteFreeKey(keyId);
+    await showFreeKeys(ctx);
+    return;
+  }
+  if (data.startsWith("delete_prem_key_")) {
+    const keyId = Number(data.replace("delete_prem_key_", ""));
+    await deletePremiumKey(keyId);
+    await showPremiumKeys(ctx);
     return;
   }
   if (data === "clear_prem_keys") {
