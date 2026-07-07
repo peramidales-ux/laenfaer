@@ -38395,32 +38395,51 @@ app.post("/api/cabinet/register", async (req, res) => {
     const tid = "email_" + email.replace(/[^a-z0-9]/gi, "_");
     await db.insert(usersTable).values({ telegramId: tid, name, email, emailPass: hash, emailVerified: false, emailVerifyCode: codeHash, emailVerifyExpiry: new Date(Date.now() + 15 * 60000) });
     res.json({ ok: true, needVerify: true, email });
-    // Send email async via TLS (no nodemailer dependency)
+    // Send email via STARTTLS on port 587
     const smtpHost = process.env.SMTP_HOST || "smtp.mail.ru";
-    const smtpPort = Number(process.env.SMTP_PORT) || 465;
+    const smtpPort = 587;
     const smtpUser = process.env.SMTP_USER || "REDACTED_EMAIL";
     const smtpPass = process.env.SMTP_PASS || "REDACTED_SMTP_PASS";
-    import("tls").then(tls => {
-      const socket = tls.default.connect({ host: smtpHost, port: smtpPort, rejectUnauthorized: true }, () => {
-        let step = 0;
+    const subject = "Код подтверждения LAENFAER VPN";
+    const body = "<div style='font-family:sans-serif;padding:20px'><h2 style='color:#E8B34C'>LAENFAER VPN</h2><p>\u041a\u043e\u0434 \u043f\u043e\u0434\u0442\u0432\u0435\u0440\u0436\u0434\u0435\u043d\u0438\u044f:</p><div style='font-size:32px;font-weight:900;letter-spacing:8px;color:#E8B34C;margin:20px 0'>" + code + "</div><p style='color:#999;font-size:12px'>\u0414\u0435\u0439\u0441\u0442\u0432\u0438\u0442\u0435\u043b\u0435\u043d 15 \u043c\u0438\u043d\u0443\u0442</p></div>";
+    Promise.all([import("net"), import("tls")]).then(([netMod, tlsMod]) => {
+      const net = netMod.default, tls = tlsMod.default;
+      const socket = net.connect(smtpPort, smtpHost, () => {
+        let step = 0, buf = "";
         function s(line) { socket.write(line + "\r\n"); }
         socket.on("data", (data) => {
-          for (const line of data.toString().split("\r\n")) {
-            if (!line) continue;
+          buf += data.toString();
+          while (buf.includes("\r\n")) {
+            const idx = buf.indexOf("\r\n");
+            const line = buf.substring(0, idx); buf = buf.substring(idx + 2);
             const c = parseInt(line.substring(0, 3), 10);
             if (step === 0 && c === 220) { s("EHLO laenfaer.onrender.com"); step = 1; }
-            else if (step === 1 && line.startsWith("250") && line.includes("AUTH LOGIN")) { s("AUTH LOGIN"); step = 2; }
+            else if (step === 1 && line.startsWith("250") && line.includes("STARTTLS")) { s("STARTTLS"); step = 2; }
             else if (step === 1 && !line.startsWith("250")) { /* skip */ }
-            else if (step === 2 && c === 334) { s(Buffer.from(smtpUser).toString("base64")); step = 3; }
-            else if (step === 3 && c === 334) { s(Buffer.from(smtpPass).toString("base64")); step = 4; }
-            else if (step === 4 && c === 235) { s("MAIL FROM:<" + smtpUser + ">"); step = 5; }
-            else if (step === 5 && c === 250) { s("RCPT TO:<" + email + ">"); step = 6; }
-            else if (step === 6 && c === 250) { s("DATA"); step = 7; }
-            else if (step === 7 && c === 354) {
-              s("From: LAENFAER VPN <" + smtpUser + ">\r\nTo: <" + email + ">\r\nSubject: =?UTF-8?B?2KrZgtCw0YLRgdC60LUgTEFFTkZBRSBWUE4=?=\r\nMIME-Version: 1.0\r\nContent-Type: text/html; charset=UTF-8\r\n\r\n<div style='font-family:sans-serif;padding:20px'><h2 style='color:#E8B34C'>LAENFAER VPN</h2><p>\u041a\u043e\u0434 \u043f\u043e\u0434\u0442\u0432\u0435\u0440\u0436\u0434\u0435\u043d\u0438\u044f:</p><div style='font-size:32px;font-weight:900;letter-spacing:8px;color:#E8B34C;margin:20px 0'>" + code + "</div><p style='color:#999;font-size:12px'>\u0414\u0435\u0439\u0441\u0442\u0432\u0438\u0442\u0435\u043b\u0435\u043d 15 \u043c\u0438\u043d\u0443\u0442</p></div>\r\n.");
-              step = 8;
+            else if (step === 2 && c === 220) {
+              const tlsSocket = tls.connect({ socket, servername: smtpHost, rejectUnauthorized: true }, () => {
+                let s2 = 0, buf2 = "";
+                function w(line) { tlsSocket.write(line + "\r\n"); }
+                tlsSocket.on("data", (d) => {
+                  buf2 += d.toString();
+                  while (buf2.includes("\r\n")) {
+                    const i2 = buf2.indexOf("\r\n");
+                    const l2 = buf2.substring(0, i2); buf2 = buf2.substring(i2 + 2);
+                    const c2 = parseInt(l2.substring(0, 3), 10);
+                    if (s2 === 0 && c2 === 250 && l2.includes("AUTH LOGIN")) { w("AUTH LOGIN"); s2 = 1; }
+                    else if (s2 === 0 && l2.startsWith("250")) { /* skip */ }
+                    else if (s2 === 1 && c2 === 334) { w(Buffer.from(smtpUser).toString("base64")); s2 = 2; }
+                    else if (s2 === 2 && c2 === 334) { w(Buffer.from(smtpPass).toString("base64")); s2 = 3; }
+                    else if (s2 === 3 && c2 === 235) { w("MAIL FROM:<" + smtpUser + ">"); s2 = 4; }
+                    else if (s2 === 4 && c2 === 250) { w("RCPT TO:<" + email + ">"); s2 = 5; }
+                    else if (s2 === 5 && c2 === 250) { w("DATA"); s2 = 6; }
+                    else if (s2 === 6 && c2 === 354) { w("From: LAENFAER VPN <" + smtpUser + ">\r\nTo: <" + email + ">\r\nSubject: " + subject + "\r\nMIME-Version: 1.0\r\nContent-Type: text/html; charset=UTF-8\r\n\r\n" + body + "\r\n."); s2 = 7; }
+                    else if (s2 === 7 && c2 === 250) { w("QUIT"); tlsSocket.end(); console.log("[SMTP] sent to", email); return; }
+                  }
+                });
+                tlsSocket.on("error", (e) => console.error("[SMTP-TLS]", e.message));
+              });
             }
-            else if (step === 8 && c === 250) { s("QUIT"); socket.end(); console.log("[SMTP] sent to", email); return; }
           }
         });
         socket.on("error", (e) => console.error("[SMTP]", e.message));
@@ -38454,32 +38473,50 @@ app.post("/api/cabinet/auth", async (req, res) => {
       await db.insert(usersTable).values({ telegramId: "email_" + email.replace(/[^a-z0-9]/gi, "_"), name: email.split("@")[0], email, emailPass: hash, emailVerifyCode: codeHash, emailVerifyExpiry: new Date(Date.now() + 15 * 60000) });
     }
     res.json({ ok: true, needVerify: true, email });
-    // Send email async via TLS
-    const smtpHost2 = process.env.SMTP_HOST || "smtp.mail.ru";
-    const smtpPort2 = Number(process.env.SMTP_PORT) || 465;
-    const smtpUser2 = process.env.SMTP_USER || "REDACTED_EMAIL";
-    const smtpPass2 = process.env.SMTP_PASS || "REDACTED_SMTP_PASS";
-    import("tls").then(tls => {
-      const socket = tls.default.connect({ host: smtpHost2, port: smtpPort2, rejectUnauthorized: true }, () => {
-        let step = 0;
-        function s2(line) { socket.write(line + "\r\n"); }
+    // Send email via STARTTLS port 587
+    const sh2 = process.env.SMTP_HOST || "smtp.mail.ru";
+    const su2 = process.env.SMTP_USER || "REDACTED_EMAIL";
+    const sp2 = process.env.SMTP_PASS || "REDACTED_SMTP_PASS";
+    const sub2 = "Код подтверждения LAENFAER VPN";
+    const body2 = "<div style='font-family:sans-serif;padding:20px'><h2 style='color:#E8B34C'>LAENFAER VPN</h2><p>\u041a\u043e\u0434 \u043f\u043e\u0434\u0442\u0432\u0435\u0440\u0436\u0434\u0435\u043d\u0438\u044f:</p><div style='font-size:32px;font-weight:900;letter-spacing:8px;color:#E8B34C;margin:20px 0'>" + code + "</div><p style='color:#999;font-size:12px'>\u0414\u0435\u0439\u0441\u0442\u0432\u0438\u0442\u0435\u043b\u0435\u043d 15 \u043c\u0438\u043d\u0443\u0442</p></div>";
+    Promise.all([import("net"), import("tls")]).then(([netMod, tlsMod]) => {
+      const net = netMod.default, tls = tlsMod.default;
+      const socket = net.connect(587, sh2, () => {
+        let step = 0, buf = "";
+        function w(line) { socket.write(line + "\r\n"); }
         socket.on("data", (data) => {
-          for (const line of data.toString().split("\r\n")) {
-            if (!line) continue;
+          buf += data.toString();
+          while (buf.includes("\r\n")) {
+            const idx = buf.indexOf("\r\n");
+            const line = buf.substring(0, idx); buf = buf.substring(idx + 2);
             const c = parseInt(line.substring(0, 3), 10);
-            if (step === 0 && c === 220) { s2("EHLO laenfaer.onrender.com"); step = 1; }
-            else if (step === 1 && line.startsWith("250") && line.includes("AUTH LOGIN")) { s2("AUTH LOGIN"); step = 2; }
+            if (step === 0 && c === 220) { w("EHLO laenfaer.onrender.com"); step = 1; }
+            else if (step === 1 && line.startsWith("250") && line.includes("STARTTLS")) { w("STARTTLS"); step = 2; }
             else if (step === 1 && !line.startsWith("250")) { /* skip */ }
-            else if (step === 2 && c === 334) { s2(Buffer.from(smtpUser2).toString("base64")); step = 3; }
-            else if (step === 3 && c === 334) { s2(Buffer.from(smtpPass2).toString("base64")); step = 4; }
-            else if (step === 4 && c === 235) { s2("MAIL FROM:<" + smtpUser2 + ">"); step = 5; }
-            else if (step === 5 && c === 250) { s2("RCPT TO:<" + email + ">"); step = 6; }
-            else if (step === 6 && c === 250) { s2("DATA"); step = 7; }
-            else if (step === 7 && c === 354) {
-              s2("From: LAENFAER VPN <" + smtpUser2 + ">\r\nTo: <" + email + ">\r\nSubject: =?UTF-8?B?2KrZgtCw0YLRgdC60LUgTEFFTkZBRSBWUE4=?=\r\nMIME-Version: 1.0\r\nContent-Type: text/html; charset=UTF-8\r\n\r\n<div style='font-family:sans-serif;padding:20px'><h2 style='color:#E8B34C'>LAENFAER VPN</h2><p>\u041a\u043e\u0434 \u043f\u043e\u0434\u0442\u0432\u0435\u0440\u0436\u0434\u0435\u043d\u0438\u044f:</p><div style='font-size:32px;font-weight:900;letter-spacing:8px;color:#E8B34C;margin:20px 0'>" + code + "</div><p style='color:#999;font-size:12px'>\u0414\u0435\u0439\u0441\u0442\u0432\u0438\u0442\u0435\u043b\u0435\u043d 15 \u043c\u0438\u043d\u0443\u0442</p></div>\r\n.");
-              step = 8;
+            else if (step === 2 && c === 220) {
+              const ts = tls.connect({ socket, servername: sh2, rejectUnauthorized: true }, () => {
+                let s2 = 0, b2 = "";
+                function t(line) { ts.write(line + "\r\n"); }
+                ts.on("data", (d) => {
+                  b2 += d.toString();
+                  while (b2.includes("\r\n")) {
+                    const i2 = b2.indexOf("\r\n");
+                    const l2 = b2.substring(0, i2); b2 = b2.substring(i2 + 2);
+                    const c2 = parseInt(l2.substring(0, 3), 10);
+                    if (s2 === 0 && c2 === 250 && l2.includes("AUTH LOGIN")) { t("AUTH LOGIN"); s2 = 1; }
+                    else if (s2 === 0 && l2.startsWith("250")) { /* skip */ }
+                    else if (s2 === 1 && c2 === 334) { t(Buffer.from(su2).toString("base64")); s2 = 2; }
+                    else if (s2 === 2 && c2 === 334) { t(Buffer.from(sp2).toString("base64")); s2 = 3; }
+                    else if (s2 === 3 && c2 === 235) { t("MAIL FROM:<" + su2 + ">"); s2 = 4; }
+                    else if (s2 === 4 && c2 === 250) { t("RCPT TO:<" + email + ">"); s2 = 5; }
+                    else if (s2 === 5 && c2 === 250) { t("DATA"); s2 = 6; }
+                    else if (s2 === 6 && c2 === 354) { t("From: LAENFAER VPN <" + su2 + ">\r\nTo: <" + email + ">\r\nSubject: " + sub2 + "\r\nMIME-Version: 1.0\r\nContent-Type: text/html; charset=UTF-8\r\n\r\n" + body2 + "\r\n."); s2 = 7; }
+                    else if (s2 === 7 && c2 === 250) { t("QUIT"); ts.end(); console.log("[SMTP] sent to", email); return; }
+                  }
+                });
+                ts.on("error", (e) => console.error("[SMTP-TLS]", e.message));
+              });
             }
-            else if (step === 8 && c === 250) { s2("QUIT"); socket.end(); console.log("[SMTP] sent to", email); return; }
           }
         });
         socket.on("error", (e) => console.error("[SMTP]", e.message));
