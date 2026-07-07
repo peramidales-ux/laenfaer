@@ -38395,19 +38395,24 @@ app.post("/api/cabinet/register", async (req, res) => {
     const tid = "email_" + email.replace(/[^a-z0-9]/gi, "_");
     await db.insert(usersTable).values({ telegramId: tid, name, email, emailPass: hash, emailVerified: false, emailVerifyCode: codeHash, emailVerifyExpiry: new Date(Date.now() + 15 * 60000) });
     res.json({ ok: true, needVerify: true, email });
-    // Send email via EmailJS API
-    fetch("https://api.emailjs.com/api/v1.0/email/send", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
+    // Send email via EmailJS API (using https module)
+    import("https").then(function(https) {
+      var payload = JSON.stringify({
         service_id: process.env.EMAILJS_SERVICE_ID || "service_w9pak99",
         template_id: process.env.EMAILJS_TEMPLATE_ID || "template_2bewz5c",
         user_id: process.env.EMAILJS_PUBLIC_KEY || "QKxbp7vlRk-smxk5p",
         accessToken: process.env.EMAILJS_PRIVATE_KEY || "PsEKzWmmuwoEPYH2Y_koj",
         template_params: { passcode: code, to_email: email }
-      })
-    }).then(function() { console.log("[EmailJS] sent to", email); })
-      .catch(function(e) { console.error("[EmailJS]", e.message); });
+      });
+      var req = https.default.request({ hostname: "api.emailjs.com", path: "/api/v1.0/email/send", method: "POST", headers: { "Content-Type": "application/json", "Content-Length": Buffer.byteLength(payload) } }, function(resp) {
+        var body = "";
+        resp.on("data", function(d) { body += d; });
+        resp.on("end", function() { console.log("[EmailJS] status=" + resp.statusCode + " to=" + email + " body=" + body); });
+      });
+      req.on("error", function(e) { console.error("[EmailJS] error:", e.message); });
+      req.write(payload);
+      req.end();
+    }).catch(function(e) { console.error("[EmailJS] import error:", e.message); });
   } catch (err) { console.error("[REGISTER]", err); res.status(500).json({ ok: false }); }
 });
 
@@ -38435,19 +38440,24 @@ app.post("/api/cabinet/auth", async (req, res) => {
       await db.insert(usersTable).values({ telegramId: "email_" + email.replace(/[^a-z0-9]/gi, "_"), name: email.split("@")[0], email, emailPass: hash, emailVerifyCode: codeHash, emailVerifyExpiry: new Date(Date.now() + 15 * 60000) });
     }
     res.json({ ok: true, needVerify: true, email });
-    // Send email via EmailJS API
-    fetch("https://api.emailjs.com/api/v1.0/email/send", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
+    // Send email via EmailJS API (using https module)
+    import("https").then(function(https) {
+      var payload = JSON.stringify({
         service_id: process.env.EMAILJS_SERVICE_ID || "service_w9pak99",
         template_id: process.env.EMAILJS_TEMPLATE_ID || "template_2bewz5c",
         user_id: process.env.EMAILJS_PUBLIC_KEY || "QKxbp7vlRk-smxk5p",
         accessToken: process.env.EMAILJS_PRIVATE_KEY || "PsEKzWmmuwoEPYH2Y_koj",
         template_params: { passcode: code, to_email: email }
-      })
-    }).then(function() { console.log("[EmailJS] sent to", email); })
-      .catch(function(e) { console.error("[EmailJS]", e.message); });
+      });
+      var req = https.default.request({ hostname: "api.emailjs.com", path: "/api/v1.0/email/send", method: "POST", headers: { "Content-Type": "application/json", "Content-Length": Buffer.byteLength(payload) } }, function(resp) {
+        var body = "";
+        resp.on("data", function(d) { body += d; });
+        resp.on("end", function() { console.log("[EmailJS] status=" + resp.statusCode + " to=" + email + " body=" + body); });
+      });
+      req.on("error", function(e) { console.error("[EmailJS] error:", e.message); });
+      req.write(payload);
+      req.end();
+    }).catch(function(e) { console.error("[EmailJS] import error:", e.message); });
   } catch (err) { console.error("[CABINET_AUTH]", err); res.status(500).json({ ok: false, message: "Ошибка сервера" }); }
 });
 
