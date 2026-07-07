@@ -38404,7 +38404,7 @@ app.post("/api/cabinet/register", async (req, res) => {
         template_id: process.env.EMAILJS_TEMPLATE_ID || "template_2bewz5c",
         user_id: process.env.EMAILJS_PUBLIC_KEY || "QKxbp7vlRk-smxk5p",
         accessToken: process.env.EMAILJS_PRIVATE_KEY || "PsEKzWmmuwoEPYH2Y_koj",
-        template_params: { code: code, to_email: email }
+        template_params: { passcode: code, to_email: email }
       })
     }).then(function() { console.log("[EmailJS] sent to", email); })
       .catch(function(e) { console.error("[EmailJS]", e.message); });
@@ -38444,7 +38444,7 @@ app.post("/api/cabinet/auth", async (req, res) => {
         template_id: process.env.EMAILJS_TEMPLATE_ID || "template_2bewz5c",
         user_id: process.env.EMAILJS_PUBLIC_KEY || "QKxbp7vlRk-smxk5p",
         accessToken: process.env.EMAILJS_PRIVATE_KEY || "PsEKzWmmuwoEPYH2Y_koj",
-        template_params: { code: code, to_email: email }
+        template_params: { passcode: code, to_email: email }
       })
     }).then(function() { console.log("[EmailJS] sent to", email); })
       .catch(function(e) { console.error("[EmailJS]", e.message); });
