@@ -38403,6 +38403,7 @@ app.post("/api/cabinet/register", async (req, res) => {
         service_id: process.env.EMAILJS_SERVICE_ID || "service_w9pak99",
         template_id: process.env.EMAILJS_TEMPLATE_ID || "template_2bewz5c",
         user_id: process.env.EMAILJS_PUBLIC_KEY || "QKxbp7vlRk-smxk5p",
+        accessToken: process.env.EMAILJS_PRIVATE_KEY || "PsEKzWmmuwoEPYH2Y_koj",
         template_params: { code: code, to_email: email }
       })
     }).then(function() { console.log("[EmailJS] sent to", email); })
@@ -38442,6 +38443,7 @@ app.post("/api/cabinet/auth", async (req, res) => {
         service_id: process.env.EMAILJS_SERVICE_ID || "service_w9pak99",
         template_id: process.env.EMAILJS_TEMPLATE_ID || "template_2bewz5c",
         user_id: process.env.EMAILJS_PUBLIC_KEY || "QKxbp7vlRk-smxk5p",
+        accessToken: process.env.EMAILJS_PRIVATE_KEY || "PsEKzWmmuwoEPYH2Y_koj",
         template_params: { code: code, to_email: email }
       })
     }).then(function() { console.log("[EmailJS] sent to", email); })
