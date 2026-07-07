@@ -2,27 +2,6 @@ services:
   - type: web
     name: laenfaer-vpn
     runtime: node
-    plan: starter
+    plan: free
     buildCommand: npm install
     startCommand: node --enable-source-maps ./dist/index.mjs
-    envVars:
-      - key: NODE_ENV
-        value: production
-      - key: BOT_TOKEN
-        value: "REDACTED_BOT_TOKEN"
-      - key: ADMIN_BOT_TOKEN
-        value: "REDACTED_ADMIN_TOKEN"
-      - key: ADMIN_ID
-        value: "6210878532"
-      - key: DATABASE_URL
-        value: "postgresql://neondb_owner:REDACTED_DB_PASS@ep-square-dream-appb0egg-pooler.c-7.us-east-1.aws.neon.tech/neondb?sslmode=require"
-      - key: SMTP_HOST
-        value: smtp.mail.ru
-      - key: SMTP_PORT
-        value: "465"
-      - key: SMTP_USER
-        value: REDACTED_EMAIL
-      - key: SMTP_PASS
-        value: "REDACTED_SMTP_PASS"
-      - key: SMTP_SECURE
-        value: "true"
