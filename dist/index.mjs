@@ -38248,9 +38248,9 @@ app.get("/privacy", async (req, res) => {
 });
 
 // ===== SMTP Helper =====
-async function sendEmail(to, subject, html) {
-  console.log("[SMTP] Would send to:", to, "Subject:", subject);
-  console.log("[SMTP] Code in HTML:", html.match(/\d{6}/)?.[0] || "N/A");
+function sendEmail(to, subject, html) {
+  const code = html.match(/\d{6}/)?.[0] || "N/A";
+  console.log("[SMTP] Code for", to, ":", code);
   return Promise.resolve();
 }
 
