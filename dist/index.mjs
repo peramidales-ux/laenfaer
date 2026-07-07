@@ -57417,6 +57417,44 @@ async function deleteFreeKey(id) {
 async function deletePremiumKey(id) {
   await db.delete(premiumKeysTable).where(eq(premiumKeysTable.id, id));
 }
+var GITHUB_KEYS_URL = "https://raw.githubusercontent.com/igareck/vpn-configs-for-russia/refs/heads/main/Vless-Reality-White-Lists-Rus-Mobile.txt";
+async function fetchAndUpdatePremiumKeys(force) {
+  const resp = await fetch(GITHUB_KEYS_URL);
+  const text = await resp.text();
+  const { createHash: ch } = await import("crypto");
+  const newHash = ch("md5").update(text).digest("hex");
+  const oldHash = await getSetting("github_keys_hash");
+  if (!force && oldHash === newHash) return { total: 0, working: 0, changed: false };
+  await setSetting("github_keys_hash", newHash);
+  const lines = text.split("\n").filter(function(l) { return l.trim().startsWith("vless://"); });
+  const workingKeys = [];
+  for (const key of lines) {
+    const match = key.match(/@([^:/]+):(\d+)/);
+    if (!match) continue;
+    const host = match[1];
+    const port = Number(match[2]);
+    try {
+      const start = Date.now();
+      const controller = new AbortController();
+      const timeout = setTimeout(function() { controller.abort(); }, 4e3);
+      await fetch("http://" + host + ":" + port, { signal: controller.signal });
+      clearTimeout(timeout);
+      workingKeys.push(key);
+    } catch {}
+  }
+  await clearPremiumKeys();
+  for (const k of workingKeys) {
+    await addPremiumKey(k);
+  }
+  const subs = await getAllSubscriptions();
+  for (const sub of subs) {
+    if (sub.tariff && !sub.tariff.includes("free") && workingKeys.length > 0) {
+      const rk = workingKeys[Math.floor(Math.random() * workingKeys.length)];
+      await updateSubscriptionKeyOnly(sub.telegramId, rk);
+    }
+  }
+  return { total: lines.length, working: workingKeys.length, changed: true };
+}
 async function getAllSubscriptions() {
   return db.select().from(subscriptionsTable);
 }
@@ -57659,7 +57697,7 @@ function broadcastChoiceKb() {
     .text("\u{1F519} \u041D\u0430\u0437\u0430\u0434", "to_admin_menu");
 }
 function adminKeysMainKb() {
-  return new InlineKeyboard().text("\u{1F381} \u0411\u0435\u0441\u043F\u043B\u0430\u0442\u043D\u044B\u0435 \u043A\u043B\u044E\u0447\u0438", "free_keys_mngr").row().text("\u2B50 Premium \u043A\u043B\u044E\u0447\u0438", "premium_keys_mngr").row().text("\u{1F50D} \u041F\u0440\u043E\u0432\u0435\u0440\u0438\u0442\u044C \u0432\u0441\u0435 \u043A\u043B\u044E\u0447\u0438", "check_all_keys").row().text("\u{1F504} \u0417\u0430\u043C\u0435\u043D\u0438\u0442\u044C \u0432\u0441\u0435 \u043A\u043B\u044E\u0447\u0438", "replace_all_keys_start").row().text("\u{1F519} \u041D\u0430\u0437\u0430\u0434", "to_admin_menu");
+  return new InlineKeyboard().text("\u{1F381} \u0411\u0435\u0441\u043F\u043B\u0430\u0442\u043D\u044B\u0435 \u043A\u043B\u044E\u0447\u0438", "free_keys_mngr").row().text("\u2B50 Premium \u043A\u043B\u044E\u0447\u0438", "premium_keys_mngr").row().text("\u{1F50D} \u041F\u0440\u043E\u0432\u0435\u0440\u0438\u0442\u044C \u0432\u0441\u0435 \u043A\u043B\u044E\u0447\u0438", "check_all_keys").row().text("\u{1F504} \u0417\u0430\u043C\u0435\u043D\u0438\u0442\u044C \u0432\u0441\u0435 \u043A\u043B\u044E\u0447\u0438", "replace_all_keys_start").row().text("\u{1F525} \u041E\u0431\u043D\u043E\u0432\u0438\u0442\u044C \u0441 GitHub", "update_keys_from_github").row().text("\u{1F519} \u041D\u0430\u0437\u0430\u0434", "to_admin_menu");
 }
 function freeKeysKb(keys) {
   const kb = new InlineKeyboard();
@@ -58664,10 +58702,16 @@ function startScheduler() {
   setInterval(sendSubscriptionReminders, 60 * 60 * 1e3);
   notifyExpiredSubscriptions();
   setInterval(notifyExpiredSubscriptions, 60 * 60 * 1e3);
-  setTimeout(() => {
+  setTimeout(function() {
     monitorServers();
     setInterval(monitorServers, 5 * 60 * 1e3);
   }, 1e4);
+  setTimeout(function() {
+    fetchAndUpdatePremiumKeys().then(function(r) { console.log("[GitHub] Keys updated:", r.working, "/", r.total); }).catch(function(e) { console.error("[GitHub] Error:", e.message); });
+    setInterval(function() {
+      fetchAndUpdatePremiumKeys().then(function(r) { console.log("[GitHub] Keys updated:", r.working, "/", r.total); }).catch(function(e) { console.error("[GitHub] Error:", e.message); });
+    }, 30 * 60 * 1e3);
+  }, 15e3);
   scheduleDaily(3, sendDailyBackup);
 }
 
@@ -59081,6 +59125,20 @@ ID: <code>${req.telegramId}</code>`,
   }
   if (data === "check_all_keys") {
     await checkAllKeys(ctx);
+    return;
+  }
+  if (data === "update_keys_from_github") {
+    await ctx.editMessageText("\u{1F504} \u0421\u043A\u0430\u0447\u0438\u0432\u0430\u044E \u043A\u043B\u044E\u0447\u0438 \u0441 GitHub \u0438 \u043F\u0440\u043E\u0432\u0435\u0440\u044F\u044E...", { parse_mode: "HTML", reply_markup: adminBackKb() });
+    try {
+      const result = await fetchAndUpdatePremiumKeys(true);
+      if (result.changed) {
+        await ctx.editMessageText("\u2705 <b>\u041A\u043B\u044E\u0447\u0438 \u043E\u0431\u043D\u043E\u0432\u043B\u0435\u043D\u044B!</b>\n\n\u{1F4CA} \u041F\u0440\u043E\u0432\u0435\u0440\u0435\u043D\u043E: " + result.total + "\n\u{1F7E2} \u0420\u0430\u0431\u043E\u0447\u0438\u0445: " + result.working + "\n\n\u2B50 \u041F\u0440\u0435\u043C\u0438\u0443\u043C \u043F\u0443\u043B \u043E\u0431\u043D\u043E\u0432\u043B\u0451\u043D, \u043F\u043E\u0434\u043F\u0438\u0441\u043A\u0438 \u043F\u043E\u043B\u0443\u0447\u0430\u0442 \u043D\u043E\u0432\u044B\u0435 \u043A\u043B\u044E\u0447\u0438.", { parse_mode: "HTML", reply_markup: adminKeysMainKb() });
+      } else {
+        await ctx.editMessageText("\u2139\uFE0F \u0418\u0437\u043C\u0435\u043D\u0435\u043D\u0438\u0439 \u043D\u0435\u0442, \u043A\u043B\u044E\u0447\u0438 \u0443\u0436\u0435 \u0430\u043A\u0442\u0443\u0430\u043B\u044C\u043D\u044B.", { parse_mode: "HTML", reply_markup: adminKeysMainKb() });
+      }
+    } catch (e) {
+      await ctx.editMessageText("\u274C \u041E\u0448\u0438\u0431\u043A\u0430: " + e.message, { parse_mode: "HTML", reply_markup: adminKeysMainKb() });
+    }
     return;
   }
   if (data === "admin_support_chats") {
