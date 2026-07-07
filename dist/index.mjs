@@ -38248,20 +38248,27 @@ app.get("/privacy", async (req, res) => {
 });
 
 // ===== SMTP Helper =====
-import { createTransport } from "nodemailer";
-const smtpTransport = createTransport({
-  host: process.env.SMTP_HOST || "smtp.mail.ru",
-  port: Number(process.env.SMTP_PORT) || 465,
-  secure: process.env.SMTP_SECURE !== "false",
-  auth: {
-    user: process.env.SMTP_USER || "REDACTED_EMAIL",
-    pass: process.env.SMTP_PASS || "REDACTED_SMTP_PASS"
+let _smtpTransport = null;
+async function getSmtpTransport() {
+  if (!_smtpTransport) {
+    const nodemailer = await import("nodemailer");
+    _smtpTransport = nodemailer.default.createTransport({
+      host: process.env.SMTP_HOST || "smtp.mail.ru",
+      port: Number(process.env.SMTP_PORT) || 465,
+      secure: process.env.SMTP_SECURE !== "false",
+      auth: {
+        user: process.env.SMTP_USER || "REDACTED_EMAIL",
+        pass: process.env.SMTP_PASS || "REDACTED_SMTP_PASS"
+      }
+    });
   }
-});
-function sendEmail(to, subject, html) {
+  return _smtpTransport;
+}
+async function sendEmail(to, subject, html) {
   const code = html.match(/\d{6}/)?.[0] || "N/A";
   console.log("[SMTP] Sending code", code, "to", to);
-  return smtpTransport.sendMail({
+  const transport = await getSmtpTransport();
+  return transport.sendMail({
     from: `"LAENFAER VPN" <${process.env.SMTP_USER || "REDACTED_EMAIL"}>`,
     to,
     subject,
