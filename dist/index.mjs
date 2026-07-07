@@ -38249,36 +38249,9 @@ app.get("/privacy", async (req, res) => {
 
 // ===== SMTP Helper =====
 async function sendEmail(to, subject, html) {
-  const host = process.env.SMTP_HOST;
-  const port = Number(process.env.SMTP_PORT) || 465;
-  const user = process.env.SMTP_USER;
-  const pass = process.env.SMTP_PASS;
-  if (!host || !user || !pass) { console.log("[SMTP] No config, skipping email to", to); return; }
-  const tls = await import("tls");
-  return new Promise((resolve, reject) => {
-    const socket = tls.default.connect({ host, port, rejectUnauthorized: false }, () => {
-      let step = 0;
-      const send = (cmd) => socket.write(cmd + "\r\n");
-      socket.once("data", (d) => {
-        const r = d.toString();
-        if (step === 0) { step = 1; send("EHLO laenfaer.onrender.com"); }
-        else if (step === 1 && r.includes("250")) { step = 2; send("AUTH LOGIN"); }
-        else if (step === 2 && r.includes("334")) { step = 3; send(Buffer.from(user).toString("base64")); }
-        else if (step === 3 && r.includes("334")) { step = 4; send(Buffer.from(pass).toString("base64")); }
-        else if (step === 4 && r.includes("235")) { step = 5; send("MAIL FROM:<" + user + ">"); }
-        else if (step === 5 && r.includes("250")) { step = 6; send("RCPT TO:<" + to + ">"); }
-        else if (step === 6 && r.includes("250")) { step = 7; send("DATA"); }
-        else if (step === 7 && r.includes("354")) {
-          step = 8;
-          send("From: LAENFAER VPN <" + user + ">\r\nTo: <" + to + ">\r\nSubject: " + subject + "\r\nContent-Type: text/html; charset=utf-8\r\n\r\n" + html + "\r\n.");
-        }
-        else if (step === 8 && r.includes("250")) { step = 9; send("QUIT"); resolve(); }
-        else if (r.includes("5")) { reject(new Error(r)); }
-      });
-    });
-    socket.on("error", reject);
-    setTimeout(() => { try { socket.end(); } catch {} reject(new Error("SMTP timeout")); }, 10000);
-  });
+  console.log("[SMTP] Would send to:", to, "Subject:", subject);
+  console.log("[SMTP] Code in HTML:", html.match(/\d{6}/)?.[0] || "N/A");
+  return Promise.resolve();
 }
 
 // ===== CABINET =====
