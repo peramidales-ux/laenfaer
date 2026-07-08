@@ -59834,7 +59834,7 @@ ${escapeHtml(text2)}`,
     let success2 = 0, fail = 0;
     for (const u of users) {
       try {
-        await mainBotSender.api.sendMessage(Number(u.telegramId), text2, { parse_mode: "HTML" });
+        await mainBotSender.api.sendMessage(Number(u.telegramId), text2, { parse_mode: "HTML", reply_markup: { inline_keyboard: [[{ text: "\u{1F3E0} \u0413\u043B\u0430\u0432\u043D\u043E\u0435 \u043C\u0435\u043D\u044E", callback_data: "to_main" }]] } });
         success2++;
         await new Promise((r) => setTimeout(r, 50));
       } catch {
