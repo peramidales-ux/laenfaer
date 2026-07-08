@@ -57993,7 +57993,7 @@ userBot.callbackQuery("open_withdraw", async (ctx) => {
   }
   userStates.set(ctx.from.id, "withdraw_mode_phone");
   await ctx.answerCallbackQuery();
-  await ctx.reply("<b>\u{1F4B8} Вывод через СБП</b>\n\nРеферальный баланс: <b>" + refBal + "\u20BD</b>\n\nШаг 1/3: Введите номер телефона СБП:", { parse_mode: "HTML" });
+  await ctx.reply("<b>\u{1F4B8} Вывод через СБП</b>\n\nРеферальный баланс: <b>" + refBal + "\u20BD</b>\n\nШаг 1/3: Введите номер телефона СБП:", { parse_mode: "HTML", reply_markup: backToMainKb() });
 });
 userBot.callbackQuery("check_sub_again", async (ctx) => {
   const userId = ctx.from.id;
@@ -58066,6 +58066,7 @@ userBot.callbackQuery("show_key", async (ctx) => {
   const sub = await getSubscription(String(userId));
   if (!sub?.key) {
     await ctx.answerCallbackQuery({ text: "\u274C \u041A\u043B\u044E\u0447 \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D", show_alert: true });
+    await ctx.editMessageText("\u274C \u0423 \u0432\u0430\u0441 \u043F\u043E\u043A\u0430 \u043D\u0435\u0442 \u0430\u043A\u0442\u0438\u0432\u043D\u043E\u0439 \u043F\u043E\u0434\u043F\u0438\u0441\u043A\u0438.\n\u041F\u043E\u043B\u0443\u0447\u0438\u0442\u0435 \u043A\u043B\u044E\u0447 \u0432 \u043C\u0430\u0433\u0430\u0437\u0438\u043D\u0435.", { reply_markup: backToMainKb() });
     return;
   }
   await ctx.answerCallbackQuery();
@@ -58077,7 +58078,7 @@ userBot.callbackQuery("show_key", async (ctx) => {
 <code>${subLink}</code>
 
 \u2139\uFE0F \u0414\u043E\u0431\u0430\u0432\u044C\u0442\u0435 \u044D\u0442\u0443 \u0441\u0441\u044B\u043B\u043A\u0443 \u0432 \u043F\u0440\u0438\u043B\u043E\u0436\u0435\u043D\u0438\u0435 \u2014 \u043A\u043B\u044E\u0447 \u0431\u0443\u0434\u0435\u0442 \u043E\u0431\u043D\u043E\u0432\u043B\u044F\u0442\u044C\u0441\u044F \u0430\u0432\u0442\u043E\u043C\u0430\u0442\u0438\u0447\u0435\u0441\u043A\u0438 \u0438 \u043E\u0442\u043A\u043B\u044E\u0447\u0438\u0442\u0441\u044F \u043F\u0440\u0438 \u0438\u0441\u0442\u0435\u0447\u0435\u043D\u0438\u0438.`,
-    { parse_mode: "HTML" }
+    { parse_mode: "HTML", reply_markup: backToMainKb() }
   );
 });
 async function getUserKey(userId) {
@@ -58305,7 +58306,7 @@ userBot.callbackQuery("open_miniapp", async (ctx) => {
   const domain = getSubDomain();
   const appUrl = domain ? domain + "/app" : "https://laenfaervpn.duckdns.org/app";
   const { InlineKeyboard: IK } = await import("grammy");
-  const kb = new IK().webApp("\u{1F310} \u041E\u0442\u043A\u0440\u044B\u0442\u044C \u043B\u0438\u0447\u043D\u044B\u0439 \u043A\u0430\u0431\u0438\u043D\u0435\u0442", appUrl);
+  const kb = new IK().webApp("\u{1F310} \u041E\u0442\u043A\u0440\u044B\u0442\u044C \u043B\u0438\u0447\u043D\u044B\u0439 \u043A\u0430\u0431\u0438\u043D\u0435\u0442", appUrl).row().text("\u{1F3E0} \u0413\u043B\u0430\u0432\u043D\u043E\u0435 \u043C\u0435\u043D\u044E", "to_main");
   await ctx.reply("\u{1F310} \u041D\u0430\u0436\u043C\u0438 \u043A\u043D\u043E\u043F\u043A\u0443 \u043D\u0438\u0436\u0435:", {
     reply_markup: kb
   });
@@ -58362,25 +58363,25 @@ userBot.on("message:text", async (ctx) => {
   if (state === "withdraw_mode_phone") {
     const phone = text2.trim();
     if (!/^\+?[78]\d{10}$/.test(phone.replace(/\s/g,""))) {
-      await ctx.reply("Неверный формат номера. Пример: +79991234567\nПопробуй ещё раз:");
+      await ctx.reply("Неверный формат номера. Пример: +79991234567\nПопробуй ещё раз:", { reply_markup: backToMainKb() });
       return;
     }
     userStates.set(userId, "withdraw_mode_name");
     withdrawData.set(userId, { phone });
-    await ctx.reply("Введите ваши ФИО (Фамилия Имя Отчество):");
+    await ctx.reply("Введите ваши ФИО (Фамилия Имя Отчество):", { reply_markup: backToMainKb() });
     return;
   }
   if (state === "withdraw_mode_name") {
     const name = text2.trim();
     if (name.split(" ").length < 2) {
-      await ctx.reply("Введите полные ФИО. Пример: Иванов Иван Иванович\nПопробуй ещё раз:");
+      await ctx.reply("Введите полные ФИО. Пример: Иванов Иван Иванович\nПопробуй ещё раз:", { reply_markup: backToMainKb() });
       return;
     }
     const data = withdrawData.get(userId) || {};
     data.name = name;
     withdrawData.set(userId, data);
     userStates.set(userId, "withdraw_mode_bank");
-    await ctx.reply("Введите название банка (например: Сбербанк, Тинькофф, ВТБ):");
+    await ctx.reply("Введите название банка (например: Сбербанк, Тинькофф, ВТБ):", { reply_markup: backToMainKb() });
     return;
   }
   if (state === "withdraw_mode_bank") {
@@ -58390,14 +58391,14 @@ userBot.on("message:text", async (ctx) => {
     withdrawData.delete(userId);
     const b = await getUserBalanceInfo(String(userId));
     const refBal = b.refBalance || 0;
-    if (refBal < 1000) { await ctx.reply("Реферальный баланс исчерпан или меньше 1000₽."); return; }
+    if (refBal < 1000) { await ctx.reply("Реферальный баланс исчерпан или меньше 1000₽.", { reply_markup: backToMainKb() }); return; }
     await db.update(usersTable).set({ refBalance: 0 }).where(eq(usersTable.telegramId, String(userId)));
     try { await adminNotifier.api.sendMessage(Number(ADMIN_ID), "<b>\u{1F4B8} \u0417\u0410\u042F\u0412\u041A\u0410 \u041D\u0410 \u0412\u042B\u0412\u041E\u0414</b>\nID: <code>" + userId + "</code>\n\u0421\u0443\u043C\u043C\u0430: <b>" + refBal + "\u20BD</b>\n\u0421\u0411\u041F: <b>" + data.phone + "</b>\n\u0424\u0418\u041E: <b>" + data.name + "</b>\n\u0411\u0430\u043D\u043A: <b>" + bank + "</b>", { parse_mode: "HTML", reply_markup: adminBackKb() }); } catch {}
-    await ctx.reply("\u2705 Заявка принята!\n\nСумма: <b>" + refBal + "\u20BD</b>\nНомер СБП: " + data.phone + "\nФИО: " + data.name + "\nБанк: " + bank + "\n\nАдминистратор переведёт средства в ближайшее время.", { parse_mode: "HTML" });
+    await ctx.reply("\u2705 Заявка принята!\n\nСумма: <b>" + refBal + "\u20BD</b>\nНомер СБП: " + data.phone + "\nФИО: " + data.name + "\nБанк: " + bank + "\n\nАдминистратор переведёт средства в ближайшее время.", { parse_mode: "HTML", reply_markup: backToMainKb() });
     return;
   }
   if (state?.startsWith("waiting_screenshot_")) {
-    await ctx.reply("\u{1F4F8} \u041E\u0442\u043F\u0440\u0430\u0432\u044C <b>\u0441\u043A\u0440\u0438\u043D\u0448\u043E\u0442</b> (\u0444\u043E\u0442\u043E) \u043F\u043E\u0434\u0442\u0432\u0435\u0440\u0436\u0434\u0435\u043D\u0438\u044F \u043E\u043F\u043B\u0430\u0442\u044B, \u0430 \u043D\u0435 \u0442\u0435\u043A\u0441\u0442.", { parse_mode: "HTML" });
+    await ctx.reply("\u{1F4F8} \u041E\u0442\u043F\u0440\u0430\u0432\u044C <b>\u0441\u043A\u0440\u0438\u043D\u0448\u043E\u0442</b> (\u0444\u043E\u0442\u043E) \u043F\u043E\u0434\u0442\u0432\u0435\u0440\u0436\u0434\u0435\u043D\u0438\u044F \u043E\u043F\u043B\u0430\u0442\u044B, \u0430 \u043D\u0435 \u0442\u0435\u043A\u0441\u0442.", { parse_mode: "HTML", reply_markup: backToMainKb() });
     return;
   }
   if (state === "support_mode") {
@@ -60351,15 +60352,15 @@ userBot.on("message:text", async (ctx, next) => {
   const userId = String(uid);
   const phone = ctx.message.text.trim();
   if (!/^\+?[78]\d{10}$/.test(phone.replace(/\s/g,""))) {
-    await ctx.reply("Неверный формат. Пример: +79991234567");
+    await ctx.reply("Неверный формат. Пример: +79991234567", { reply_markup: backToMainKb() });
     withdrawPending.set(uid, true);
     return;
   }
   const b = await getUserBalanceInfo(userId);
-  if (b.balance <= 0) { await ctx.reply("Баланс исчерпан."); return; }
+  if (b.balance <= 0) { await ctx.reply("Баланс исчерпан.", { reply_markup: backToMainKb() }); return; }
   await db.update(usersTable).set({ balance: 0 }).where(eq(usersTable.telegramId, userId));
   try { await adminNotifier.api.sendMessage(Number(ADMIN_ID), "<b>\u{1F4B8} \u0417\u0410\u042F\u0412\u041A\u0410 \u041D\u0410 \u0412\u042B\u0412\u041E\u0414</b>\nID: <code>" + userId + "</code>\n\u0421\u0443\u043C\u043C\u0430: <b>" + b.balance + "\u20BD</b>\n\u0421\u0411\u041F: <b>" + phone + "</b>", { parse_mode: "HTML", reply_markup: adminBackKb() }); } catch {}
-  await ctx.reply("\u2705 Заявка принята! Переведём <b>" + b.balance + "\u20BD</b> на " + phone + " в ближайшее время.", { parse_mode: "HTML" });
+  await ctx.reply("\u2705 Заявка принята! Переведём <b>" + b.balance + "\u20BD</b> на " + phone + " в ближайшее время.", { parse_mode: "HTML", reply_markup: backToMainKb() });
 });
 
 async function startBots() {
@@ -60389,27 +60390,27 @@ async function startBots() {
     const userId = String(ctx.from.id);
     const bal = await getUserBalanceInfo(userId);
     if (bal.balance <= 0) {
-      await ctx.reply("\u{1F4B0} <b>\u0412\u044B\u0432\u043E\u0434 \u0441\u0440\u0435\u0434\u0441\u0442\u0432</b>\n\n\u0423 \u0432\u0430\u0441 \u043D\u0435\u0442 \u0434\u043E\u0441\u0442\u0443\u043F\u043D\u043E\u0433\u043E \u0431\u0430\u043B\u0430\u043D\u0441\u0430.", { parse_mode: "HTML" });
+      await ctx.reply("\u{1F4B0} <b>\u0412\u044B\u0432\u043E\u0434 \u0441\u0440\u0435\u0434\u0441\u0442\u0432</b>\n\n\u0423 \u0432\u0430\u0441 \u043D\u0435\u0442 \u0434\u043E\u0441\u0442\u0443\u043F\u043D\u043E\u0433\u043E \u0431\u0430\u043B\u0430\u043D\u0441\u0430.", { parse_mode: "HTML", reply_markup: backToMainKb() });
       return;
     }
-    await ctx.reply(`\u{1F4B0} <b>\u0412\u044B\u0432\u043E\u0434 \u0447\u0435\u0440\u0435\u0437 \u0421\u0411\u041F</b>\n\n\u0414\u043E\u0441\u0442\u0443\u043F\u043D\u043E: <b>${bal.balance}\u20BD</b>\n\n\u0422\u0435\u043A\u0441\u0442\u043E\u043C \u043E\u0442\u043F\u0440\u0430\u0432\u044C \u043D\u043E\u043C\u0435\u0440 \u0442\u0435\u043B\u0435\u0444\u043E\u043D\u0430 \u0421\u0411\u041F \u0432 \u0444\u043E\u0440\u043C\u0430\u0442\u0435:\n<code>\u0421\u0411\u041F: +7XXXXXXXXXX</code>`, { parse_mode: "HTML" });
+    await ctx.reply(`\u{1F4B0} <b>\u0412\u044B\u0432\u043E\u0434 \u0447\u0435\u0440\u0435\u0437 \u0421\u0411\u041F</b>\n\n\u0414\u043E\u0441\u0442\u0443\u043F\u043D\u043E: <b>${bal.balance}\u20BD</b>\n\n\u0422\u0435\u043A\u0441\u0442\u043E\u043C \u043E\u0442\u043F\u0440\u0430\u0432\u044C \u043D\u043E\u043C\u0435\u0440 \u0442\u0435\u043B\u0435\u0444\u043E\u043D\u0430 \u0421\u0411\u041F \u0432 \u0444\u043E\u0440\u043C\u0430\u0442\u0435:\n<code>\u0421\u0411\u041F: +7XXXXXXXXXX</code>`, { parse_mode: "HTML", reply_markup: backToMainKb() });
     const handler = async (msg) => {
       if (msg.from?.id !== ctx.from.id || !msg.text) return;
       const phone = msg.text.replace("\u0421\u0411\u041F:", "").trim();
       if (!/^\+?[78]\d{10}$/.test(phone.replace(/\s/g, ""))) {
-        await userBot.api.sendMessage(ctx.from.id, "\u274C \u041D\u0435\u0432\u0435\u0440\u043D\u044B\u0439 \u0444\u043E\u0440\u043C\u0430\u0442 \u043D\u043E\u043C\u0435\u0440\u0430. \u041F\u043E\u043F\u0440\u043E\u0431\u0443\u0439 \u0435\u0449\u0435 \u0440\u0430\u0437.");
+        await userBot.api.sendMessage(ctx.from.id, "\u274C \u041D\u0435\u0432\u0435\u0440\u043D\u044B\u0439 \u0444\u043E\u0440\u043C\u0430\u0442 \u043D\u043E\u043C\u0435\u0440\u0430. \u041F\u043E\u043F\u0440\u043E\u0431\u0443\u0439 \u0435\u0449\u0435 \u0440\u0430\u0437.", { reply_markup: backToMainKb() });
         return;
       }
       const freshBal = await getUserBalanceInfo(userId);
       if (freshBal.balance <= 0) {
-        await userBot.api.sendMessage(ctx.from.id, "\u274C \u0411\u0430\u043B\u0430\u043D\u0441 \u0438\u0441\u0447\u0435\u0440\u043F\u0430\u043D.");
+        await userBot.api.sendMessage(ctx.from.id, "\u274C \u0411\u0430\u043B\u0430\u043D\u0441 \u0438\u0441\u0447\u0435\u0440\u043F\u0430\u043D.", { reply_markup: backToMainKb() });
         return;
       }
       await db.update(usersTable).set({ balance: 0 }).where(eq(usersTable.telegramId, userId));
       try {
         await adminNotifier.api.sendMessage(Number(ADMIN_ID), `\u{1F4B8} <b>\u0417\u0410\u042F\u0412\u041A\u0410 \u041D\u0410 \u0412\u042B\u0412\u041E\u0414</b>\n\n\u{1F464} \u041F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u0435\u043B\u044C: <code>${userId}</code>\n\u{1F4B0} \u0421\u0443\u043C\u043C\u0430: <b>${freshBal.balance}\u20BD</b>\n\u{1F4F1} \u0421\u0411\u041F: <b>${phone}</b>`, { parse_mode: "HTML", reply_markup: adminBackKb() });
       } catch {}
-      await userBot.api.sendMessage(ctx.from.id, `\u2705 <b>\u0417\u0430\u044F\u0432\u043A\u0430 \u043E\u0442\u043F\u0440\u0430\u0432\u043B\u0435\u043D\u0430!</b>\n\n\u0410\u0434\u043C\u0438\u043D\u0438\u0441\u0442\u0440\u0430\u0442\u043E\u0440 \u043E\u0431\u0440\u0430\u0431\u043E\u0442\u0430\u0435\u0442 \u0432\u044B\u043F\u043B\u0430\u0442\u0443 <b>${freshBal.balance}\u20BD</b> \u043D\u0430 ${phone} \u0432 \u0431\u043B\u0438\u0436\u0430\u0439\u0448\u0435\u0435 \u0432\u0440\u0435\u043C\u044F.`, { parse_mode: "HTML" });
+      await userBot.api.sendMessage(ctx.from.id, `\u2705 <b>\u0417\u0430\u044F\u0432\u043A\u0430 \u043E\u0442\u043F\u0440\u0430\u0432\u043B\u0435\u043D\u0430!</b>\n\n\u0410\u0434\u043C\u0438\u043D\u0438\u0441\u0442\u0440\u0430\u0442\u043E\u0440 \u043E\u0431\u0440\u0430\u0431\u043E\u0442\u0430\u0435\u0442 \u0432\u044B\u043F\u043B\u0430\u0442\u0443 <b>${freshBal.balance}\u20BD</b> \u043D\u0430 ${phone} \u0432 \u0431\u043B\u0438\u0436\u0430\u0439\u0448\u0435\u0435 \u0432\u0440\u0435\u043C\u044F.`, { parse_mode: "HTML", reply_markup: backToMainKb() });
     };
     userBot.on("message:text", handler);
     setTimeout(() => userBot.off("message:text", handler), 120000);
