@@ -59007,7 +59007,7 @@ adminBot.callbackQuery(/.*/, async (ctx) => {
         if (bonus > 0) {
           await db.update(usersTable).set({ refBalance: sql`${usersTable.refBalance} + ${bonus}` }).where(eq(usersTable.telegramId, inviterId));
           try {
-            await mainBotSender.api.sendMessage(Number(inviterId), `\u{1F4B0} <b>\u0420\u0435\u0444\u0435\u0440\u0430\u043B\u044C\u043D\u044B\u0439 \u0431\u043E\u043D\u0443\u0441!</b>\n\n\u0412\u0430\u0448 \u0440\u0435\u0444\u0435\u0440\u0430\u043B \u043E\u043F\u043B\u0430\u0442\u0438\u043B \u043F\u043E\u0434\u043F\u0438\u0441\u043A\u0443. \u0412\u0430\u043C \u043D\u0430\u0447\u0438\u0441\u043B\u0435\u043D\u043E <b>+${bonus}\u20BD</b> (10% \u043E\u0442 ${req.amount}\u20BD)`, { parse_mode: "HTML" });
+            await mainBotSender.api.sendMessage(Number(inviterId), `\u{1F4B0} <b>\u0420\u0435\u0444\u0435\u0440\u0430\u043B\u044C\u043D\u044B\u0439 \u0431\u043E\u043D\u0443\u0441!</b>\n\n\u0412\u0430\u0448 \u0440\u0435\u0444\u0435\u0440\u0430\u043B \u043E\u043F\u043B\u0430\u0442\u0438\u043B \u043F\u043E\u0434\u043F\u0438\u0441\u043A\u0443. \u0412\u0430\u043C \u043D\u0430\u0447\u0438\u0441\u043B\u0435\u043D\u043E <b>+${bonus}\u20BD</b> (10% \u043E\u0442 ${req.amount}\u20BD)`, { parse_mode: "HTML", reply_markup: backToMainKb() });
           } catch {}
         }
       }
@@ -59117,7 +59117,7 @@ ID: <code>${req.telegramId}</code>`,
       await mainBotSender.api.sendMessage(
         Number(uid),
         "\u{1F512} <b>\u0427\u0430\u0442 \u043F\u043E\u0434\u0434\u0435\u0440\u0436\u043A\u0438 \u0437\u0430\u043A\u0440\u044B\u0442 \u0430\u0434\u043C\u0438\u043D\u0438\u0441\u0442\u0440\u0430\u0442\u043E\u0440\u043E\u043C.</b>\n\n\u0422\u044B \u043C\u043E\u0436\u0435\u0448\u044C \u0437\u0430\u0434\u0430\u0442\u044C \u043D\u043E\u0432\u044B\u0439 \u0432\u043E\u043F\u0440\u043E\u0441, \u043D\u0430\u0436\u0430\u0432 \xAB\u041F\u043E\u0434\u0434\u0435\u0440\u0436\u043A\u0430\xBB \u0432 \u043B\u0438\u0447\u043D\u043E\u043C \u043A\u0430\u0431\u0438\u043D\u0435\u0442\u0435.",
-        { parse_mode: "HTML" }
+        { parse_mode: "HTML", reply_markup: backToMainKb() }
       );
     } catch {
     }
@@ -59134,7 +59134,7 @@ ID: <code>${req.telegramId}</code>`,
       await mainBotSender.api.sendMessage(
         Number(uid),
         "\u{1F6AB} \u0412\u0430\u0448 \u0430\u043A\u043A\u0430\u0443\u043D\u0442 \u0437\u0430\u0431\u043B\u043E\u043A\u0438\u0440\u043E\u0432\u0430\u043D \u0430\u0434\u043C\u0438\u043D\u0438\u0441\u0442\u0440\u0430\u0442\u043E\u0440\u043E\u043C.",
-        { parse_mode: "HTML" }
+        { parse_mode: "HTML", reply_markup: backToMainKb() }
       );
     } catch {
     }
@@ -59151,7 +59151,7 @@ ID: <code>${req.telegramId}</code>`,
       await mainBotSender.api.sendMessage(
         Number(uid),
         "\u2705 \u0412\u0430\u0448 \u0430\u043A\u043A\u0430\u0443\u043D\u0442 \u0440\u0430\u0437\u0431\u043B\u043E\u043A\u0438\u0440\u043E\u0432\u0430\u043D. \u0414\u043E\u0431\u0440\u043E \u043F\u043E\u0436\u0430\u043B\u043E\u0432\u0430\u0442\u044C \u043E\u0431\u0440\u0430\u0442\u043D\u043E!",
-        { parse_mode: "HTML" }
+        { parse_mode: "HTML", reply_markup: mainMenuKb() }
       );
     } catch {
     }
@@ -59202,7 +59202,7 @@ ID: <code>${req.telegramId}</code>`,
           `\u{1F381} <b>\u0410\u0434\u043C\u0438\u043D\u0438\u0441\u0442\u0440\u0430\u0442\u043E\u0440 \u0432\u044B\u0434\u0430\u043B \u0432\u0430\u043C \u0411\u0435\u0441\u043F\u043B\u0430\u0442\u043D\u044B\u0439 \u043A\u043B\u044E\u0447!</b>
 
 <code>${escapeHtml(keyObj.key)}</code>`,
-          { parse_mode: "HTML" }
+          { parse_mode: "HTML", reply_markup: connectKb() }
         );
         await setSubscription(uid, "free_7days", 7, keyObj.key);
         await ctx.editMessageText("\u2705 \u0411\u0435\u0441\u043F\u043B\u0430\u0442\u043D\u044B\u0439 \u043A\u043B\u044E\u0447 \u043E\u0442\u043F\u0440\u0430\u0432\u043B\u0435\u043D \u043F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u0435\u043B\u044E", {
@@ -59232,7 +59232,7 @@ ID: <code>${req.telegramId}</code>`,
           `\u2B50 <b>\u0410\u0434\u043C\u0438\u043D\u0438\u0441\u0442\u0440\u0430\u0442\u043E\u0440 \u0432\u044B\u0434\u0430\u043B \u0432\u0430\u043C Premium \u043A\u043B\u044E\u0447!</b>
 
 <code>${escapeHtml(keyObj.key)}</code>`,
-          { parse_mode: "HTML" }
+          { parse_mode: "HTML", reply_markup: connectKb() }
         );
         await setSubscription(uid, "30days", 30, keyObj.key);
         await ctx.editMessageText("\u2705 Premium \u043A\u043B\u044E\u0447 \u043E\u0442\u043F\u0440\u0430\u0432\u043B\u0435\u043D \u043F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u0435\u043B\u044E", {
@@ -59258,7 +59258,7 @@ ID: <code>${req.telegramId}</code>`,
           `\u2699\uFE0F <b>\u0410\u0434\u043C\u0438\u043D\u0438\u0441\u0442\u0440\u0430\u0442\u043E\u0440 \u0432\u044B\u0434\u0430\u043B \u0432\u0430\u043C \u0422\u0435\u0441\u0442\u043E\u0432\u044B\u0439 \u043A\u043B\u044E\u0447!</b>
 
 <code>${escapeHtml(testKey)}</code>`,
-          { parse_mode: "HTML" }
+          { parse_mode: "HTML", reply_markup: connectKb() }
         );
         await setSubscription(uid, "3days", 3, testKey);
         await ctx.editMessageText("\u2705 \u0422\u0435\u0441\u0442\u043E\u0432\u044B\u0439 \u043A\u043B\u044E\u0447 \u043E\u0442\u043F\u0440\u0430\u0432\u043B\u0435\u043D \u043F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u0435\u043B\u044E", {
@@ -59525,7 +59525,7 @@ adminBot.on("message:text", async (ctx) => {
     const targetId = adminDirectMode.get(ADMIN_ID2);
     adminDirectMode.delete(ADMIN_ID2);
     try {
-      await mainBotSender.api.sendMessage(Number(targetId), text2, { parse_mode: "HTML" });
+      await mainBotSender.api.sendMessage(Number(targetId), text2, { parse_mode: "HTML", reply_markup: mainMenuKb() });
       await ctx.reply(`\u2705 \u0421\u043E\u043E\u0431\u0449\u0435\u043D\u0438\u0435 \u043E\u0442\u043F\u0440\u0430\u0432\u043B\u0435\u043D\u043E \u043F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u0435\u043B\u044E ${targetId}!`, { reply_markup: adminBackKb() });
     } catch (e) {
       await ctx.reply(`\u274C \u041E\u0448\u0438\u0431\u043A\u0430: ${escapeHtml(String(e))}`, { reply_markup: adminBackKb() });
@@ -59624,7 +59624,7 @@ ${escapeHtml(text2)}`,
 <code>${subLink}</code>
 
 \u0414\u043E\u0431\u0430\u0432\u044C\u0442\u0435 \u0435\u0451 \u0432 \u0441\u0432\u043E\u0451 \u043F\u0440\u0438\u043B\u043E\u0436\u0435\u043D\u0438\u0435 \u2014 \u043A\u043B\u044E\u0447 \u0431\u0443\u0434\u0435\u0442 \u043E\u0431\u043D\u043E\u0432\u043B\u044F\u0442\u044C\u0441\u044F \u0430\u0432\u0442\u043E\u043C\u0430\u0442\u0438\u0447\u0435\u0441\u043A\u0438.`,
-          { parse_mode: "HTML" }
+          { parse_mode: "HTML", reply_markup: connectKb() }
         );
       } catch {}
       await ctx.reply(`\u2705 ${label} \u043F\u043E\u0434\u043F\u0438\u0441\u043A\u0430 \u043D\u0430 ${days} \u0434\u043D. \u0432\u044B\u0434\u0430\u043D\u0430 \u043F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u0435\u043B\u044E ${uid}!`, { reply_markup: adminBackKb() });
@@ -59649,7 +59649,7 @@ ${escapeHtml(text2)}`,
 
 \u0412\u0430\u0448 \u043D\u043E\u0432\u044B\u0439 \u043A\u043B\u044E\u0447:
 <code>${escapeHtml(text2.trim())}</code>`,
-        { parse_mode: "HTML" }
+        { parse_mode: "HTML", reply_markup: connectKb() }
       );
     } catch {
     }
