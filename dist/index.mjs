@@ -38716,7 +38716,7 @@ h+='</div>';
 h+='<div class="timer-card"><div class="timer-label">&#9201; Осталось</div><div class="timer-digits"><div class="timer-d" id="td">00</div><div class="timer-sep">:</div><div class="timer-d" id="th">00</div><div class="timer-sep">:</div><div class="timer-d" id="tm">00</div><div class="timer-sep">:</div><div class="timer-d" id="ts">00</div></div><div class="timer-exp">Действует до: '+EDD+'</div></div>';
 
 if(SL){h+='<div class="link-box"><div class="link-text" id="sl">'+SL+'</div><button class="link-copy" data-copy="sl">&#128203;</button></div>';}
-if(H&&SL){h+='<a class="btn btn-o" href="'+SL+'" target="_blank">Управление подпиской &#8594;</a>';}
+if(H&&SL){h+='<a class="btn btn-o" href="https://t.me/laenfaer_vpn_bot" target="_blank">Управление подпиской &#8594;</a>';}
 h+='</div></div>';
 
 /* SUBSCRIPTION */
@@ -38734,7 +38734,7 @@ h+='</div>';
 /* Timer */
 h+='<div class="timer-card"><div class="timer-label">&#9201; Осталось</div><div class="timer-digits"><div class="timer-d" id="td2">00</div><div class="timer-sep">:</div><div class="timer-d" id="th2">00</div><div class="timer-sep">:</div><div class="timer-d" id="tm2">00</div><div class="timer-sep">:</div><div class="timer-d" id="ts2">00</div></div><div class="timer-exp">Действует до: '+EDD+'</div></div>';
 
-h+='<a class="btn btn-g" href="'+(SL||'#')+'" target="_blank">Выберите тариф для продолжения &#8594;</a>';
+h+='<a class="btn btn-g" href="https://t.me/laenfaer_vpn_bot" target="_blank">Выберите тариф для продолжения &#8594;</a>';
 }else{
 h+='<div class="c" style="text-align:center;padding:32px"><div style="font-size:36px;margin-bottom:8px">&#128274;</div><div style="font-size:15px;font-weight:800;color:#f87171">Нет активной подписки</div><div style="font-size:11px;color:rgba(255,255,255,.25);margin-top:4px">Напишите /start в боте</div></div>';
 }
@@ -38871,11 +38871,24 @@ app.get("/api/promo/:userId", async (req, res) => {
     if (!code) return res.json({ ok: false, message: "Введите промокод" });
     const promo = await activatePromoCode(code);
     if (!promo) return res.json({ ok: false, message: "Промокод не найден или уже использован" });
-    const isFreeTariffApi = promo.tariff && promo.tariff.includes("free");
-    const key = isFreeTariffApi ? (await getRandomFreeKey() || await getRandomPremiumKey()) : (await getRandomPremiumKey() || await getRandomFreeKey());
-    if (!key) return res.json({ ok: false, message: "Нет свободных ключей, обратитесь в поддержку" });
     const days = promo.days || 30;
-    const tariff = promo.tariff || "30days";
+    const existingSub = await getSubscription(userId);
+    const hasActive = existingSub && new Date(existingSub.expiresAt) > new Date();
+    let tariff;
+    let key;
+    if (promo.tariff === "auto" || !promo.tariff) {
+      if (hasActive) {
+        tariff = existingSub.tariff;
+        key = existingSub.key;
+      } else {
+        tariff = "free_" + days + "days";
+        key = await getRandomFreeKey() || await getRandomPremiumKey();
+      }
+    } else {
+      tariff = promo.tariff;
+      key = promo.tariff.includes("free") ? (await getRandomFreeKey() || await getRandomPremiumKey()) : (await getRandomPremiumKey() || await getRandomFreeKey());
+    }
+    if (!key) return res.json({ ok: false, message: "Нет свободных ключей, обратитесь в поддержку" });
     await addDaysToSubscription(userId, tariff, days, key);
     try { await adminNotifier.api.sendMessage(ADMIN_ID, `\u{1F3AB} <b>\u041F\u0420\u041E\u041C\u041E\u041A\u041E\u0414 \u0410\u041A\u0422\u0418\u0412\u0418\u0420\u041E\u0412\u0410\u041D</b> (\u043C\u0438\u043D\u0438-\u043F\u0440\u0438\u043B\u043E\u0436\u0435\u043D\u0438\u0435)\n\n\u{1F511} \u041A\u043E\u0434: <code>${code}</code>\n\u{1F464} \u041F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u0435\u043B\u044C: <code>${userId}</code>\n\u{1F4CB} \u0422\u0430\u0440\u0438\u0444: ${tariff}\n\u{1F4C5} \u0414\u043E\u0431\u0430\u0432\u043B\u0435\u043D\u043E: ${days} \u0434\u043D.`, { parse_mode: "HTML", reply_markup: adminBackKb() }); } catch {}
     const domain = getSubDomain();
@@ -57657,12 +57670,12 @@ function connectKb() {
 function connectAndroidKb(key) {
   const domain2 = getSubDomain() || "https://laenfaervpn.duckdns.org";
   const encodedKey = encodeURIComponent(key);
-  return new InlineKeyboard().url("\u{1F916} HappProxy", `https://${domain2.replace(/^https?:\/\//, "")}/connect?app=happproxy&key=${encodedKey}`).row().text("\u{1F519} \u041D\u0430\u0437\u0430\u0434", "connect_back");
+  return new InlineKeyboard().url("\u{1F916} HappProxy", `https://${domain2.replace(/^https?:\/\//, "")}/api/connect?app=happproxy&key=${encodedKey}`).row().text("\u{1F519} \u041D\u0430\u0437\u0430\u0434", "connect_back");
 }
 function connectIphoneKb(key) {
   const domain2 = getSubDomain() || "https://laenfaervpn.duckdns.org";
   const encodedKey = encodeURIComponent(key);
-  return new InlineKeyboard().url("\u{1F4F1} Happ iOS", `https://${domain2.replace(/^https?:\/\//, "")}/connect?app=happ_ios&key=${encodedKey}`).row().text("\u{1F519} \u041D\u0430\u0437\u0430\u0434", "connect_back");
+  return new InlineKeyboard().url("\u{1F4F1} Happ iOS", `https://${domain2.replace(/^https?:\/\//, "")}/api/connect?app=happ_ios&key=${encodedKey}`).row().text("\u{1F519} \u041D\u0430\u0437\u0430\u0434", "connect_back");
 }
 function activeSupportKb() {
   return new InlineKeyboard().text("\u{1F519} \u041D\u0430\u0437\u0430\u0434", "back_from_support").text("\u{1F3E0} \u0413\u043B\u0430\u0432\u043D\u043E\u0435 \u043C\u0435\u043D\u044E", "to_main").row().text("\u{1F512} \u0417\u0430\u043A\u0440\u044B\u0442\u044C \u0447\u0430\u0442", "close_support_chat");
@@ -57977,7 +57990,7 @@ userBot.command("status", async (ctx) => {
   let serverText = "\u{1F4CA} <b>\u0421\u0422\u0410\u0422\u0423\u0421 \u0421\u0415\u0420\u0412\u0415\u0420\u041E\u0412</b>\n\n";
   if (serverStatus.size > 0) {
     for (const [ip, online] of serverStatus) {
-      serverText += `${online ? "\u{1F7E2}" : "\u{1F534}"} <code>${ip}</code> \u2014 ${online ? "\u041E\u043D\u043B\u0430\u0439\u043D" : "\u041E\u0444\u0444\u043B\u0430\u0439\u043D"}\n`;
+      serverText += `${online ? "\u{1F7E2}" : "\u{1F534}"} ${getCountryForIp(ip)} \u2014 ${online ? "\u041E\u043D\u043B\u0430\u0439\u043D" : "\u041E\u0444\u0444\u043B\u0430\u0439\u043D"}\n`;
     }
     const onlineCount = [...serverStatus.values()].filter(Boolean).length;
     serverText += `\n\u0414\u043E\u0441\u0442\u0443\u043F\u043D\u043E: ${onlineCount}/${serverStatus.size}`;
@@ -58164,7 +58177,7 @@ async function getUserKey(userId) {
 }
 userBot.callbackQuery("connect_android", async (ctx) => {
   const userId = String(ctx.from.id);
-  const connectUrl = `${getSubDomain() || "https://laenfaervpn.duckdns.org"}/connect?app=happproxy&key=${encodeURIComponent(userId)}`;
+  const connectUrl = `${getSubDomain() || "https://laenfaervpn.duckdns.org"}/api/connect?app=happproxy&key=${encodeURIComponent(userId)}`;
   const kb = new InlineKeyboard2().url("\u{1F916} HappProxy", connectUrl).row().text("\u{1F519} \u041D\u0430\u0437\u0430\u0434", "connect_back");
   await ctx.answerCallbackQuery();
   await ctx.editMessageText(
@@ -58174,7 +58187,7 @@ userBot.callbackQuery("connect_android", async (ctx) => {
 });
 userBot.callbackQuery("connect_iphone", async (ctx) => {
   const userId = String(ctx.from.id);
-  const connectUrl = `${getSubDomain() || "https://laenfaervpn.duckdns.org"}/connect?app=happ_ios&key=${encodeURIComponent(userId)}`;
+  const connectUrl = `${getSubDomain() || "https://laenfaervpn.duckdns.org"}/api/connect?app=happ_ios&key=${encodeURIComponent(userId)}`;
   const kb = new InlineKeyboard2().url("\u{1F4F1} Happ iOS", connectUrl).row().text("\u{1F519} \u041D\u0430\u0437\u0430\u0434", "connect_back");
   await ctx.answerCallbackQuery();
   await ctx.editMessageText(
@@ -58373,7 +58386,7 @@ userBot.callbackQuery("open_status", async (ctx) => {
   let serverText = "\u{1F4CA} <b>\u0421\u0422\u0410\u0422\u0423\u0421 \u0421\u0415\u0420\u0412\u0415\u0420\u041E\u0412</b>\n\n";
   if (serverStatus.size > 0) {
     for (const [ip, online] of serverStatus) {
-      serverText += `${online ? "\u{1F7E2}" : "\u{1F534}"} <code>${ip}</code> \u2014 ${online ? "\u041E\u043D\u043B\u0430\u0439\u043D" : "\u041E\u0444\u0444\u043B\u0430\u0439\u043D"}\n`;
+      serverText += `${online ? "\u{1F7E2}" : "\u{1F534}"} ${getCountryForIp(ip)} \u2014 ${online ? "\u041E\u043D\u043B\u0430\u0439\u043D" : "\u041E\u0444\u0444\u043B\u0430\u0439\u043D"}\n`;
     }
     const onlineCount = [...serverStatus.values()].filter(Boolean).length;
     serverText += `\n\u0414\u043E\u0441\u0442\u0443\u043F\u043D\u043E: ${onlineCount}/${serverStatus.size}`;
@@ -58566,6 +58579,30 @@ function initScheduler(userApi, adminApi, adminUserId) {
   adminId = adminUserId;
 }
 var serverStatusCache = /* @__PURE__ */ new Map();
+var ipCountryMap = {
+  "185.71.67.223": "\u{1F1F7}\u{1F1FA} \u0420\u043E\u0441\u0441\u0438\u044F (LTE)",
+  "213.219.212.30": "\u{1F1F7}\u{1F1FA} \u0420\u043E\u0441\u0441\u0438\u044F (Reality #1-6)",
+  "213.219.212.24": "\u{1F1F7}\u{1F1FA} \u0420\u043E\u0441\u0441\u0438\u044F (Reality #7-8)",
+  "213.219.212.105": "\u{1F1F7}\u{1F1FA} \u0420\u043E\u0441\u0441\u0438\u044F (Reality #9)",
+  "213.219.212.14": "\u{1F1F7}\u{1F1FA} \u0420\u043E\u0441\u0441\u0438\u044F (Reality #10)",
+  "94.131.94.54": "\u{1F1F0}\u{1F1FF} \u041A\u0430\u0437\u0430\u0445\u0441\u0442\u0430\u043D (Reality KZ)",
+  "81.163.23.115": "\u{1F1FB}\u{1F1EE} \u0424\u0438\u043D\u043B\u044F\u043D\u0434\u0438\u044F",
+  "81.94.148.75": "\u{1F1FB}\u{1F1EE} \u0424\u0438\u043D\u043B\u044F\u043D\u0434\u0438\u044F",
+  "217.16.29.31": "\u{1F1F7}\u{1F1FA} \u0420\u043E\u0441\u0441\u0438\u044F",
+  "178.250.242.39": "\u{1F1E9}\u{1F1EA} \u0413\u0435\u0440\u043C\u0430\u043D\u0438\u044F",
+  "78.41.111.87": "\u{1F1F7}\u{1F1FA} \u0420\u043E\u0441\u0441\u0438\u044F",
+  "78.159.250.32": "\u{1F1F7}\u{1F1FA} \u0420\u043E\u0441\u0441\u0438\u044F",
+  "62.152.58.86": "\u{1F1F7}\u{1F1FA} \u0420\u043E\u0441\u0441\u0438\u044F",
+  "31.129.42.182": "\u{1F1F7}\u{1F1FA} \u0420\u043E\u0441\u0441\u0438\u044F",
+  "193.33.133.195": "\u{1F1F7}\u{1F1FA} \u0420\u043E\u0441\u0441\u0438\u044F",
+  "193.33.133.194": "\u{1F1F7}\u{1F1FA} \u0420\u043E\u0441\u0441\u0438\u044F",
+  "185.141.227.178": "\u{1F1F7}\u{1F1FA} \u0420\u043E\u0441\u0441\u0438\u044F",
+  "45.11.26.253": "\u{1F1F7}\u{1F1FA} \u0420\u043E\u0441\u0441\u0438\u044F",
+  "62.152.56.157": "\u{1F1F7}\u{1F1FA} \u0420\u043E\u0441\u0441\u0438\u044F",
+};
+function getCountryForIp(ip) {
+  return ipCountryMap[ip] || "\u{1F310} " + ip;
+}
 async function pingIp(ip) {
   try {
     await execAsync(`ping -c 1 -W 3 ${ip}`);
@@ -58821,7 +58858,7 @@ adminBot.command("stats", async (ctx) => {
   const serverStatus = getServerStatus();
   let serverText = "";
   if (serverStatus.size > 0) {
-    for (const [ip, online] of serverStatus) serverText += `${online ? "\u{1F7E2}" : "\u{1F534}"} ${ip}
+    for (const [ip, online] of serverStatus) serverText += `${online ? "\u{1F7E2}" : "\u{1F534}"} ${getCountryForIp(ip)}
 `;
   } else {
     serverText = "\u23F3 \u041F\u0440\u043E\u0432\u0435\u0440\u043A\u0430 \u0435\u0449\u0451 \u043D\u0435 \u0437\u0430\u043F\u0443\u0441\u043A\u0430\u043B\u0430\u0441\u044C";
@@ -59655,25 +59692,19 @@ ${escapeHtml(text2)}`,
       await ctx.reply("\u274C \u0412\u0432\u0435\u0434\u0438\u0442\u0435 \u043A\u043E\u0440\u0440\u0435\u043A\u0442\u043D\u043E\u0435 \u0447\u0438\u0441\u043B\u043E \u0434\u043D\u0435\u0439.", { reply_markup: adminBackKb() });
       return;
     }
-    adminStates.set(ADMIN_ID2, `promo_tariff_${code}_${days}`);
-    await ctx.reply(`\u2705 \u041A\u043E\u0434: <code>${code}</code> | \u0414\u043D\u0435\u0439: ${days}\n\n\u0412\u044B\u0431\u0435\u0440\u0438\u0442\u0435 \u0442\u0438\u043F \u043F\u043E\u0434\u043F\u0438\u0441\u043A\u0438:`, {
-      parse_mode: "HTML",
-      reply_markup: new InlineKeyboard3()
-        .text("\u{1F381} \u0411\u0435\u0441\u043F\u043B\u0430\u0442\u043D\u0430\u044F", "promo_set_free")
-        .text("\u2B50 Premium", "promo_set_prem").row()
-        .text("\u{1F519} \u041E\u0442\u043C\u0435\u043D\u0430", "admin_promo_menu")
-    });
+    adminStates.set(ADMIN_ID2, `promo_max_${code}_${days}`);
+    await ctx.reply(`\u2705 \u041A\u043E\u0434: <code>${code}</code> | \u0414\u043D\u0435\u0439: ${days}\n\n\u0412\u0432\u0435\u0434\u0438\u0442\u0435 \u043B\u0438\u043C\u0438\u0442 \u0438\u0441\u043F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u043D\u0438\u0439 (\u043F\u043E \u0443\u043C\u043E\u043B\u0447\u0430\u043D\u0438\u044E: 999):`, { reply_markup: adminBackKb() });
     return;
   }
-  if (state.startsWith("promo_fin|")) {
-    const parts = state.split("|");
-    const code = parts[1];
-    const days = parts[2];
-    const tariff = parts[3];
+  if (state.startsWith("promo_max_")) {
+    const rest = state.replace("promo_max_", "");
+    const lastUnderscore = rest.lastIndexOf("_");
+    const code = rest.substring(0, lastUnderscore);
+    const days = rest.substring(lastUnderscore + 1);
     adminStates.delete(ADMIN_ID2);
     const maxUses = parseInt(text2.trim(), 10) || 999;
-    await savePromoCode(code, days, tariff, maxUses);
-    await ctx.reply(`\u2705 <b>\u041F\u0440\u043E\u043C\u043E\u043A\u043E\u0434 \u0441\u043E\u0437\u0434\u0430\u043D!</b>\n\n\u{1F511} \u041A\u043E\u0434: <code>${code}</code>\n\u{1F4C5} \u0414\u043D\u0435\u0439: ${days}\n\u{1F4CB} \u0422\u0430\u0440\u0438\u0444: ${tariff}\n\u{1F517} \u041B\u0438\u043C\u0438\u0442: ${maxUses} \u0438\u0441\u043F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u043D\u0438\u0439`, { parse_mode: "HTML", reply_markup: adminBackKb() });
+    await savePromoCode(code, days, "auto", maxUses);
+    await ctx.reply(`\u2705 <b>\u041F\u0440\u043E\u043C\u043E\u043A\u043E\u0434 \u0441\u043E\u0437\u0434\u0430\u043D!</b>\n\n\u{1F511} \u041A\u043E\u0434: <code>${code}</code>\n\u{1F4C5} \u0414\u043D\u0435\u0439: ${days}\n\u{1F517} \u041B\u0438\u043C\u0438\u0442: ${maxUses} \u0438\u0441\u043F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u043D\u0438\u0439\n\u{1F4CB} \u0422\u0438\u043F: \u0430\u0432\u0442\u043E (\u0434\u043E\u0431\u0430\u0432\u043B\u044F\u0435\u0442 \u0434\u043D\u0438 \u043A \u0442\u0435\u043A\u0443\u0449\u0435\u0439 \u043F\u043E\u0434\u043F\u0438\u0441\u043A\u0435)`, { parse_mode: "HTML", reply_markup: adminBackKb() });
     return;
   }
   if (state.startsWith("give_free_days_") || state.startsWith("give_prem_days_")) {
@@ -59994,6 +60025,25 @@ async function showPromoList(ctx) {
   await ctx.editMessageText(text2, { parse_mode: "HTML", reply_markup: kb });
 }
 async function showSubscriptionsList(ctx, page = 0, filter = "all") {
+  const tariffLabelMap = {
+    "1day": "1 день",
+    "30days": "Premium 30 дней",
+    "60days": "Premium 60 дней",
+    "90days": "Premium 90 дней",
+    "180days": "Premium 180 дней",
+    "free_3days": "Бесплатный 3 дня",
+    "free_7days": "Бесплатный 7 дней",
+    "free": "Бесплатный",
+  };
+  function fmtTariff(t) {
+    if (!t) return "?";
+    if (tariffLabelMap[t]) return tariffLabelMap[t];
+    const freeMatch = t.match(/^free[_\s]*(\d+)/i);
+    if (freeMatch) return `Бесплатный ${freeMatch[1]} дн.`;
+    const premMatch = t.match(/^(\d+)days?$/i);
+    if (premMatch) return `Premium ${premMatch[1]} дн.`;
+    return t;
+  }
   let allSubs = await db.select().from(subscriptionsTable);
   if (filter === "free") {
     allSubs = allSubs.filter(s => s.tariff && (s.tariff.includes("free") || s.tariff.includes("trial")));
@@ -60024,7 +60074,7 @@ async function showSubscriptionsList(ctx, page = 0, filter = "all") {
     const u = userMap.get(s.telegramId);
     const name = u?.name || u?.username || "";
     const nameStr = name ? ` (${name})` : "";
-    text2 += `${isActive ? "\u{1F7E2}" : "\u{1F534}"} <b>${escapeHtml(s.telegramId)}</b>${nameStr} | ${s.tariff} | ${status}\n`;
+    text2 += `${isActive ? "\u{1F7E2}" : "\u{1F534}"} <b>${escapeHtml(s.telegramId)}</b>${nameStr} | ${fmtTariff(s.tariff)} | ${status}\n`;
     kb.text(`\u{1F464} ${escapeHtml(name || s.telegramId)}`, `manage_user_${s.telegramId}`).row();
   }
   kb.text("\u{1F381} \u0411\u0435\u0441\u043F\u043B\u0430\u0442\u043D\u044B\u0435", `subs_filter_free`).text("\u2B50 Premium", `subs_filter_premium`).text("\u{1F4CB} \u0412\u0441\u0435", `subs_filter_all`).row();
@@ -60067,14 +60117,9 @@ async function showUserProfile(ctx, userId) {
 \u2514 \u0422\u0430\u0440\u0438\u0444: ${tariffNames[sub.tariff] ?? sub.tariff}
 \u2514 \u0414\u0435\u0439\u0441\u0442\u0432\u0443\u0435\u0442 \u0434\u043E: ${formatDate(sub.expiresAt)}
 `;
-    if (sub.key) {
-      const status = await checkKeyStatus(sub.key);
-      const statusText = status.online ? `\u{1F7E2} \u041E\u043D\u043B\u0430\u0439\u043D ${status.ping}\u043C\u0441` : "\u{1F534} \u041E\u0444\u0444\u043B\u0430\u0439\u043D";
-      text2 += `
-\u{1F511} <b>\u041A\u041B\u042E\u0427:</b>
-<code>${escapeHtml(sub.key.slice(0, 80))}${sub.key.length > 80 ? "..." : ""}</code>
-\u{1F4E1} <b>\u0421\u0422\u0410\u0422\u0423\u0421:</b> ${statusText}
-`;
+    const domain = getSubDomain();
+    if (domain) {
+      text2 += `\u{1F517} <b>\u0421\u0441\u044B\u043B\u043A\u0430:</b> <code>${domain}/sub/${userId}</code>\n`;
     }
   } else {
     text2 += "\n\u{1F4CB} <b>\u041F\u041E\u0414\u041F\u0418\u0421\u041A\u0410:</b>\n\u2514 \u041D\u0435\u0442 \u0430\u043A\u0442\u0438\u0432\u043D\u043E\u0439 \u043F\u043E\u0434\u043F\u0438\u0441\u043A\u0438\n";
@@ -60096,7 +60141,7 @@ async function showStats(ctx) {
   let serverText = "";
   if (serverStatus.size > 0) {
     for (const [ip, online] of serverStatus) {
-      serverText += `${online ? "\u{1F7E2}" : "\u{1F534}"} ${ip}
+      serverText += `${online ? "\u{1F7E2}" : "\u{1F534}"} ${getCountryForIp(ip)}
 `;
     }
   } else {
