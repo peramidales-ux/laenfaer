@@ -58381,7 +58381,6 @@ userBot.callbackQuery("open_status", async (ctx) => {
     serverText += "\u23F3 \u041F\u0440\u043E\u0432\u0435\u0440\u043A\u0430 \u0435\u0449\u0451 \u043D\u0435 \u0437\u0430\u043F\u0443\u0441\u043A\u0430\u043B\u0430\u0441\u044C";
   }
   await ctx.editMessageText(serverText, { parse_mode: "HTML", reply_markup: backToMainKb() });
-  );
   await ctx.answerCallbackQuery();
 });
 userBot.callbackQuery("open_miniapp", async (ctx) => {
