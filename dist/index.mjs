@@ -60416,29 +60416,18 @@ adminBot.on("message:document", async (ctx) => {
         }
       }
       const freeKeys = await getFreeKeys();
-      await ctx.reply(`\u2705 \u0411\u0435\u0441\u043F\u043B\u0430\u0442\u043D\u044B\u0435 \u043A\u043B\u044E\u0447\u0438 \u043E\u0431\u043D\u043E\u0432\u043B\u0435\u043D\u044B!\n\u041A\u043B\u044E\u0447\u0435\u0439: ${lines.length}\n\u041F\u043E\u0434\u043F\u0438\u0441\u0447\u0438\u043A\u043E\u0432: ${updated}`, { reply_markup: freeKeysKb(freeKeys) });
+      await ctx.reply(`\u2705 \u0411\u0435\u0441\u043F\u043B\u0430\u0442\u043D\u044B\u0435 \u043A\u043B\u044E\u0447\u0438 \u043E\u0431\u043D\u043E\u0432\u043B\u0435\u043D\u044B!\n\u0414\u043E\u0431\u0430\u0432\u043B\u0435\u043D\u043E \u0432 \u043F\u0443\u043B: <b>${freeKeys.length}</b> \u043A\u043B\u044E\u0447\u0435\u0439`, { parse_mode: "HTML", reply_markup: freeKeysKb(freeKeys) });
     } else if (state === "waiting_new_prem_keys") {
       await clearPremiumKeys();
       for (const k of lines) await addPremiumKey(k);
-      const subs = await getAllSubscriptions();
-      let updated = 0;
-      const pt = ["30days","60days","90days","180days","365days","1day"];
-      for (const sub of subs) {
-        if (pt.includes(sub.tariff)) { await updateSubscriptionKeyOnly(sub.telegramId, lines[0]); updated++; }
-      }
       const premKeys = await getPremiumKeys();
-      await ctx.reply(`\u2705 Premium \u043A\u043B\u044E\u0447\u0438 \u043E\u0431\u043D\u043E\u0432\u043B\u0435\u043D\u044B!\n\u041A\u043B\u044E\u0447\u0435\u0439: ${lines.length}\n\u041F\u043E\u0434\u043F\u0438\u0441\u0447\u0438\u043A\u043E\u0432: ${updated}`, { reply_markup: premiumKeysKb(premKeys) });
+      await ctx.reply(`\u2705 Premium \u043A\u043B\u044E\u0447\u0438 \u043E\u0431\u043D\u043E\u0432\u043B\u0435\u043D\u044B!\n\u0414\u043E\u0431\u0430\u0432\u043B\u0435\u043D\u043E \u0432 \u043F\u0443\u043B: <b>${premKeys.length}</b> \u043A\u043B\u044E\u0447\u0435\u0439`, { parse_mode: "HTML", reply_markup: premiumKeysKb(premKeys) });
     } else if (state === "waiting_replace_all_keys") {
       await clearFreeKeys(); await clearPremiumKeys();
       for (const k of lines) { await addFreeKey(k); await addPremiumKey(k); }
-      const subs = await getAllSubscriptions();
-      let uf = 0, up = 0;
-      const pt2 = ["30days","60days","90days","180days","365days","1day"];
-      for (const sub of subs) {
-        if ((sub.tariff === "free_3days" || sub.tariff === "free_7days" || sub.tariff === "free")) { await updateSubscriptionKeyOnly(sub.telegramId, lines[0]); uf++; }
-        else if (pt2.includes(sub.tariff)) { await updateSubscriptionKeyOnly(sub.telegramId, lines[0]); up++; }
-      }
-      await ctx.reply(`\u2705 \u0412\u0441\u0435 \u043A\u043B\u044E\u0447\u0438 \u0437\u0430\u043C\u0435\u043D\u0435\u043D\u044B!\n\u041A\u043B\u044E\u0447\u0435\u0439: ${lines.length}\n\u0411\u0435\u0441\u043F\u043B: ${uf}\nPremium: ${up}`, { reply_markup: adminKeysMainKb() });
+      const freeKeysCount = (await getFreeKeys()).length;
+      const premKeysCount = (await getPremiumKeys()).length;
+      await ctx.reply(`\u2705 \u0412\u0441\u0435 \u043A\u043B\u044E\u0447\u0438 \u0437\u0430\u043C\u0435\u043D\u0435\u043D\u044B!\n\u0411\u0435\u0441\u043F\u043B: <b>${freeKeysCount}</b>\nPremium: <b>${premKeysCount}</b>`, { parse_mode: "HTML", reply_markup: adminKeysMainKb() });
     }
     adminStates.delete(ADMIN_ID2);
   } catch(e) { await ctx.reply(`\u274C \u041E\u0448\u0438\u0431\u043A\u0430: ${e?.message||e}`); }
