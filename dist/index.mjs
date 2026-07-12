@@ -58177,7 +58177,9 @@ async function getUserKey(userId) {
 }
 userBot.callbackQuery("connect_android", async (ctx) => {
   const userId = String(ctx.from.id);
-  const connectUrl = `${getSubDomain() || "https://laenfaervpn.duckdns.org"}/api/connect?app=happproxy&key=${encodeURIComponent(userId)}`;
+  const domain = getSubDomain() || "https://laenfaervpn.duckdns.org";
+  const subUrl = `${domain}/sub/${userId}`;
+  const connectUrl = `${domain}/api/connect?app=happproxy&key=${encodeURIComponent(subUrl)}`;
   const kb = new InlineKeyboard2().url("\u{1F916} HappProxy", connectUrl).row().text("\u{1F519} \u041D\u0430\u0437\u0430\u0434", "connect_back");
   await ctx.answerCallbackQuery();
   await ctx.editMessageText(
@@ -58187,7 +58189,9 @@ userBot.callbackQuery("connect_android", async (ctx) => {
 });
 userBot.callbackQuery("connect_iphone", async (ctx) => {
   const userId = String(ctx.from.id);
-  const connectUrl = `${getSubDomain() || "https://laenfaervpn.duckdns.org"}/api/connect?app=happ_ios&key=${encodeURIComponent(userId)}`;
+  const domain = getSubDomain() || "https://laenfaervpn.duckdns.org";
+  const subUrl = `${domain}/sub/${userId}`;
+  const connectUrl = `${domain}/api/connect?app=happ_ios&key=${encodeURIComponent(subUrl)}`;
   const kb = new InlineKeyboard2().url("\u{1F4F1} Happ iOS", connectUrl).row().text("\u{1F519} \u041D\u0430\u0437\u0430\u0434", "connect_back");
   await ctx.answerCallbackQuery();
   await ctx.editMessageText(
@@ -58580,18 +58584,25 @@ function initScheduler(userApi, adminApi, adminUserId) {
 }
 var serverStatusCache = /* @__PURE__ */ new Map();
 var ipCountryMap = {
-  "185.71.67.223": "\u{1F1F7}\u{1F1FA} \u0420\u043E\u0441\u0441\u0438\u044F (LTE)",
-  "213.219.212.30": "\u{1F1F7}\u{1F1FA} \u0420\u043E\u0441\u0441\u0438\u044F (Reality #1-6)",
-  "213.219.212.24": "\u{1F1F7}\u{1F1FA} \u0420\u043E\u0441\u0441\u0438\u044F (Reality #7-8)",
-  "213.219.212.105": "\u{1F1F7}\u{1F1FA} \u0420\u043E\u0441\u0441\u0438\u044F (Reality #9)",
-  "213.219.212.14": "\u{1F1F7}\u{1F1FA} \u0420\u043E\u0441\u0441\u0438\u044F (Reality #10)",
-  "94.131.94.54": "\u{1F1F0}\u{1F1FF} \u041A\u0430\u0437\u0430\u0445\u0441\u0442\u0430\u043D (Reality KZ)",
+  "185.71.67.223": "\u{1F1F7}\u{1F1FA} \u0420\u043E\u0441\u0441\u0438\u044F",
+  "213.219.212.30": "\u{1F1F7}\u{1F1FA} \u0420\u043E\u0441\u0441\u0438\u044F",
+  "213.219.212.24": "\u{1F1F7}\u{1F1FA} \u0420\u043E\u0441\u0441\u0438\u044F",
+  "213.219.212.105": "\u{1F1F7}\u{1F1FA} \u0420\u043E\u0441\u0441\u0438\u044F",
+  "213.219.212.14": "\u{1F1F7}\u{1F1FA} \u0420\u043E\u0441\u0441\u0438\u044F",
+  "213.219.212.245": "\u{1F1F7}\u{1F1FA} \u0420\u043E\u0441\u0441\u0438\u044F",
+  "94.131.94.54": "\u{1F1F0}\u{1F1FF} \u041A\u0430\u0437\u0430\u0445\u0441\u0442\u0430\u043D",
   "81.163.23.115": "\u{1F1FB}\u{1F1EE} \u0424\u0438\u043D\u043B\u044F\u043D\u0434\u0438\u044F",
   "81.94.148.75": "\u{1F1FB}\u{1F1EE} \u0424\u0438\u043D\u043B\u044F\u043D\u0434\u0438\u044F",
+  "81.94.148.101": "\u{1F1FB}\u{1F1EE} \u0424\u0438\u043D\u043B\u044F\u043D\u0434\u0438\u044F",
+  "81.94.148.65": "\u{1F1FB}\u{1F1EE} \u0424\u0438\u043D\u043B\u044F\u043D\u0434\u0438\u044F",
   "217.16.29.31": "\u{1F1F7}\u{1F1FA} \u0420\u043E\u0441\u0441\u0438\u044F",
   "178.250.242.39": "\u{1F1E9}\u{1F1EA} \u0413\u0435\u0440\u043C\u0430\u043D\u0438\u044F",
   "78.41.111.87": "\u{1F1F7}\u{1F1FA} \u0420\u043E\u0441\u0441\u0438\u044F",
   "78.159.250.32": "\u{1F1F7}\u{1F1FA} \u0420\u043E\u0441\u0441\u0438\u044F",
+  "78.159.250.170": "\u{1F1F7}\u{1F1FA} \u0420\u043E\u0441\u0441\u0438\u044F",
+  "78.159.245.184": "\u{1F1F7}\u{1F1FA} \u0420\u043E\u0441\u0441\u0438\u044F",
+  "78.159.240.132": "\u{1F1F7}\u{1F1FA} \u0420\u043E\u0441\u0441\u0438\u044F",
+  "78.159.240.211": "\u{1F1F7}\u{1F1FA} \u0420\u043E\u0441\u0441\u0438\u044F",
   "62.152.58.86": "\u{1F1F7}\u{1F1FA} \u0420\u043E\u0441\u0441\u0438\u044F",
   "31.129.42.182": "\u{1F1F7}\u{1F1FA} \u0420\u043E\u0441\u0441\u0438\u044F",
   "193.33.133.195": "\u{1F1F7}\u{1F1FA} \u0420\u043E\u0441\u0441\u0438\u044F",
@@ -58599,9 +58610,28 @@ var ipCountryMap = {
   "185.141.227.178": "\u{1F1F7}\u{1F1FA} \u0420\u043E\u0441\u0441\u0438\u044F",
   "45.11.26.253": "\u{1F1F7}\u{1F1FA} \u0420\u043E\u0441\u0441\u0438\u044F",
   "62.152.56.157": "\u{1F1F7}\u{1F1FA} \u0420\u043E\u0441\u0441\u0438\u044F",
+  "5.188.140.160": "\u{1F1F7}\u{1F1FA} \u0420\u043E\u0441\u0441\u0438\u044F",
+  "158.160.198.58": "\u{1F1F7}\u{1F1FA} \u0420\u043E\u0441\u0441\u0438\u044F",
+  "188.68.218.101": "\u{1F1F7}\u{1F1FA} \u0420\u043E\u0441\u0441\u0438\u044F",
+  "195.209.87.198": "\u{1F1F7}\u{1F1FA} \u0420\u043E\u0441\u0441\u0438\u044F",
+  "90.156.218.131": "\u{1F1F7}\u{1F1FA} \u0420\u043E\u0441\u0441\u0438\u044F",
+  "90.156.218.124": "\u{1F1F7}\u{1F1FA} \u0420\u043E\u0441\u0441\u0438\u044F",
+  "90.156.218.234": "\u{1F1F7}\u{1F1FA} \u0420\u043E\u0441\u0441\u0438\u044F",
+  "194.55.239.53": "\u{1F1F7}\u{1F1FA} \u0420\u043E\u0441\u0441\u0438\u044F",
+  "194.55.239.54": "\u{1F1F7}\u{1F1FA} \u0420\u043E\u0441\u0441\u0438\u044F",
+  "194.55.239.61": "\u{1F1F7}\u{1F1FA} \u0420\u043E\u0441\u0441\u0438\u044F",
+  "194.55.239.49": "\u{1F1F7}\u{1F1FA} \u0420\u043E\u0441\u0441\u0438\u044F",
+  "194.55.239.64": "\u{1F1F7}\u{1F1FA} \u0420\u043E\u0441\u0441\u0438\u044F",
 };
 function getCountryForIp(ip) {
-  return ipCountryMap[ip] || "\u{1F310} " + ip;
+  if (ipCountryMap[ip]) return ipCountryMap[ip];
+  const first = parseInt(ip.split(".")[0], 10);
+  if (first >= 5 && first <= 89) return "\u{1F1F7}\u{1F1FA} \u0420\u043E\u0441\u0441\u0438\u044F";
+  if (first >= 77 && first <= 95) return "\u{1F1F7}\u{1F1FA} \u0420\u043E\u0441\u0441\u0438\u044F";
+  if (first >= 176 && first <= 195) return "\u{1F1F7}\u{1F1FA} \u0420\u043E\u0441\u0441\u0438\u044F";
+  if (first >= 194 && first <= 213) return "\u{1F1F7}\u{1F1FA} \u0420\u043E\u0441\u0441\u0438\u044F";
+  if (first >= 217 && first <= 217) return "\u{1F1F7}\u{1F1FA} \u0420\u043E\u0441\u0441\u0438\u044F";
+  return "\u{1F310} " + ip;
 }
 async function pingIp(ip) {
   try {
@@ -60025,21 +60055,12 @@ async function showPromoList(ctx) {
   await ctx.editMessageText(text2, { parse_mode: "HTML", reply_markup: kb });
 }
 async function showSubscriptionsList(ctx, page = 0, filter = "all") {
-  const tariffLabelMap = {
-    "1day": "1 день",
-    "30days": "Premium 30 дней",
-    "60days": "Premium 60 дней",
-    "90days": "Premium 90 дней",
-    "180days": "Premium 180 дней",
-    "free_3days": "Бесплатный 3 дня",
-    "free_7days": "Бесплатный 7 дней",
-    "free": "Бесплатный",
-  };
-  function fmtTariff(t) {
+  function fmtTariff(t, daysLeft) {
     if (!t) return "?";
-    if (tariffLabelMap[t]) return tariffLabelMap[t];
-    const freeMatch = t.match(/^free[_\s]*(\d+)/i);
-    if (freeMatch) return `Бесплатный ${freeMatch[1]} дн.`;
+    const isFree = t.includes("free") || t === "free";
+    const prefix = isFree ? "Бесплатный" : "Premium";
+    if (daysLeft !== undefined && daysLeft > 0) return `${prefix} (${daysLeft} дн.)`;
+    if (isFree) return "Бесплатный";
     const premMatch = t.match(/^(\d+)days?$/i);
     if (premMatch) return `Premium ${premMatch[1]} дн.`;
     return t;
@@ -60074,7 +60095,7 @@ async function showSubscriptionsList(ctx, page = 0, filter = "all") {
     const u = userMap.get(s.telegramId);
     const name = u?.name || u?.username || "";
     const nameStr = name ? ` (${name})` : "";
-    text2 += `${isActive ? "\u{1F7E2}" : "\u{1F534}"} <b>${escapeHtml(s.telegramId)}</b>${nameStr} | ${fmtTariff(s.tariff)} | ${status}\n`;
+    text2 += `${isActive ? "\u{1F7E2}" : "\u{1F534}"} <b>${escapeHtml(s.telegramId)}</b>${nameStr} | ${fmtTariff(s.tariff, daysLeft)} | ${status}\n`;
     kb.text(`\u{1F464} ${escapeHtml(name || s.telegramId)}`, `manage_user_${s.telegramId}`).row();
   }
   kb.text("\u{1F381} \u0411\u0435\u0441\u043F\u043B\u0430\u0442\u043D\u044B\u0435", `subs_filter_free`).text("\u2B50 Premium", `subs_filter_premium`).text("\u{1F4CB} \u0412\u0441\u0435", `subs_filter_all`).row();
