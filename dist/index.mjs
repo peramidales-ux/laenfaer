@@ -60005,21 +60005,27 @@ async function showSubscriptionsList(ctx, page = 0, filter = "all") {
     return;
   }
   const now = new Date();
-  const active = allSubs.filter(s => new Date(s.expiresAt) > now);
-  const expired = allSubs.filter(s => new Date(s.expiresAt) <= now);
+  const active = allSubs.filter(s => new Date(s.expiresAt) > now).sort((a, b) => new Date(b.expiresAt) - new Date(a.expiresAt));
+  const expired = allSubs.filter(s => new Date(s.expiresAt) <= now).sort((a, b) => new Date(b.expiresAt) - new Date(a.expiresAt));
+  const sorted = [...active, ...expired];
+  const allUsers = await db.select().from(usersTable);
+  const userMap = new Map(allUsers.map(u => [u.telegramId, u]));
   const perPage = 8;
-  const totalPages = Math.ceil(allSubs.length / perPage);
+  const totalPages = Math.ceil(sorted.length / perPage);
   const safePage = Math.max(0, Math.min(page, totalPages - 1));
-  const slice = allSubs.slice(safePage * perPage, (safePage + 1) * perPage);
+  const slice = sorted.slice(safePage * perPage, (safePage + 1) * perPage);
   const filterLabel = filter === "free" ? "\u{1F381} \u0411\u0435\u0441\u043F\u043B\u0430\u0442\u043D\u044B\u0435" : filter === "premium" ? "\u2B50 Premium" : "\u{1F4CB} \u0412\u0441\u0435";
-  let text2 = `${filterLabel} \u041F\u043E\u0434\u043F\u0438\u0441\u043A\u0438\n\n\u2705 \u0410\u043A\u0442\u0438\u0432\u043D\u044B\u0445: <b>${active.length}</b> | \u274C \u0418\u0441\u0442\u0435\u043A\u0448\u0438\u0445: <b>${expired.length}</b> | \u0412\u0441\u0435\u0433\u043E: <b>${allSubs.length}</b>\n\u{1F4C4} \u0421\u0442\u0440\u0430\u043D\u0438\u0446\u0430 <b>${safePage + 1}/${totalPages}</b>\n\n`;
+  let text2 = `${filterLabel} \u041F\u043E\u0434\u043F\u0438\u0441\u043A\u0438\n\n\u2705 \u0410\u043A\u0442\u0438\u0432\u043D\u044B\u0445: <b>${active.length}</b> | \u274C \u0418\u0441\u0442\u0435\u043A\u0448\u0438\u0445: <b>${expired.length}</b> | \u0412\u0441\u0435\u0433\u043E: <b>${sorted.length}</b>\n\u{1F4C4} \u0421\u0442\u0440\u0430\u043D\u0438\u0446\u0430 <b>${safePage + 1}/${totalPages}</b>\n\n`;
   const kb = new InlineKeyboard3();
   for (const s of slice) {
     const isActive = new Date(s.expiresAt) > now;
     const daysLeft = isActive ? Math.ceil((new Date(s.expiresAt) - now) / 86400000) : 0;
     const status = isActive ? `\u2705 ${daysLeft}\u0434` : "\u274C \u0438\u0441\u0442\u0435\u043A";
-    text2 += `${isActive ? "\u{1F7E2}" : "\u{1F534}"} <b>${s.telegramId}</b> | ${s.tariff} | ${status}\n`;
-    kb.text(`\u{1F464} ${s.telegramId}`, `manage_user_${s.telegramId}`).row();
+    const u = userMap.get(s.telegramId);
+    const name = u?.name || u?.username || "";
+    const nameStr = name ? ` (${name})` : "";
+    text2 += `${isActive ? "\u{1F7E2}" : "\u{1F534}"} <b>${escapeHtml(s.telegramId)}</b>${nameStr} | ${s.tariff} | ${status}\n`;
+    kb.text(`\u{1F464} ${escapeHtml(name || s.telegramId)}`, `manage_user_${s.telegramId}`).row();
   }
   kb.text("\u{1F381} \u0411\u0435\u0441\u043F\u043B\u0430\u0442\u043D\u044B\u0435", `subs_filter_free`).text("\u2B50 Premium", `subs_filter_premium`).text("\u{1F4CB} \u0412\u0441\u0435", `subs_filter_all`).row();
   const nav = [];
