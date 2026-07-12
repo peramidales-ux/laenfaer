@@ -1,6 +1,7 @@
 import { createRequire as __bannerCrReq } from 'node:module';
 import __bannerPath from 'node:path';
 import __bannerUrl from 'node:url';
+import { createHmac } from 'node:crypto';
 
 globalThis.require = __bannerCrReq(import.meta.url);
 globalThis.__filename = __bannerUrl.fileURLToPath(import.meta.url);
@@ -37484,7 +37485,7 @@ router2.get("/connect", (req, res) => {
     happ_ios: {
       name: "Happ",
       icon: "\u{1F4F1}",
-      deepLink: `https://laenfaer-redirect.vercel.app/r?url=${encodeURIComponent("happ://add/" + key)}`,
+      deepLink: `happ://add/${key}`,
       storeIos: "https://apps.apple.com/ru/app/happ-proxy-utility-plus/id6746188973",
       storeAndroid: "https://play.google.com/store/apps/details?id=com.happproxy",
       storeOther: "https://www.happ.su/main",
@@ -37494,7 +37495,7 @@ router2.get("/connect", (req, res) => {
     happproxy: {
       name: "Happ",
       icon: "\u{1F916}",
-      deepLink: `https://laenfaer-redirect.vercel.app/r?url=${encodeURIComponent("happ://add/" + key)}`,
+      deepLink: `happ://add/${key}`,
       storeIos: "https://apps.apple.com/ru/app/happ-proxy-utility-plus/id6746188973",
       storeAndroid: "https://play.google.com/store/apps/details?id=com.happproxy",
       storeOther: "https://www.happ.su/main",
@@ -38795,6 +38796,9 @@ var pb=document.getElementById('promoBtn');if(pb)pb.addEventListener('click',fun
 app.get("/api/profile/:userId", async (req, res) => {
   try {
     const userId = String(req.params.userId);
+    if (!/^\d+$/.test(userId)) {
+      return res.status(400).json({ error: "Invalid user ID" });
+    }
     const domain = getSubDomain();
     const [user, sub] = await Promise.all([
       db.select().from(usersTable).where(eq(usersTable.telegramId, userId)).limit(1),
@@ -38802,6 +38806,9 @@ app.get("/api/profile/:userId", async (req, res) => {
     ]);
     const u = user[0];
     const s = sub[0];
+    if (!u) {
+      return res.status(404).json({ error: "User not found" });
+    }
     const now = new Date();
     const hasActiveSub = s && new Date(s.expiresAt) > now;
     const daysLeft = hasActiveSub ? Math.ceil((new Date(s.expiresAt) - now) / 86400000) : 0;
@@ -38837,10 +38844,29 @@ app.get("/api/profile/:userId", async (req, res) => {
   }
 });
 
+function verifyTelegramInitData(initData, botToken) {
+  try {
+    const urlParams = new URLSearchParams(initData);
+    const hash = urlParams.get("hash");
+    urlParams.delete("hash");
+    urlParams.sort();
+    const dataCheckString = Array.from(urlParams.entries()).map(([k, v]) => `${k}=${v}`).join("\n");
+    const secretKey = createHmac("sha256", "WebAppData").update(botToken).digest();
+    const calculatedHash = createHmac("sha256", secretKey).update(dataCheckString).digest("hex");
+    return calculatedHash === hash;
+  } catch {
+    return false;
+  }
+}
+
 // Promo code API for mini-app
 app.get("/api/promo/:userId", async (req, res) => {
   try {
     const userId = String(req.params.userId);
+    const initData = String(req.headers["x-telegram-initdata"] || "");
+    if (!initData || !verifyTelegramInitData(initData, BOT_TOKEN)) {
+      return res.status(403).json({ ok: false, message: "Неавторизован" });
+    }
     const code = String(req.query.code || "").trim().toUpperCase();
     if (!code) return res.json({ ok: false, message: "Введите промокод" });
     const promo = await activatePromoCode(code);
@@ -57346,7 +57372,6 @@ async function setSubscription(telegramId, tariff, days, key) {
     target: subscriptionsTable.telegramId,
     set: { tariff, expiresAt, key, reminderSent: false, updatedAt: /* @__PURE__ */ new Date() }
   });
-  await db.update(usersTable).set({ balance: 0 }).where(eq(usersTable.telegramId, telegramId));
   return expiresAt;
 }
 async function addDaysToSubscription(telegramId, tariff, days, key) {
@@ -57363,7 +57388,6 @@ async function addDaysToSubscription(telegramId, tariff, days, key) {
     target: subscriptionsTable.telegramId,
     set: { tariff: newTariff, expiresAt, key: newKey, reminderSent: false, updatedAt: new Date() }
   });
-  await db.update(usersTable).set({ balance: 0 }).where(eq(usersTable.telegramId, telegramId));
   return expiresAt;
 }
 async function hasHadFreeKey(telegramId) {
@@ -57471,7 +57495,7 @@ async function cleanBlockedUsers() {
   let removed = 0;
   for (const u of allUsers) {
     if (u.banned) {
-      await db.delete(usersTable).where(eq(usersTable.telegramId, u.telegramId));
+      await deleteUser(u.telegramId);
       removed++;
       continue;
     }
@@ -57480,7 +57504,7 @@ async function cleanBlockedUsers() {
     } catch (e) {
       const errStr = String(e);
       if (errStr.includes("bot was blocked") || errStr.includes("user is deactivated") || errStr.includes("Forbidden") || errStr.includes("chat not found") || errStr.includes("bot blocked")) {
-        await db.delete(usersTable).where(eq(usersTable.telegramId, u.telegramId));
+        await deleteUser(u.telegramId);
         removed++;
       }
     }
@@ -57631,14 +57655,14 @@ function connectKb() {
   return new InlineKeyboard().text("\u{1F916} Android", "connect_android").text("\u{1F4F1} iPhone", "connect_iphone").row().text("\u{1F511} \u041F\u043E\u043A\u0430\u0437\u0430\u0442\u044C \u043A\u043B\u044E\u0447", "show_key").row().text("\u2753 \u041A\u0430\u043A \u043F\u043E\u0434\u043A\u043B\u044E\u0447\u0438\u0442\u044C\u0441\u044F", "how_to_connect").row().text("\u{1F3E0} \u0412 \u0433\u043B\u0430\u0432\u043D\u043E\u0435 \u043C\u0435\u043D\u044E", "to_main");
 }
 function connectAndroidKb(key) {
-  const domain2 = getSubDomain();
+  const domain2 = getSubDomain() || "https://laenfaervpn.duckdns.org";
   const encodedKey = encodeURIComponent(key);
-  return new InlineKeyboard().url("\u{1F916} HappProxy", domain2 ? `https://${domain2.replace(/^https?:\/\//, "")}/connect?app=happproxy&key=${encodedKey}` : `https://laenfaer-redirect.vercel.app/r?url=${encodeURIComponent("happ://add/" + key)}`).row().text("\u{1F519} \u041D\u0430\u0437\u0430\u0434", "connect_back");
+  return new InlineKeyboard().url("\u{1F916} HappProxy", `https://${domain2.replace(/^https?:\/\//, "")}/connect?app=happproxy&key=${encodedKey}`).row().text("\u{1F519} \u041D\u0430\u0437\u0430\u0434", "connect_back");
 }
 function connectIphoneKb(key) {
-  const domain2 = getSubDomain();
+  const domain2 = getSubDomain() || "https://laenfaervpn.duckdns.org";
   const encodedKey = encodeURIComponent(key);
-  return new InlineKeyboard().url("\u{1F4F1} Happ iOS", domain2 ? `https://${domain2.replace(/^https?:\/\//, "")}/connect?app=happ_ios&key=${encodedKey}` : `https://laenfaer-redirect.vercel.app/r?url=${encodeURIComponent("happ://add/" + key)}`).row().text("\u{1F519} \u041D\u0430\u0437\u0430\u0434", "connect_back");
+  return new InlineKeyboard().url("\u{1F4F1} Happ iOS", `https://${domain2.replace(/^https?:\/\//, "")}/connect?app=happ_ios&key=${encodedKey}`).row().text("\u{1F519} \u041D\u0430\u0437\u0430\u0434", "connect_back");
 }
 function activeSupportKb() {
   return new InlineKeyboard().text("\u{1F519} \u041D\u0430\u0437\u0430\u0434", "back_from_support").text("\u{1F3E0} \u0413\u043B\u0430\u0432\u043D\u043E\u0435 \u043C\u0435\u043D\u044E", "to_main").row().text("\u{1F512} \u0417\u0430\u043A\u0440\u044B\u0442\u044C \u0447\u0430\u0442", "close_support_chat");
@@ -57756,6 +57780,34 @@ if (!ADMIN_BOT_TOKEN) throw new Error("ADMIN_BOT_TOKEN is required");
 var adminNotifier = new Bot(ADMIN_BOT_TOKEN);
 var ADMIN_ID = Number(process.env.ADMIN_ID);
 var userStates = /* @__PURE__ */ new Map();
+var userStatesTimestamps = /* @__PURE__ */ new Map();
+var USER_STATE_TTL = 30 * 60 * 1000;
+function setUserState(userId, state) {
+  userStates.set(userId, state);
+  userStatesTimestamps.set(userId, Date.now());
+}
+function getUserState(userId) {
+  const ts = userStatesTimestamps.get(userId);
+  if (ts && Date.now() - ts > USER_STATE_TTL) {
+    userStates.delete(userId);
+    userStatesTimestamps.delete(userId);
+    return undefined;
+  }
+  return userStates.get(userId);
+}
+function deleteUserState(userId) {
+  userStates.delete(userId);
+  userStatesTimestamps.delete(userId);
+}
+setInterval(() => {
+  const now = Date.now();
+  for (const [userId, ts] of userStatesTimestamps) {
+    if (now - ts > USER_STATE_TTL) {
+      userStates.delete(userId);
+      userStatesTimestamps.delete(userId);
+    }
+  }
+}, 5 * 60 * 1000);
 var withdrawData = /* @__PURE__ */ new Map();
 var withdrawPending = /* @__PURE__ */ new Map();
 var lastRefNotif = /* @__PURE__ */ new Map();
@@ -57866,7 +57918,7 @@ userBot.command("key", async (ctx) => {
   }
   const left = daysLeft(sub.expiresAt);
   const alive = left > 0;
-  userStates.set(userId, `key:${sub.key}`);
+  setUserState(userId, `key:${sub.key}`);
   await ctx.reply(
     `\u2705 <b>\u041F\u043E\u0434\u043A\u043B\u044E\u0447\u0435\u043D\u0438\u0435 \u0433\u043E\u0442\u043E\u0432\u043E!</b>
 
@@ -57886,7 +57938,7 @@ userBot.command("profile", async (ctx) => {
   const refCount = refCountRows[0]?.count || 0;
   const regDate = user?.createdAt ? new Date(user.createdAt).toLocaleDateString("ru-RU") : "—";
   const botUsername = ctx.me.username;
-  const refLink = `https://t.me/${botUsername}?start=ref_${userId}`;
+  const refLink = `https://t.me/${botUsername}?start=${userId}`;
   await ctx.reply(
     `\u{1F464} <b>\u041B\u0418\u0427\u041D\u042B\u0419 \u041A\u0410\u0411\u0418\u041D\u0415\u0422</b>
 
@@ -57914,17 +57966,25 @@ userBot.command("shop", async (ctx) => {
 });
 userBot.command("support", async (ctx) => {
   const userId = ctx.from.id;
-  userStates.set(userId, "support_mode");
+  setUserState(userId, "support_mode");
   await ctx.reply(
     "\u{1F4AC} \u0427\u0410\u0422 \u041F\u041E\u0414\u0414\u0415\u0420\u0416\u041A\u0418\n\n\u041F\u0440\u043E\u0441\u0442\u043E \u043D\u0430\u043F\u0438\u0448\u0438 \u0441\u0432\u043E\u0439 \u0432\u043E\u043F\u0440\u043E\u0441 \u0432 \u044D\u0442\u043E\u0442 \u0447\u0430\u0442.\n\u0410\u0434\u043C\u0438\u043D\u0438\u0441\u0442\u0440\u0430\u0442\u043E\u0440 \u043E\u0442\u0432\u0435\u0442\u0438\u0442 \u0442\u0435\u0431\u0435.\n\n\u2757 \u0427\u0430\u0442 \u0430\u043A\u0442\u0438\u0432\u0435\u043D \u2014 \u0442\u044B \u043C\u043E\u0436\u0435\u0448\u044C \u043F\u0438\u0441\u0430\u0442\u044C \u0441\u043E\u043E\u0431\u0449\u0435\u043D\u0438\u044F.",
     { reply_markup: activeSupportKb() }
   );
 });
 userBot.command("status", async (ctx) => {
-  await ctx.reply(
-    "\u{1F4CA} \u0421\u0422\u0410\u0422\u0423\u0421 \u0421\u0415\u0420\u0412\u0415\u0420\u041E\u0412\n\n\u0413\u0435\u0440\u043C\u0430\u043D\u0438\u044F \u2014 \u{1F7E2} \u041E\u043D\u043B\u0430\u0439\u043D\n\u041D\u0438\u0434\u0435\u0440\u043B\u0430\u043D\u0434\u044B \u2014 \u{1F7E2} \u041E\u043D\u043B\u0430\u0439\u043D\n\u0424\u0438\u043D\u043B\u044F\u043D\u0434\u0438\u044F \u2014 \u{1F7E2} \u041E\u043D\u043B\u0430\u0439\u043D\n\n\u041D\u0430\u0433\u0440\u0443\u0437\u043A\u0430: 12%\n\u0414\u043E\u0441\u0442\u0443\u043F\u043D\u043E\u0441\u0442\u044C: 99.9%\n\n\u0412\u0441\u0435 \u0441\u0438\u0441\u0442\u0435\u043C\u044B \u0440\u0430\u0431\u043E\u0442\u0430\u044E\u0442 \u0448\u0442\u0430\u0442\u043D\u043E!",
-    { reply_markup: backToMainKb() }
-  );
+  const serverStatus = getServerStatus();
+  let serverText = "\u{1F4CA} <b>\u0421\u0422\u0410\u0422\u0423\u0421 \u0421\u0415\u0420\u0412\u0415\u0420\u041E\u0412</b>\n\n";
+  if (serverStatus.size > 0) {
+    for (const [ip, online] of serverStatus) {
+      serverText += `${online ? "\u{1F7E2}" : "\u{1F534}"} <code>${ip}</code> \u2014 ${online ? "\u041E\u043D\u043B\u0430\u0439\u043D" : "\u041E\u0444\u0444\u043B\u0430\u0439\u043D"}\n`;
+    }
+    const onlineCount = [...serverStatus.values()].filter(Boolean).length;
+    serverText += `\n\u0414\u043E\u0441\u0442\u0443\u043F\u043D\u043E: ${onlineCount}/${serverStatus.size}`;
+  } else {
+    serverText += "\u23F3 \u041F\u0440\u043E\u0432\u0435\u0440\u043A\u0430 \u0435\u0449\u0451 \u043D\u0435 \u0437\u0430\u043F\u0443\u0441\u043A\u0430\u043B\u0430\u0441\u044C";
+  }
+  await ctx.reply(serverText, { parse_mode: "HTML", reply_markup: backToMainKb() });
 });
 userBot.command("start", async (ctx) => {
   const userId = ctx.from.id;
@@ -57958,7 +58018,7 @@ userBot.command("start", async (ctx) => {
             if (!rewardKey) rewardKey = await getRandomFreeKey();
             if (rewardKey) {
               const rewardExpiry = await setSubscription(String(inviterId), "30days", 30, rewardKey);
-              userStates.set(Number(inviterId), `key:${rewardKey}`);
+              setUserState(Number(inviterId), `key:${rewardKey}`);
               await userBot.api.sendMessage(
                 Number(inviterId),
                 `\u{1F3C6} <b>\u041F\u041E\u0417\u0414\u0420\u0410\u0412\u041B\u042F\u0415\u041C! \u0422\u044B \u043F\u0440\u0438\u0433\u043B\u0430\u0441\u0438\u043B 10 \u0434\u0440\u0443\u0437\u0435\u0439!</b>
@@ -58006,7 +58066,7 @@ userBot.callbackQuery("open_withdraw", async (ctx) => {
     await ctx.answerCallbackQuery({ text: "Минимальная сумма вывода 1000₽. Ваш реферальный баланс: " + refBal + "₽", show_alert: true });
     return;
   }
-  userStates.set(ctx.from.id, "withdraw_mode_phone");
+  setUserState(ctx.from.id, "withdraw_mode_phone");
   await ctx.answerCallbackQuery();
   await ctx.reply("<b>\u{1F4B8} Вывод через СБП</b>\n\nРеферальный баланс: <b>" + refBal + "\u20BD</b>\n\nШаг 1/3: Введите номер телефона СБП:", { parse_mode: "HTML", reply_markup: backToMainKb() });
 });
@@ -58020,12 +58080,12 @@ userBot.callbackQuery("check_sub_again", async (ctx) => {
   }
 });
 userBot.callbackQuery("to_main", async (ctx) => {
-  userStates.delete(ctx.from.id);
-  await ctx.editMessageText(getWelcomeText(ctx.from.first_name), { reply_markup: mainMenuKb() });
+  deleteUserState(ctx.from.id);
+  try { await ctx.editMessageText(getWelcomeText(ctx.from.first_name), { reply_markup: mainMenuKb() }); } catch {}
   await ctx.answerCallbackQuery();
 });
 userBot.callbackQuery("open_shop", async (ctx) => {
-  await ctx.editMessageText(SHOP_TEXT, { parse_mode: "HTML", reply_markup: shopKb() });
+  try { await ctx.editMessageText(SHOP_TEXT, { parse_mode: "HTML", reply_markup: shopKb() }); } catch {}
   await ctx.answerCallbackQuery();
 });
 userBot.callbackQuery("get_free_key_random", async (ctx) => {
@@ -58033,7 +58093,7 @@ userBot.callbackQuery("get_free_key_random", async (ctx) => {
   const sub = await getSubscription(String(userId));
   if (sub && daysLeft(sub.expiresAt) > 0) {
     const left2 = daysLeft(sub.expiresAt);
-    userStates.set(userId, `key:${sub.key}`);
+    setUserState(userId, `key:${sub.key}`);
     await ctx.editMessageText(
       `\u2705 <b>\u041F\u043E\u0434\u043A\u043B\u044E\u0447\u0435\u043D\u0438\u0435 \u0433\u043E\u0442\u043E\u0432\u043E!</b>
 
@@ -58063,7 +58123,7 @@ userBot.callbackQuery("get_free_key_random", async (ctx) => {
   }
   const expiry = await setSubscription(String(userId), "free_3days", FREE_DAYS, freeKey);
   const left = daysLeft(expiry);
-  userStates.set(userId, `key:${freeKey}`);
+  setUserState(userId, `key:${freeKey}`);
   await ctx.editMessageText(
     `\u2705 <b>\u041F\u043E\u0434\u043A\u043B\u044E\u0447\u0435\u043D\u0438\u0435 \u0433\u043E\u0442\u043E\u0432\u043E!</b>
 
@@ -58097,17 +58157,15 @@ userBot.callbackQuery("show_key", async (ctx) => {
   );
 });
 async function getUserKey(userId) {
-  const state = userStates.get(userId);
+  const state = getUserState(userId);
   if (state?.startsWith("key:")) return state.slice(4);
   const sub = await getSubscription(String(userId));
   return sub?.key ?? null;
 }
 userBot.callbackQuery("connect_android", async (ctx) => {
   const userId = String(ctx.from.id);
-  const domain = getSubDomain(); const subLink = domain ? `${domain}/sub/${userId}` : `https://laenfaervpn.duckdns.org/sub/${userId}`;
-  const happUrl = "happ://add/" + encodeURIComponent(subLink);
-  const redirectUrl = "https://laenfaer-redirect.vercel.app/r?url=" + encodeURIComponent(happUrl);
-  const kb = new InlineKeyboard2().url("\u{1F916} HappProxy", redirectUrl).row().text("\u{1F519} \u041D\u0430\u0437\u0430\u0434", "connect_back");
+  const connectUrl = `${getSubDomain() || "https://laenfaervpn.duckdns.org"}/connect?app=happproxy&key=${encodeURIComponent(userId)}`;
+  const kb = new InlineKeyboard2().url("\u{1F916} HappProxy", connectUrl).row().text("\u{1F519} \u041D\u0430\u0437\u0430\u0434", "connect_back");
   await ctx.answerCallbackQuery();
   await ctx.editMessageText(
     "\u{1F916} <b>\u041F\u043E\u0434\u043A\u043B\u044E\u0447\u0435\u043D\u0438\u0435 Android</b>\n\n\u041D\u0430\u0436\u043C\u0438 \u043A\u043D\u043E\u043F\u043A\u0443 \u2014 \u043F\u043E\u0434\u043F\u0438\u0441\u043A\u0430 \u0434\u043E\u0431\u0430\u0432\u0438\u0442\u0441\u044F \u0430\u0432\u0442\u043E\u043C\u0430\u0442\u0438\u0447\u0435\u0441\u043A\u0438 \u0438 \u0431\u0443\u0434\u0435\u0442 \u043E\u0431\u043D\u043E\u0432\u043B\u044F\u0442\u044C\u0441\u044F:",
@@ -58116,10 +58174,8 @@ userBot.callbackQuery("connect_android", async (ctx) => {
 });
 userBot.callbackQuery("connect_iphone", async (ctx) => {
   const userId = String(ctx.from.id);
-  const domain = getSubDomain(); const subLink = domain ? `${domain}/sub/${userId}` : `https://laenfaervpn.duckdns.org/sub/${userId}`;
-  const happUrl = "happ://add/" + encodeURIComponent(subLink);
-  const redirectUrl = "https://laenfaer-redirect.vercel.app/r?url=" + encodeURIComponent(happUrl);
-  const kb = new InlineKeyboard2().url("\u{1F4F1} Happ iOS", redirectUrl).row().text("\u{1F519} \u041D\u0430\u0437\u0430\u0434", "connect_back");
+  const connectUrl = `${getSubDomain() || "https://laenfaervpn.duckdns.org"}/connect?app=happ_ios&key=${encodeURIComponent(userId)}`;
+  const kb = new InlineKeyboard2().url("\u{1F4F1} Happ iOS", connectUrl).row().text("\u{1F519} \u041D\u0430\u0437\u0430\u0434", "connect_back");
   await ctx.answerCallbackQuery();
   await ctx.editMessageText(
     "\u{1F4F1} <b>\u041F\u043E\u0434\u043A\u043B\u044E\u0447\u0435\u043D\u0438\u0435 iPhone</b>\n\n\u041D\u0430\u0436\u043C\u0438 \u043A\u043D\u043E\u043F\u043A\u0443 \u2014 \u043F\u043E\u0434\u043F\u0438\u0441\u043A\u0430 \u0434\u043E\u0431\u0430\u0432\u0438\u0442\u0441\u044F \u0430\u0432\u0442\u043E\u043C\u0430\u0442\u0438\u0447\u0435\u0441\u043A\u0438 \u0438 \u0431\u0443\u0434\u0435\u0442 \u043E\u0431\u043D\u043E\u0432\u043B\u044F\u0442\u044C\u0441\u044F:",
@@ -58154,7 +58210,7 @@ userBot.callbackQuery(/^tariff_(.+)$/, async (ctx) => {
     return;
   }
   const userId = ctx.from.id;
-  userStates.set(userId, `waiting_screenshot_${tariff}`);
+  setUserState(userId, `waiting_screenshot_${tariff}`);
   const payUrl = `${YOOMONEY_URL}/${cfg.price}`;
   const kb = new InlineKeyboard2().url(`\u{1F4B3} \u041E\u043F\u043B\u0430\u0442\u0438\u0442\u044C ${cfg.price}\u20BD`, payUrl).row().text("\u25C0\uFE0F \u041D\u0430\u0437\u0430\u0434 \u0432 \u043C\u0430\u0433\u0430\u0437\u0438\u043D", "open_shop");
   await ctx.editMessageText(
@@ -58184,6 +58240,7 @@ userBot.callbackQuery("open_profile", async (ctx) => {
   if (isExpired) {
     kb.row().text("\u{1F6D2} \u041F\u0440\u043E\u0434\u043B\u0438\u0442\u044C \u043F\u043E\u0434\u043F\u0438\u0441\u043A\u0443", "open_shop");
   }
+  try {
   await ctx.editMessageText(
     `\u{1F464} <b>\u041B\u0418\u0427\u041D\u042B\u0419 \u041A\u0410\u0411\u0418\u041D\u0415\u0422</b>
 
@@ -58198,13 +58255,14 @@ ${status}
 \u{1F447} \u0414\u043E\u043F\u043E\u043B\u043D\u0438\u0442\u0435\u043B\u044C\u043D\u044B\u0435 \u0440\u0430\u0437\u0434\u0435\u043B\u044B:`,
     { parse_mode: "HTML", reply_markup: kb }
   );
+  } catch {}
   await ctx.answerCallbackQuery();
 });
 userBot.callbackQuery("open_info", async (ctx) => {
-  await ctx.editMessageText(
+  try { await ctx.editMessageText(
     "\u{1F4D6} <b>\u0418\u041D\u0421\u0422\u0420\u0423\u041A\u0426\u0418\u042F \u041F\u041E \u041F\u041E\u0414\u041A\u041B\u042E\u0427\u0415\u041D\u0418\u042E</b>\n\n<b>\u041F\u0440\u0438\u043B\u043E\u0436\u0435\u043D\u0438\u044F:</b>\n\u{1F916} Android: HappProxy / v2rayTun\n\u{1F4F1} iPhone: Happ / v2rayTun\n\n<b>\u041A\u0430\u043A \u043F\u043E\u0434\u043A\u043B\u044E\u0447\u0438\u0442\u044C\u0441\u044F:</b>\n1. \u041D\u0430\u0436\u043C\u0438 \xAB\u{1F511} \u041F\u043E\u043A\u0430\u0437\u0430\u0442\u044C \u043A\u043B\u044E\u0447\xBB \u0438 \u0441\u043A\u043E\u043F\u0438\u0440\u0443\u0439 \u0435\u0433\u043E\n2. \u041E\u0442\u043A\u0440\u043E\u0439 \u043F\u0440\u0438\u043B\u043E\u0436\u0435\u043D\u0438\u0435 \u2192 \u043D\u0430\u0436\u043C\u0438 + \u2192 \u0418\u043C\u043F\u043E\u0440\u0442 \u0438\u0437 \u0431\u0443\u0444\u0435\u0440\u0430 \u043E\u0431\u043C\u0435\u043D\u0430\n3. \u041D\u0430\u0436\u043C\u0438 \u25B6\uFE0F \u0434\u043B\u044F \u043F\u043E\u0434\u043A\u043B\u044E\u0447\u0435\u043D\u0438\u044F\n\n<b>\u0410\u0432\u0442\u043E\u043C\u0430\u0442\u0438\u0447\u0435\u0441\u043A\u043E\u0435 \u043F\u043E\u0434\u043A\u043B\u044E\u0447\u0435\u043D\u0438\u0435:</b>\n\u0412 \u0440\u0430\u0437\u0434\u0435\u043B\u0435 \xAB\u041F\u043E\u0434\u043A\u043B\u044E\u0447\u0438\u0442\u044C\u0441\u044F\xBB \u043D\u0430\u0436\u043C\u0438 \u043A\u043D\u043E\u043F\u043A\u0443 \u0441\u0432\u043E\u0435\u0439 \u043F\u043B\u0430\u0442\u0444\u043E\u0440\u043C\u044B \u2192 \u0432\u044B\u0431\u0435\u0440\u0438 \u043F\u0440\u0438\u043B\u043E\u0436\u0435\u043D\u0438\u0435 \u2014 \u043A\u043B\u044E\u0447 \u0432\u0441\u0442\u0430\u0432\u0438\u0442\u0441\u044F \u0441\u0430\u043C!\n\n\u0422\u0432\u043E\u044F \u0431\u0435\u0437\u043E\u043F\u0430\u0441\u043D\u043E\u0441\u0442\u044C \u2014 \u043D\u0430\u0448 \u043F\u0440\u0438\u043E\u0440\u0438\u0442\u0435\u0442! \u{1F512}",
     { parse_mode: "HTML", reply_markup: profileKb() }
-  );
+  ); } catch {}
   await ctx.answerCallbackQuery();
 });
 userBot.callbackQuery("open_ref", async (ctx) => {
@@ -58249,7 +58307,7 @@ userBot.callbackQuery("open_support", async (ctx) => {
       { reply_markup: closedSupportKb() }
     );
   } else {
-    userStates.set(userId, "support_mode");
+    setUserState(userId, "support_mode");
     await ctx.editMessageText(
       "\u{1F4AC} \u0427\u0410\u0422 \u041F\u041E\u0414\u0414\u0415\u0420\u0416\u041A\u0418\n\n\u041F\u0440\u043E\u0441\u0442\u043E \u043D\u0430\u043F\u0438\u0448\u0438 \u0441\u0432\u043E\u0439 \u0432\u043E\u043F\u0440\u043E\u0441 \u0432 \u044D\u0442\u043E\u0442 \u0447\u0430\u0442.\n\u0410\u0434\u043C\u0438\u043D\u0438\u0441\u0442\u0440\u0430\u0442\u043E\u0440 \u043E\u0442\u0432\u0435\u0442\u0438\u0442 \u0442\u0435\u0431\u0435.\n\n\u2757 \u0427\u0430\u0442 \u0430\u043A\u0442\u0438\u0432\u0435\u043D \u2014 \u0442\u044B \u043C\u043E\u0436\u0435\u0448\u044C \u043F\u0438\u0441\u0430\u0442\u044C \u0441\u043E\u043E\u0431\u0449\u0435\u043D\u0438\u044F.",
       { reply_markup: activeSupportKb() }
@@ -58260,7 +58318,7 @@ userBot.callbackQuery("open_support", async (ctx) => {
 userBot.callbackQuery("new_support_chat", async (ctx) => {
   const userId = ctx.from.id;
   await reopenSupportChat(String(userId));
-  userStates.set(userId, "support_mode");
+  setUserState(userId, "support_mode");
   await ctx.editMessageText(
     "\u{1F4AC} \u0427\u0410\u0422 \u041F\u041E\u0414\u0414\u0415\u0420\u0416\u041A\u0418\n\n\u041F\u0440\u043E\u0441\u0442\u043E \u043D\u0430\u043F\u0438\u0448\u0438 \u0441\u0432\u043E\u0439 \u0432\u043E\u043F\u0440\u043E\u0441 \u0432 \u044D\u0442\u043E\u0442 \u0447\u0430\u0442.\n\u0410\u0434\u043C\u0438\u043D\u0438\u0441\u0442\u0440\u0430\u0442\u043E\u0440 \u043E\u0442\u0432\u0435\u0442\u0438\u0442 \u0442\u0435\u0431\u0435.\n\n\u2757 \u0427\u0430\u0442 \u0430\u043A\u0442\u0438\u0432\u0435\u043D \u2014 \u0442\u044B \u043C\u043E\u0436\u0435\u0448\u044C \u043F\u0438\u0441\u0430\u0442\u044C \u0441\u043E\u043E\u0431\u0449\u0435\u043D\u0438\u044F.",
     { reply_markup: activeSupportKb() }
@@ -58268,7 +58326,7 @@ userBot.callbackQuery("new_support_chat", async (ctx) => {
   await ctx.answerCallbackQuery();
 });
 userBot.callbackQuery("back_from_support", async (ctx) => {
-  userStates.delete(ctx.from.id);
+  deleteUserState(ctx.from.id);
   const userId = ctx.from.id;
   const status = await getSubscriptionStatus(String(userId));
   const bal = await getUserBalanceInfo(String(userId));
@@ -58289,7 +58347,7 @@ ${status}
   await ctx.answerCallbackQuery();
 });
 userBot.callbackQuery("close_support_chat", async (ctx) => {
-  userStates.delete(ctx.from.id);
+  deleteUserState(ctx.from.id);
   await closeSupportChat(String(ctx.from.id));
   const userId = ctx.from.id;
   const status = await getSubscriptionStatus(String(userId));
@@ -58311,9 +58369,18 @@ ${status}
   await ctx.answerCallbackQuery();
 });
 userBot.callbackQuery("open_status", async (ctx) => {
-  await ctx.editMessageText(
-    "\u{1F4CA} \u0421\u0422\u0410\u0422\u0423\u0421 \u0421\u0415\u0420\u0412\u0415\u0420\u041E\u0412\n\n\u0413\u0435\u0440\u043C\u0430\u043D\u0438\u044F \u2014 \u{1F7E2} \u041E\u043D\u043B\u0430\u0439\u043D\n\u041D\u0438\u0434\u0435\u0440\u043B\u0430\u043D\u0434\u044B \u2014 \u{1F7E2} \u041E\u043D\u043B\u0430\u0439\u043D\n\u0424\u0438\u043D\u043B\u044F\u043D\u0434\u0438\u044F \u2014 \u{1F7E2} \u041E\u043D\u043B\u0430\u0439\u043D\n\n\u041D\u0430\u0433\u0440\u0443\u0437\u043A\u0430: 12%\n\u0414\u043E\u0441\u0442\u0443\u043F\u043D\u043E\u0441\u0442\u044C: 99.9%\n\n\u0412\u0441\u0435 \u0441\u0438\u0441\u0442\u0435\u043C\u044B \u0440\u0430\u0431\u043E\u0442\u0430\u044E\u0442 \u0448\u0442\u0430\u0442\u043D\u043E!",
-    { reply_markup: backToMainKb() }
+  const serverStatus = getServerStatus();
+  let serverText = "\u{1F4CA} <b>\u0421\u0422\u0410\u0422\u0423\u0421 \u0421\u0415\u0420\u0412\u0415\u0420\u041E\u0412</b>\n\n";
+  if (serverStatus.size > 0) {
+    for (const [ip, online] of serverStatus) {
+      serverText += `${online ? "\u{1F7E2}" : "\u{1F534}"} <code>${ip}</code> \u2014 ${online ? "\u041E\u043D\u043B\u0430\u0439\u043D" : "\u041E\u0444\u0444\u043B\u0430\u0439\u043D"}\n`;
+    }
+    const onlineCount = [...serverStatus.values()].filter(Boolean).length;
+    serverText += `\n\u0414\u043E\u0441\u0442\u0443\u043F\u043D\u043E: ${onlineCount}/${serverStatus.size}`;
+  } else {
+    serverText += "\u23F3 \u041F\u0440\u043E\u0432\u0435\u0440\u043A\u0430 \u0435\u0449\u0451 \u043D\u0435 \u0437\u0430\u043F\u0443\u0441\u043A\u0430\u043B\u0430\u0441\u044C";
+  }
+  await ctx.editMessageText(serverText, { parse_mode: "HTML", reply_markup: backToMainKb() });
   );
   await ctx.answerCallbackQuery();
 });
@@ -58328,13 +58395,13 @@ userBot.callbackQuery("open_miniapp", async (ctx) => {
   await ctx.answerCallbackQuery();
 });
 userBot.callbackQuery("open_promo", async (ctx) => {
-  userStates.set(ctx.from.id, "waiting_promo_code");
+  setUserState(ctx.from.id, "waiting_promo_code");
   await ctx.reply("\u{1F3AB} <b>\u0412\u0432\u0435\u0434\u0438\u0442\u0435 \u043F\u0440\u043E\u043C\u043E\u043A\u043E\u0434</b>\n\n\u0412\u0432\u0435\u0434\u0438\u0442\u0435 \u043A\u043E\u0434 \u043F\u0440\u043E\u043C\u043E\u043A\u043E\u0434\u0430, \u043F\u043E\u043B\u0443\u0447\u0435\u043D\u043D\u044B\u0439 \u043E\u0442 \u0430\u0434\u043C\u0438\u043D\u0438\u0441\u0442\u0440\u0430\u0442\u043E\u0440\u0430 \u0438\u043B\u0438 \u0438\u0437 \u0440\u0435\u043A\u043B\u0430\u043C\u043D\u043E\u0439 \u043A\u0430\u043C\u043F\u0430\u043D\u0438\u0438:", { parse_mode: "HTML", reply_markup: backToMainKb() });
   await ctx.answerCallbackQuery();
 });
 userBot.on("message:photo", async (ctx) => {
   const userId = ctx.from.id;
-  const state = userStates.get(userId);
+  const state = getUserState(userId);
   if (!state?.startsWith("waiting_screenshot_")) return;
   const tariff = state.replace("waiting_screenshot_", "");
   const cfg = TARIFF_CONFIG[tariff];
@@ -58360,7 +58427,7 @@ userBot.on("message:photo", async (ctx) => {
   } catch (e) {
     console.error("[SCREENSHOT] sendPhoto to admin failed. ADMIN_ID=" + ADMIN_ID + " error=" + (e?.message || e));
   }
-  userStates.delete(userId);
+  deleteUserState(userId);
   await ctx.reply(
     "\u2705 <b>\u0421\u043A\u0440\u0438\u043D\u0448\u043E\u0442 \u043E\u0442\u043F\u0440\u0430\u0432\u043B\u0435\u043D \u0430\u0434\u043C\u0438\u043D\u0438\u0441\u0442\u0440\u0430\u0442\u043E\u0440\u0443!</b>\n\n\u041E\u0436\u0438\u0434\u0430\u0439 \u043F\u043E\u0434\u0442\u0432\u0435\u0440\u0436\u0434\u0435\u043D\u0438\u044F \u2014 \u043A\u0430\u043A \u0442\u043E\u043B\u044C\u043A\u043E \u043E\u043F\u043B\u0430\u0442\u0430 \u0431\u0443\u0434\u0435\u0442 \u043F\u0440\u043E\u0432\u0435\u0440\u0435\u043D\u0430, \u043F\u043E\u0434\u043F\u0438\u0441\u043A\u0430 \u0430\u043A\u0442\u0438\u0432\u0438\u0440\u0443\u0435\u0442\u0441\u044F \u0430\u0432\u0442\u043E\u043C\u0430\u0442\u0438\u0447\u0435\u0441\u043A\u0438.",
     { parse_mode: "HTML", reply_markup: backToMainKb() }
@@ -58374,14 +58441,14 @@ userBot.on("message:text", async (ctx) => {
     await ctx.reply("\u26A0\uFE0F \u0414\u043E\u0441\u0442\u0443\u043F \u0437\u0430\u0431\u043B\u043E\u043A\u0438\u0440\u043E\u0432\u0430\u043D!\n\n\u041F\u043E\u0434\u043F\u0438\u0448\u0438\u0441\u044C \u043D\u0430 \u043A\u0430\u043D\u0430\u043B, \u0447\u0442\u043E\u0431\u044B \u0434\u0430\u043B\u044C\u0448\u0435 \u043E\u0441\u0442\u0430\u0432\u0430\u0442\u044C\u0441\u044F \u043D\u0430 \u0441\u0432\u044F\u0437\u0438! \u{1F525}", { reply_markup: subRequiredKb() });
     return;
   }
-  const state = userStates.get(userId);
+  const state = getUserState(userId);
   if (state === "withdraw_mode_phone") {
     const phone = text2.trim();
     if (!/^\+?[78]\d{10}$/.test(phone.replace(/\s/g,""))) {
       await ctx.reply("Неверный формат номера. Пример: +79991234567\nПопробуй ещё раз:", { reply_markup: backToMainKb() });
       return;
     }
-    userStates.set(userId, "withdraw_mode_name");
+    setUserState(userId, "withdraw_mode_name");
     withdrawData.set(userId, { phone });
     await ctx.reply("Введите ваши ФИО (Фамилия Имя Отчество):", { reply_markup: backToMainKb() });
     return;
@@ -58395,12 +58462,12 @@ userBot.on("message:text", async (ctx) => {
     const data = withdrawData.get(userId) || {};
     data.name = name;
     withdrawData.set(userId, data);
-    userStates.set(userId, "withdraw_mode_bank");
+    setUserState(userId, "withdraw_mode_bank");
     await ctx.reply("Введите название банка (например: Сбербанк, Тинькофф, ВТБ):", { reply_markup: backToMainKb() });
     return;
   }
   if (state === "withdraw_mode_bank") {
-    userStates.delete(userId);
+    deleteUserState(userId);
     const bank = text2.trim();
     const data = withdrawData.get(userId) || {};
     withdrawData.delete(userId);
@@ -58420,7 +58487,7 @@ userBot.on("message:text", async (ctx) => {
     const chat = await getSupportChat(String(userId));
     if (chat?.closed) {
       await ctx.reply("\u274C \u0427\u0430\u0442 \u043F\u043E\u0434\u0434\u0435\u0440\u0436\u043A\u0438 \u0437\u0430\u043A\u0440\u044B\u0442. \u041E\u0442\u043A\u0440\u043E\u0439 \u043D\u043E\u0432\u044B\u0439 \u0434\u0438\u0430\u043B\u043E\u0433 \u0447\u0435\u0440\u0435\u0437 \xAB\u041F\u043E\u0434\u0434\u0435\u0440\u0436\u043A\u0430\xBB.", { reply_markup: backToMainKb() });
-      userStates.delete(userId);
+      deleteUserState(userId);
       return;
     }
     await addSupportMessage(String(userId), { text: text2, time: Date.now() / 1e3, fromUser: true });
@@ -58445,7 +58512,7 @@ ${text2}`,
   }
   if (state === "waiting_promo_code") {
     const code = text2.trim().toUpperCase();
-    userStates.delete(userId);
+    deleteUserState(userId);
     const promo = await activatePromoCode(code);
     if (!promo) {
       await ctx.reply("\u274C \u041F\u0440\u043E\u043C\u043E\u043A\u043E\u0434 \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D \u0438\u043B\u0438 \u0443\u0436\u0435 \u0438\u0441\u043F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u043D.", { reply_markup: mainMenuKb() });
@@ -58461,7 +58528,7 @@ ${text2}`,
     const tariff = promo.tariff || "30days";
     const expiresAt = await addDaysToSubscription(String(userId), tariff, days, key);
     try { await adminNotifier.api.sendMessage(ADMIN_ID, `\u{1F3AB} <b>\u041F\u0420\u041E\u041C\u041E\u041A\u041E\u0414 \u0410\u041A\u0422\u0418\u0412\u0418\u0420\u041E\u0412\u0410\u041D</b>\n\n\u{1F511} \u041A\u043E\u0434: <code>${code}</code>\n\u{1F464} \u041F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u0435\u043B\u044C: <code>${userId}</code> (${ctx.from.first_name})\n\u{1F4CB} \u0422\u0430\u0440\u0438\u0444: ${tariff}\n\u{1F4C5} \u0414\u043E\u0431\u0430\u0432\u043B\u0435\u043D\u043E: ${days} \u0434\u043D.\n\u{1F4C5} \u0414\u043E: ${formatDate(expiresAt)}`, { parse_mode: "HTML", reply_markup: adminBackKb() }); } catch {}
-    userStates.set(userId, `key:${key}`);
+    setUserState(userId, `key:${key}`);
     await ctx.reply(
       `\u2705 <b>\u041F\u0440\u043E\u043C\u043E\u043A\u043E\u0434 \u043F\u0440\u0438\u043C\u0435\u043D\u0451\u043D!</b>\n\n\u{1F389} \u041F\u043E\u0434\u043F\u0438\u0441\u043A\u0430 \u0430\u043A\u0442\u0438\u0432\u0438\u0440\u043E\u0432\u0430\u043D\u0430 \u043D\u0430 ${days} \u0434\u043D\u0435\u0439.\n\u{1F4C5} \u0414\u043E: ${formatDate(expiresAt)}\n\n\u{1F447} \u0412\u044B\u0431\u0435\u0440\u0438 \u0441\u0432\u043E\u044E \u043F\u043B\u0430\u0442\u0444\u043E\u0440\u043C\u0443:`,
       { parse_mode: "HTML", reply_markup: connectKb() }
@@ -60335,9 +60402,9 @@ async function registerCommands() {
 
 userBot.on("message:text", async (ctx, next) => {
   const uid = ctx.from.id;
-  const state = userStates.get(uid);
+  const state = getUserState(uid);
   if (state === "waiting_promo_code") {
-    userStates.delete(uid);
+    deleteUserState(uid);
     const code = ctx.message.text.trim();
     if (!code) {
       await ctx.reply("\u274C \u0412\u0432\u0435\u0434\u0438\u0442\u0435 \u043A\u043E\u0434.", { reply_markup: backToMainKb() });
