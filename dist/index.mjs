@@ -37647,7 +37647,7 @@ app.get("/sub/:userId", async (req, res) => {
     res.setHeader("Content-Type", "text/plain; charset=utf-8");
     res.setHeader("profile-title", "base64:" + Buffer.from("\u26A1 LAENFAER VPN \u26A1").toString("base64"));
     res.setHeader("subscription-userinfo", "upload=0; download=0; total=0; expire=" + expireHeader);
-    res.setHeader("profile-update-interval", "12");
+    res.setHeader("profile-update-interval", "1");
     res.setHeader("support-url", "https://t.me/laenfaer_vpn_bot");
     res.setHeader("profile-web-page-url", "https://t.me/laenfaer_vpn_bot");
     res.setHeader("content-disposition", "attachment; filename=LAENFAER_VPN");
@@ -37684,8 +37684,8 @@ const SEO = {
   title: "LAENFAER VPN - быстрый и надёжный VPN без ограничений",
   description: "LAENFAER VPN - сервис для подключения VPN через Telegram-бот. 50+ серверов в Европе и CIS, скорость до 1 Гбит/с, шифрование данных. Подключись за 2 минуты.",
   keywords: "VPN, VPN сервис, обход блокировок, Telegram VPN, быстрый VPN, безопасный интернет, HappProxy, INCY, VLESS, Reality",
-  url: "https://laenfaervpn.duckdns.org",
-  image: "https://laenfaervpn.duckdns.org/og.png"
+  url: "https://laenfaer-vpn-youtube.duckdns.org",
+  image: "https://laenfaer-vpn-youtube.duckdns.org/og.png"
 };
 
 var faqLD = JSON.stringify({"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"Какие приложения поддерживаются?","acceptedAnswer":{"@type":"Answer","text":"LAENFAER VPN (Android), Happ (iPhone/iPad), INCY (Windows/macOS), v2rayTun и другие клиенты с поддержкой VLESS Reality."}},{"@type":"Question","name":"Безопасен ли VPN?","acceptedAnswer":{"@type":"Answer","text":"Да. Мы используем протокол VLESS с технологией Reality."}},{"@type":"Question","name":"Сколько устройств можно подключить?","acceptedAnswer":{"@type":"Answer","text":"Зависит от тарифа. На бесплатном - 1 устройство. На платных - от 1 до 5."}},{"@type":"Question","name":"Как оплатить подписку?","acceptedAnswer":{"@type":"Answer","text":"Оплата через СБП, банковские карты или криптовалюту."}},{"@type":"Question","name":"Есть ли реферальная программа?","acceptedAnswer":{"@type":"Answer","text":"Да! 25% от оплаты приглашённых друзей на ваш баланс."}}]});
@@ -38032,7 +38032,7 @@ app.get("/about", async (req, res) => {
 </div>
 <div style="text-align:center;margin-top:32px"><a href="https://t.me/laenfaer_vpn_bot" style="display:inline-block;background:#8BC53F;color:#07090D;font-size:16px;font-weight:700;padding:14px 32px;border-radius:16px;text-decoration:none">Подключиться к боту &#10132;</a></div>
 </div>
-`, `<script type="application/ld+json">${JSON.stringify({"@context":"https://schema.org","@type":"AboutPage","name":"О сервисе LAENFAER VPN","url":"https://laenfaervpn.duckdns.org/about"})}</script>`));
+`, `<script type="application/ld+json">${JSON.stringify({"@context":"https://schema.org","@type":"AboutPage","name":"О сервисе LAENFAER VPN","url":"https://laenfaer-vpn-youtube.duckdns.org/about"})}</script>`));
 });
 
 // ===== PRICING =====
@@ -38268,7 +38268,7 @@ app.get("/terms", async (req, res) => {
 // ===== SITEMAP =====
 app.get("/sitemap.xml", async (req, res) => {
   const all=["","/about","/pricing","/servers","/setup","/faq","/blog","/vs","/referral","/support","/privacy","/terms","/setup/android","/setup/ios","/setup/windows","/setup/macos","/setup/router","/blog/what-is-vpn","/blog/vless-reality","/blog/blockings-2026","/blog/privacy","/blog/vpn-speed","/blog/compare"];
-  res.setHeader("Content-Type","application/xml; charset=utf-8").send(`<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${all.map(p=>`<url><loc>https://laenfaervpn.duckdns.org${p}</loc><changefreq>${p===''?'weekly':'monthly'}</changefreq><priority>${p===''?'1.0':p.startsWith('/blog')?'0.7':'0.8'}</priority></url>`).join('')}</urlset>`);
+  res.setHeader("Content-Type","application/xml; charset=utf-8").send(`<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${all.map(p=>`<url><loc>https://laenfaer-vpn-youtube.duckdns.org${p}</loc><changefreq>${p===''?'weekly':'monthly'}</changefreq><priority>${p===''?'1.0':p.startsWith('/blog')?'0.7':'0.8'}</priority></url>`).join('')}</urlset>`);
 });
 
 // ===== ROBOTS =====
@@ -38277,7 +38277,7 @@ app.get("/robots.txt", async (req, res) => {
 Allow: /
 Disallow: /api/
 Disallow: /sub/
-Sitemap: https://laenfaervpn.duckdns.org/sitemap.xml
+Sitemap: https://laenfaer-vpn-youtube.duckdns.org/sitemap.xml
 
 User-agent: GPTBot
 Allow: /
@@ -57646,7 +57646,7 @@ var BOT_USERNAME = process.env.BOT_USERNAME ?? "laenfaer_vpn_bot";
 var YOOMONEY_URL = "https://yoomoney.ru/to/4100118805863911";
 function mainMenuKb() {
   const domain = getSubDomain();
-  const appUrl = domain ? domain + "/app" : "https://laenfaervpn.duckdns.org/app";
+  const appUrl = domain ? domain + "/app" : "https://laenfaer-vpn-youtube.duckdns.org/app";
   return new InlineKeyboard().text("\u{1F511} \u041F\u043E\u043B\u0443\u0447\u0438\u0442\u044C \u043A\u043B\u044E\u0447", "get_free_key_random").text("\u{1F3AB} \u041F\u0440\u043E\u043C\u043E\u043A\u043E\u0434", "open_promo").row().text("\u{1F6D2} \u041C\u0430\u0433\u0430\u0437\u0438\u043D", "open_shop").text("\u{1F464} \u041F\u0440\u043E\u0444\u0438\u043B\u044C", "open_profile").row().webApp("\u{1F310} \u041B\u0438\u0447\u043D\u044B\u0439 \u043A\u0430\u0431\u0438\u043D\u0435\u0442", appUrl).row().text("\u{1F4AC} \u041F\u043E\u0434\u0434\u0435\u0440\u0436\u043A\u0430", "open_support").text("\u{1F4CA} \u0421\u0435\u0440\u0432\u0435\u0440\u044B", "open_status").row().text("\u2753 \u041A\u0430\u043A \u043F\u043E\u0434\u043A\u043B\u044E\u0447\u0438\u0442\u044C\u0441\u044F", "how_to_connect").row();
 }
 function profileKb() {
@@ -57662,18 +57662,18 @@ function subRequiredKb() {
   return new InlineKeyboard().url("\u{1F4E2} \u041F\u043E\u0434\u043F\u0438\u0441\u0430\u0442\u044C\u0441\u044F \u043D\u0430 \u043A\u0430\u043D\u0430\u043B", CHANNEL_URL).row().text("\u2705 \u041F\u0440\u043E\u0432\u0435\u0440\u0438\u0442\u044C \u043F\u043E\u0434\u043F\u0438\u0441\u043A\u0443", "check_sub_again");
 }
 function getSubDomain() {
-  return process.env.RENDER_EXTERNAL_URL || "https://laenfaervpn.duckdns.org";
+  return process.env.RENDER_EXTERNAL_URL || "https://laenfaer-vpn-youtube.duckdns.org";
 }
 function connectKb() {
   return new InlineKeyboard().text("\u{1F916} Android", "connect_android").text("\u{1F4F1} iPhone", "connect_iphone").row().text("\u{1F511} \u041F\u043E\u043A\u0430\u0437\u0430\u0442\u044C \u043A\u043B\u044E\u0447", "show_key").row().text("\u2753 \u041A\u0430\u043A \u043F\u043E\u0434\u043A\u043B\u044E\u0447\u0438\u0442\u044C\u0441\u044F", "how_to_connect").row().text("\u{1F3E0} \u0412 \u0433\u043B\u0430\u0432\u043D\u043E\u0435 \u043C\u0435\u043D\u044E", "to_main");
 }
 function connectAndroidKb(key) {
-  const domain2 = getSubDomain() || "https://laenfaervpn.duckdns.org";
+  const domain2 = getSubDomain() || "https://laenfaer-vpn-youtube.duckdns.org";
   const encodedKey = encodeURIComponent(key);
   return new InlineKeyboard().url("\u{1F916} HappProxy", `https://${domain2.replace(/^https?:\/\//, "")}/api/connect?app=happproxy&key=${encodedKey}`).row().text("\u{1F519} \u041D\u0430\u0437\u0430\u0434", "connect_back");
 }
 function connectIphoneKb(key) {
-  const domain2 = getSubDomain() || "https://laenfaervpn.duckdns.org";
+  const domain2 = getSubDomain() || "https://laenfaer-vpn-youtube.duckdns.org";
   const encodedKey = encodeURIComponent(key);
   return new InlineKeyboard().url("\u{1F4F1} Happ iOS", `https://${domain2.replace(/^https?:\/\//, "")}/api/connect?app=happ_ios&key=${encodedKey}`).row().text("\u{1F519} \u041D\u0430\u0437\u0430\u0434", "connect_back");
 }
@@ -58158,7 +58158,7 @@ userBot.callbackQuery("show_key", async (ctx) => {
     return;
   }
   await ctx.answerCallbackQuery();
-  const domain = getSubDomain(); const subLink = domain ? `${domain}/sub/${userId}` : `https://laenfaervpn.duckdns.org/sub/${userId}`;
+  const domain = getSubDomain(); const subLink = domain ? `${domain}/sub/${userId}` : `https://laenfaer-vpn-youtube.duckdns.org/sub/${userId}`;
   await ctx.reply(
     `\u{1F511} <b>\u0412\u0430\u0448\u0430 \u043F\u043E\u0434\u043F\u0438\u0441\u043A\u0430</b>
 
@@ -58177,7 +58177,7 @@ async function getUserKey(userId) {
 }
 userBot.callbackQuery("connect_android", async (ctx) => {
   const userId = String(ctx.from.id);
-  const domain = getSubDomain() || "https://laenfaervpn.duckdns.org";
+  const domain = getSubDomain() || "https://laenfaer-vpn-youtube.duckdns.org";
   const subUrl = `${domain}/sub/${userId}`;
   const connectUrl = `${domain}/api/connect?app=happproxy&key=${encodeURIComponent(subUrl)}`;
   const kb = new InlineKeyboard2().url("\u{1F916} HappProxy", connectUrl).row().text("\u{1F519} \u041D\u0430\u0437\u0430\u0434", "connect_back");
@@ -58189,7 +58189,7 @@ userBot.callbackQuery("connect_android", async (ctx) => {
 });
 userBot.callbackQuery("connect_iphone", async (ctx) => {
   const userId = String(ctx.from.id);
-  const domain = getSubDomain() || "https://laenfaervpn.duckdns.org";
+  const domain = getSubDomain() || "https://laenfaer-vpn-youtube.duckdns.org";
   const subUrl = `${domain}/sub/${userId}`;
   const connectUrl = `${domain}/api/connect?app=happ_ios&key=${encodeURIComponent(subUrl)}`;
   const kb = new InlineKeyboard2().url("\u{1F4F1} Happ iOS", connectUrl).row().text("\u{1F519} \u041D\u0430\u0437\u0430\u0434", "connect_back");
@@ -58402,7 +58402,7 @@ userBot.callbackQuery("open_status", async (ctx) => {
 });
 userBot.callbackQuery("open_miniapp", async (ctx) => {
   const domain = getSubDomain();
-  const appUrl = domain ? domain + "/app" : "https://laenfaervpn.duckdns.org/app";
+  const appUrl = domain ? domain + "/app" : "https://laenfaer-vpn-youtube.duckdns.org/app";
   const { InlineKeyboard: IK } = await import("grammy");
   const kb = new IK().webApp("\u{1F310} \u041E\u0442\u043A\u0440\u044B\u0442\u044C \u043B\u0438\u0447\u043D\u044B\u0439 \u043A\u0430\u0431\u0438\u043D\u0435\u0442", appUrl).row().text("\u{1F3E0} \u0413\u043B\u0430\u0432\u043D\u043E\u0435 \u043C\u0435\u043D\u044E", "to_main");
   await ctx.reply("\u{1F310} \u041D\u0430\u0436\u043C\u0438 \u043A\u043D\u043E\u043F\u043A\u0443 \u043D\u0438\u0436\u0435:", {
@@ -59754,7 +59754,7 @@ ${escapeHtml(text2)}`,
       }
       const tariff = isPrem ? "30days" : "free_3days";
       await setSubscription(uid, tariff, days, key);
-      const domain = getSubDomain(); const subLink = domain ? `${domain}/sub/${uid}` : `https://laenfaervpn.duckdns.org/sub/${uid}`;
+      const domain = getSubDomain(); const subLink = domain ? `${domain}/sub/${uid}` : `https://laenfaer-vpn-youtube.duckdns.org/sub/${uid}`;
       const label = isPrem ? "Premium" : "\u0431\u0435\u0441\u043F\u043B\u0430\u0442\u043D\u0430\u044F";
       const emoji = isPrem ? "\u2B50" : "\u{1F381}";
       try {
@@ -60484,7 +60484,7 @@ userBot.on("message:text", async (ctx, next) => {
     await addDaysToSubscription(String(uid), promo.tariff, promo.days, key);
     try { await adminNotifier.api.sendMessage(ADMIN_ID, `\u{1F3AB} <b>\u041F\u0420\u041E\u041C\u041E\u041A\u041E\u0414 \u0410\u041A\u0422\u0418\u0412\u0418\u0420\u041E\u0412\u0410\u041D</b>\n\n\u{1F511} \u041A\u043E\u0434: <code>${code}</code>\n\u{1F464} \u041F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u0435\u043B\u044C: <code>${uid}</code> (${ctx.from.first_name})\n\u{1F4CB} \u0422\u0430\u0440\u0438\u0444: ${promo.tariff}\n\u{1F4C5} \u0414\u043E\u0431\u0430\u0432\u043B\u0435\u043D\u043E: ${promo.days} \u0434\u043D.`, { parse_mode: "HTML", reply_markup: adminBackKb() }); } catch {}
     const domain = getSubDomain();
-    const subLink = domain ? `${domain}/sub/${uid}` : `https://laenfaervpn.duckdns.org/sub/${uid}`;
+    const subLink = domain ? `${domain}/sub/${uid}` : `https://laenfaer-vpn-youtube.duckdns.org/sub/${uid}`;
     const tariffName = promo.tariff.includes("free") ? "\u0411\u0435\u0441\u043F\u043B\u0430\u0442\u043D\u0430\u044F" : "Premium";
     await ctx.reply(`\u2705 <b>\u041F\u0440\u043E\u043C\u043E\u043A\u043E\u0434 \u0430\u043A\u0442\u0438\u0432\u0438\u0440\u043E\u0432\u0430\u043D!</b>\n\n\u{1F381} \u0412\u044B \u043F\u043E\u043B\u0443\u0447\u0438\u043B\u0438 <b>${tariffName} \u043F\u043E\u0434\u043F\u0438\u0441\u043A\u0443 \u043D\u0430 ${promo.days} \u0434\u043D.!</b>\n\n\u{1F517} \u0421\u0441\u044B\u043B\u043A\u0430 \u043D\u0430 \u043F\u043E\u0434\u043F\u0438\u0441\u043A\u0443:\n<code>${subLink}</code>\n\n\u0414\u043E\u0431\u0430\u0432\u044C\u0442\u0435 \u0435\u0451 \u0432 \u0441\u0432\u043E\u0451 \u043F\u0440\u0438\u043B\u043E\u0436\u0435\u043D\u0438\u0435 \u2014 \u043A\u043B\u044E\u0447 \u0431\u0443\u0434\u0435\u0442 \u043E\u0431\u043D\u043E\u0432\u043B\u044F\u0442\u044C\u0441\u044F \u0430\u0432\u0442\u043E\u043C\u0430\u0442\u0438\u0447\u0435\u0441\u043A\u0438.`, { parse_mode: "HTML", reply_markup: backToMainKb() });
     return;
