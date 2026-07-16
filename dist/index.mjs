@@ -58663,30 +58663,8 @@ async function monitorServers() {
       }
       if (wasOnline && !isOnline) {
         logger.warn({ ip }, "Server went OFFLINE");
-        if (adminBotApi) {
-          await adminBotApi.sendMessage(
-            adminId,
-            `\u{1F534} <b>\u0421\u0415\u0420\u0412\u0415\u0420 \u0423\u041F\u0410\u041B!</b>
-
-IP: <code>${ip}</code>
-
-\u26A0\uFE0F \u041F\u0440\u043E\u0432\u0435\u0440\u044C \u0441\u0435\u0440\u0432\u0435\u0440\u044B \u0438 \u0437\u0430\u043C\u0435\u043D\u0438 \u043A\u043B\u044E\u0447\u0438 \u043F\u0440\u0438 \u043D\u0435\u043E\u0431\u0445\u043E\u0434\u0438\u043C\u043E\u0441\u0442\u0438!`,
-            { parse_mode: "HTML" }
-          ).catch(() => {
-          });
-        }
       } else if (!wasOnline && isOnline) {
         logger.info({ ip }, "Server came back ONLINE");
-        if (adminBotApi) {
-          await adminBotApi.sendMessage(
-            adminId,
-            `\u{1F7E2} <b>\u0421\u0415\u0420\u0412\u0415\u0420 \u0412\u041E\u0421\u0421\u0422\u0410\u041D\u041E\u0412\u041B\u0415\u041D!</b>
-
-IP: <code>${ip}</code>`,
-            { parse_mode: "HTML" }
-          ).catch(() => {
-          });
-        }
       }
       serverStatusCache.set(ip, isOnline);
     }
