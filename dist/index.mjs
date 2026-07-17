@@ -58900,6 +58900,41 @@ adminBot.command("broadcast", async (ctx) => {
     reply_markup: adminBackKb()
   });
 });
+adminBot.command("subs", async (ctx) => {
+  if (!isAdmin(ctx)) return;
+  const kb = new InlineKeyboard3().text("\u{1F4CB} \u0412\u0441\u0435", "subs_filter_all").row().text("\u{1F511} \u041F\u0440\u0435\u043C\u0438\u0443\u043C", "subs_filter_premium").text("\u{1F7E2} \u0411\u0435\u0441\u043F\u043B\u0430\u0442\u043D\u044B\u0435", "subs_filter_free").row().text("\u{1F519} \u0412 \u043C\u0435\u043D\u044E", "to_admin_menu");
+  await ctx.reply("\u{1F4CB} <b>\u041F\u043E\u0434\u043F\u0438\u0441\u043A\u0438</b>", { parse_mode: "HTML", reply_markup: kb });
+});
+adminBot.command("promo", async (ctx) => {
+  if (!isAdmin(ctx)) return;
+  await showPromoMenu(ctx);
+});
+adminBot.command("support", async (ctx) => {
+  if (!isAdmin(ctx)) return;
+  await showSupportChats(ctx);
+});
+adminBot.command("balances", async (ctx) => {
+  if (!isAdmin(ctx)) return;
+  const users = await getAllUsers();
+  const kb = new InlineKeyboard3();
+  const rich = users.filter((u) => u.balance > 0 || u.refBalance > 0).sort((a, b) => (b.balance + b.refBalance) - (a.balance + a.refBalance)).slice(0, 10);
+  for (const u of rich) {
+    const total = u.balance + u.refBalance;
+    kb.text(`${u.name.slice(0, 16)} \u2014 ${total}\u20BD`, `bal_manage_${u.telegramId}`).row();
+  }
+  kb.text("\u{1F50D} \u041D\u0430\u0439\u0442\u0438", "bal_search_user").row().text("\u{1F519} \u0412 \u043C\u0435\u043D\u044E", "to_admin_menu");
+  await ctx.reply("\u{1F4B0} <b>\u0411\u0430\u043B\u0430\u043D\u0441\u044B \u043F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u0435\u043B\u0435\u0439</b>", { parse_mode: "HTML", reply_markup: kb });
+});
+adminBot.command("search", async (ctx) => {
+  if (!isAdmin(ctx)) return;
+  adminStates.set(ADMIN_ID2, "waiting_search_user");
+  await ctx.reply("\u{1F50D} \u0412\u0432\u0435\u0434\u0438 ID \u0438\u043B\u0438 \u0438\u043C\u044F \u043F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u0435\u043B\u044F:", { reply_markup: adminBackKb() });
+});
+adminBot.command("backup", async (ctx) => {
+  if (!isAdmin(ctx)) return;
+  await sendDailyBackup();
+  await ctx.reply("\u{1F4BE} \u0411\u044D\u043A\u0430\u043F \u043E\u0442\u043F\u0440\u0430\u0432\u043B\u0435\u043D!");
+});
 adminBot.callbackQuery(/.*/, async (ctx) => {
   if (!isAdmin(ctx)) {
     await ctx.answerCallbackQuery("\u26D4 \u0414\u043E\u0441\u0442\u0443\u043F \u0437\u0430\u043F\u0440\u0435\u0449\u0451\u043D!");
@@ -60422,17 +60457,23 @@ async function registerCommands() {
     { command: "start", description: "\u{1F3E0} \u0413\u043B\u0430\u0432\u043D\u043E\u0435 \u043C\u0435\u043D\u044E" },
     { command: "menu", description: "\u{1F3E0} \u041E\u0442\u043A\u0440\u044B\u0442\u044C \u043C\u0435\u043D\u044E" },
     { command: "key", description: "\u{1F511} \u041C\u043E\u0439 \u043A\u043B\u044E\u0447" },
-    { command: "profile", description: "\u{1F464} \u041B\u0438\u0447\u043D\u044B\u0439 \u043A\u0430\u0431\u0438\u043D\u0435\u0442" },
-    { command: "shop", description: "\u{1F6D2} \u041A\u0443\u043F\u0438\u0442\u044C \u043F\u043E\u0434\u043F\u0438\u0441\u043A\u0443" },
-    { command: "support", description: "\u{1F91D} \u041D\u0430\u043F\u0438\u0441\u0430\u0442\u044C \u0432 \u043F\u043E\u0434\u0434\u0435\u0440\u0436\u043A\u0443" },
+    { command: "profile", description: "\u{1F464} \u041F\u0440\u043E\u0444\u0438\u043B\u044C" },
+    { command: "shop", description: "\u{1F6D2} \u041C\u0430\u0433\u0430\u0437\u0438\u043D" },
+    { command: "support", description: "\u{1F4AC} \u041F\u043E\u0434\u0434\u0435\u0440\u0436\u043A\u0430" },
     { command: "withdraw", description: "\u{1F4B8} \u0412\u044B\u0432\u043E\u0434 \u0441\u0440\u0435\u0434\u0441\u0442\u0432" }
   ]);
   await adminBot.api.setMyCommands([
     { command: "start", description: "\u{1F6E0} \u041F\u0430\u043D\u0435\u043B\u044C \u0443\u043F\u0440\u0430\u0432\u043B\u0435\u043D\u0438\u044F" },
-    { command: "users", description: "\u{1F465} \u0421\u043F\u0438\u0441\u043E\u043A \u043F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u0435\u043B\u0435\u0439" },
+    { command: "users", description: "\u{1F465} \u041F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u0435\u043B\u0438" },
     { command: "stats", description: "\u{1F4C8} \u0421\u0442\u0430\u0442\u0438\u0441\u0442\u0438\u043A\u0430" },
-    { command: "keys", description: "\u{1F511} \u0423\u043F\u0440\u0430\u0432\u043B\u0435\u043D\u0438\u0435 \u043A\u043B\u044E\u0447\u0430\u043C\u0438" },
-    { command: "broadcast", description: "\u{1F4E2} \u0420\u0430\u0441\u0441\u044B\u043B\u043A\u0430" }
+    { command: "keys", description: "\u{1F511} \u041A\u043B\u044E\u0447\u0438" },
+    { command: "subs", description: "\u{1F4CB} \u041F\u043E\u0434\u043F\u0438\u0441\u043A\u0438" },
+    { command: "promo", description: "\u{1F3AB} \u041F\u0440\u043E\u043C\u043E\u043A\u043E\u0434\u044B" },
+    { command: "support", description: "\u{1F4AC} \u041F\u043E\u0434\u0434\u0435\u0440\u0436\u043A\u0430" },
+    { command: "broadcast", description: "\u{1F4E2} \u0420\u0430\u0441\u0441\u044B\u043B\u043A\u0430" },
+    { command: "balances", description: "\u{1F4B0} \u0411\u0430\u043B\u0430\u043D\u0441\u044B" },
+    { command: "search", description: "\u{1F50D} \u041F\u043E\u0438\u0441\u043A" },
+    { command: "backup", description: "\u{1F4BE} \u0411\u044D\u043A\u0430\u043F" }
   ]);
   logger.info("Bot commands registered");
 }
