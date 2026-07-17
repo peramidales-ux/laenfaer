@@ -57698,19 +57698,40 @@ function broadcastChoiceKb() {
 function adminKeysMainKb() {
   return new InlineKeyboard().text("\u{1F381} \u0411\u0435\u0441\u043F\u043B\u0430\u0442\u043D\u044B\u0435 \u043A\u043B\u044E\u0447\u0438", "free_keys_mngr").row().text("\u2B50 Premium \u043A\u043B\u044E\u0447\u0438", "premium_keys_mngr").row().text("\u{1F50D} \u041F\u0440\u043E\u0432\u0435\u0440\u0438\u0442\u044C \u0432\u0441\u0435 \u043A\u043B\u044E\u0447\u0438", "check_all_keys").row().text("\u{1F504} \u0417\u0430\u043C\u0435\u043D\u0438\u0442\u044C \u0432\u0441\u0435 \u043A\u043B\u044E\u0447\u0438", "replace_all_keys_start").row().text("\u{1F519} \u041D\u0430\u0437\u0430\u0434", "to_admin_menu");
 }
-function freeKeysKb(keys) {
+function freeKeysKb(keys, page = 0) {
+  const perPage = 10;
+  const totalPages = Math.ceil(keys.length / perPage);
+  const start = page * perPage;
+  const slice = keys.slice(start, start + perPage);
   const kb = new InlineKeyboard();
-  for (const k of keys) {
+  for (const k of slice) {
     const short = k.key.length > 30 ? k.key.slice(0, 30) + "\u2026" : k.key;
     kb.text(`\u{1F4DD} \u2116${k.id}`, `edit_free_key_${k.id}`).text(`\u{1F5D1} \u2116${k.id}`, `delete_free_key_${k.id}`).row();
   }
-  kb.text("\u2795 \u0414\u043E\u0431\u0430\u0432\u0438\u0442\u044C", "add_free_key").row().text("\u{1F504} \u041E\u0431\u043D\u043E\u0432\u0438\u0442\u044C \u0432\u0441\u0435", "update_all_free_keys_start").row().text("\u{1F5D1} \u041E\u0447\u0438\u0441\u0442\u0438\u0442\u044C \u0432\u0441\u0435", "clear_all_free_keys").row().text("\u{1F519} \u041D\u0430\u0437\u0430\u0434", "to_admin_menu");
+  if (totalPages > 1) {
+    kb.row();
+    if (page > 0) kb.text("\u2B05", `free_page_${page - 1}`);
+    kb.text(`${page + 1}/${totalPages}`, "noop");
+    if (page < totalPages - 1) kb.text("\u27A1", `free_page_${page + 1}`);
+  }
+  kb.row().text("\u2795 \u0414\u043E\u0431\u0430\u0432\u0438\u0442\u044C", "add_free_key").row().text("\u{1F504} \u041E\u0431\u043D\u043E\u0432\u0438\u0442\u044C \u0432\u0441\u0435", "update_all_free_keys_start").row().text("\u{1F5D1} \u041E\u0447\u0438\u0441\u0442\u0438\u0442\u044C \u0432\u0441\u0435", "clear_all_free_keys").row().text("\u{1F519} \u041D\u0430\u0437\u0430\u0434", "to_admin_menu");
   return kb;
 }
-function premiumKeysKb(keys) {
+function premiumKeysKb(keys, page = 0) {
+  const perPage = 10;
+  const totalPages = Math.ceil(keys.length / perPage);
+  const start = page * perPage;
+  const slice = keys.slice(start, start + perPage);
   const kb = new InlineKeyboard();
-  for (const k of keys) {
+  for (const k of slice) {
     kb.text(`\u{1F4DD} \u2116${k.id}`, `edit_prem_key_${k.id}`).text(`\u{1F5D1} \u2116${k.id}`, `delete_prem_key_${k.id}`).row();
+  }
+  if (totalPages > 1) {
+    const nav = [];
+    if (page > 0) nav.push(kb.text("\u2B05", `prem_page_${page - 1}`));
+    nav.push(kb.text(`${page + 1}/${totalPages}`, "noop"));
+    if (page < totalPages - 1) nav.push(kb.text("\u27A1", `prem_page_${page + 1}`));
+    kb.row();
   }
   kb.text("\u2795 \u0414\u043E\u0431\u0430\u0432\u0438\u0442\u044C", "add_prem_key").row().text("\u{1F504} \u041E\u0431\u043D\u043E\u0432\u0438\u0442\u044C \u0432\u0441\u0435", "update_all_prem_keys_start").row().text("\u{1F5D1} \u041E\u0447\u0438\u0441\u0442\u0438\u0442\u044C", "clear_prem_keys").row().text("\u{1F519} \u041D\u0430\u0437\u0430\u0434", "to_admin_menu");
   return kb;
@@ -59247,6 +59268,17 @@ ID: <code>${req.telegramId}</code>`,
     await showPremiumKeys(ctx);
     return;
   }
+  if (data === "prem_page_" || data === "free_page_" || data === "noop") return;
+  if (data.startsWith("prem_page_")) {
+    const page = parseInt(data.replace("prem_page_", ""), 10);
+    await showPremiumKeys(ctx, page);
+    return;
+  }
+  if (data.startsWith("free_page_")) {
+    const page = parseInt(data.replace("free_page_", ""), 10);
+    await showFreeKeys(ctx, page);
+    return;
+  }
   if (data === "check_all_keys") {
     await checkAllKeys(ctx);
     return;
@@ -60207,22 +60239,28 @@ ${topText}`,
     { parse_mode: "HTML", reply_markup: adminBackKb() }
   );
 }
-async function showFreeKeys(ctx) {
+async function showFreeKeys(ctx, page = 0) {
   const keys = await getFreeKeys();
   let text2 = `\u{1F381} <b>\u0411\u0415\u0421\u041F\u041B\u0410\u0422\u041D\u042B\u0415 \u041A\u041B\u042E\u0427\u0418</b>
 
 \u0412\u0441\u0435\u0433\u043E \u0432 \u043F\u0443\u043B\u0435: <b>${keys.length}</b> \u0448\u0442.
 
 `;
-  keys.forEach((k, idx) => {
-    const short = k.key.length > 60 ? k.key.slice(0, 60) + "..." : k.key;
-    text2 += `${idx + 1}. <code>${escapeHtml(short)}</code>
+  if (keys.length) {
+    const perPage = 10;
+    const start = page * perPage;
+    const slice = keys.slice(start, start + perPage);
+    slice.forEach((k, i) => {
+      const short = k.key.length > 60 ? k.key.slice(0, 60) + "..." : k.key;
+      text2 += `${start + i + 1}. <code>${escapeHtml(short)}</code>
 `;
-  });
-  if (!keys.length) text2 += "\u26A0\uFE0F \u041F\u0443\u043B \u0431\u0435\u0441\u043F\u043B\u0430\u0442\u043D\u044B\u0445 \u043A\u043B\u044E\u0447\u0435\u0439 \u043F\u0443\u0441\u0442!\n";
-  await ctx.editMessageText(text2, { parse_mode: "HTML", reply_markup: freeKeysKb(keys) });
+    });
+  } else {
+    text2 += "\u26A0\uFE0F \u041F\u0443\u043B \u0431\u0435\u0441\u043F\u043B\u0430\u0442\u043D\u044B\u0445 \u043A\u043B\u044E\u0447\u0435\u0439 \u043F\u0443\u0441\u0442!\n";
+  }
+  await ctx.editMessageText(text2, { parse_mode: "HTML", reply_markup: freeKeysKb(keys, page) });
 }
-async function showPremiumKeys(ctx) {
+async function showPremiumKeys(ctx, page = 0) {
   const keys = await getPremiumKeys();
   let text2 = `\u2B50 <b>PREMIUM \u041A\u041B\u042E\u0427\u0418</b>
 
@@ -60230,15 +60268,18 @@ async function showPremiumKeys(ctx) {
 `;
   if (keys.length) {
     text2 += "\n<b>\u0421\u043F\u0438\u0441\u043E\u043A:</b>\n";
-    keys.forEach((k, idx) => {
+    const perPage = 10;
+    const start = page * perPage;
+    const slice = keys.slice(start, start + perPage);
+    slice.forEach((k, i) => {
       const short = k.key.length > 60 ? k.key.slice(0, 60) + "..." : k.key;
-      text2 += `${idx + 1}. <code>${escapeHtml(short)}</code>
+      text2 += `${start + i + 1}. <code>${escapeHtml(short)}</code>
 `;
     });
   } else {
     text2 += "\n\u26A0\uFE0F \u041F\u0443\u043B Premium \u043A\u043B\u044E\u0447\u0435\u0439 \u043F\u0443\u0441\u0442!\n";
   }
-  await ctx.editMessageText(text2, { parse_mode: "HTML", reply_markup: premiumKeysKb(keys) });
+  await ctx.editMessageText(text2, { parse_mode: "HTML", reply_markup: premiumKeysKb(keys, page) });
 }
 async function checkAllKeys(ctx) {
   await ctx.editMessageText("\u{1F50D} <b>\u041F\u0420\u041E\u0412\u0415\u0420\u041A\u0410 \u041A\u041B\u042E\u0427\u0415\u0419</b>\n\n\u23F3 \u0412\u044B\u043F\u043E\u043B\u043D\u044F\u0435\u0442\u0441\u044F \u043F\u0440\u043E\u0432\u0435\u0440\u043A\u0430...\n\u042D\u0442\u043E \u043C\u043E\u0436\u0435\u0442 \u0437\u0430\u043D\u044F\u0442\u044C \u0434\u043E 30 \u0441\u0435\u043A\u0443\u043D\u0434.", {
