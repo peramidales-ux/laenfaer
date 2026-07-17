@@ -30,6 +30,12 @@ function extractSni(vlessLine) {
   return null;
 }
 
+function extractFlag(fragment) {
+  // Regional indicator symbols: each flag is 2 chars in U+1F1E6..U+1F1FF range
+  const match = fragment.match(/^[\u{1F1E6}-\u{1F1FF}]{2}/u);
+  return match ? match[0] : "";
+}
+
 function getBaseKey(vlessLine) {
   const qIdx = vlessLine.indexOf("?");
   const main = qIdx !== -1 ? vlessLine.substring(0, qIdx) : vlessLine;
@@ -80,7 +86,10 @@ async function fetchKeys() {
   return filtered.map((line, i) => {
     const hashIdx = line.lastIndexOf("#");
     const base = hashIdx !== -1 ? line.substring(0, hashIdx) : line;
-    return `${base}#⚡LTE/4G⚡LAENFAER ${i + 1}`;
+    const fragment = hashIdx !== -1 ? decodeURIComponent(line.substring(hashIdx + 1)) : "";
+    const flag = extractFlag(fragment);
+    const flagPart = flag ? ` ${flag}` : "";
+    return `${base}#⚡LTE/4G⚡LAENFAER${flagPart} ${i + 1}`;
   });
 }
 
