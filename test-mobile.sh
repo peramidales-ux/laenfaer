@@ -19,7 +19,7 @@ echo ""
 
 # Скачивание ключей с сервера
 echo "Скачиваю ключи с сервера..."
-curl -s http://laenfaer-vpn-youtube.duckdns.org/sub/6210878532 | base64 -d 2>/dev/null | grep '^vless://' > vless.txt
+curl -sL "http://laenfaer-vpn-youtube.duckdns.org/sub/6210878532" | base64 -d 2>/dev/null | grep '^vless://' > vless.txt
 TOTAL=$(wc -l < vless.txt)
 echo "Скачано $TOTAL ключей"
 echo ""
