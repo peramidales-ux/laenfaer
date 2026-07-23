@@ -57289,6 +57289,7 @@ var usersTable = pgTable("users", {
   deviceFingerprint: text("device_fingerprint").default(""),
   webCabinetId: text("web_cabinet_id").default(""),
   webCabinetCode: text("web_cabinet_code").default(""),
+  hadFreeTrial: boolean("had_free_trial").notNull().default(false),
   banned: boolean("banned").notNull().default(false),
   balance: integer("balance").notNull().default(0),
   refBalance: integer("ref_balance").notNull().default(0),
@@ -57353,7 +57354,10 @@ async function getOrCreateUser(telegramId, name, username) {
   const existing = await db.select().from(usersTable).where(eq(usersTable.telegramId, telegramId)).limit(1);
   if (existing.length > 0) return existing[0];
   const [user] = await db.insert(usersTable).values({ telegramId, name, username }).onConflictDoNothing().returning();
-  return user;
+  if (user) return user;
+  // Race condition: another request inserted first; fetch the existing row
+  const fallback = await db.select().from(usersTable).where(eq(usersTable.telegramId, telegramId)).limit(1);
+  return fallback[0];
 }
 async function getUser(telegramId) {
   const rows = await db.select().from(usersTable).where(eq(usersTable.telegramId, telegramId)).limit(1);
@@ -57366,8 +57370,8 @@ async function unbanUser(telegramId) {
   await db.update(usersTable).set({ banned: false }).where(eq(usersTable.telegramId, telegramId));
 }
 async function getUserBalanceInfo(telegramId) {
-  const rows = await db.select({ balance: usersTable.balance, totalPaid: usersTable.totalPaid }).from(usersTable).where(eq(usersTable.telegramId, telegramId)).limit(1);
-  return { balance: rows[0]?.balance ?? 0, totalPaid: rows[0]?.totalPaid ?? 0 };
+  const rows = await db.select({ balance: usersTable.balance, totalPaid: usersTable.totalPaid, refBalance: usersTable.refBalance }).from(usersTable).where(eq(usersTable.telegramId, telegramId)).limit(1);
+  return { balance: rows[0]?.balance ?? 0, totalPaid: rows[0]?.totalPaid ?? 0, refBalance: rows[0]?.refBalance ?? 0 };
 }
 async function addToUserBalance(telegramId, amount) {
   await db.update(usersTable).set({
@@ -57404,6 +57408,10 @@ async function addDaysToSubscription(telegramId, tariff, days, key) {
   return expiresAt;
 }
 async function hasHadFreeKey(telegramId) {
+  // Check the persistent flag in users table (survives tariff upgrades)
+  const rows = await db.select({ hadFreeTrial: usersTable.hadFreeTrial }).from(usersTable).where(eq(usersTable.telegramId, telegramId)).limit(1);
+  if (rows[0]?.hadFreeTrial) return true;
+  // Fallback: also check current subscription tariff for existing users who got a free key before this flag was added
   const sub = await getSubscription(telegramId);
   return sub?.tariff === "free_7days" || sub?.tariff === "free_3days" || sub?.tariff === "free";
 }
@@ -57586,9 +57594,15 @@ async function getActiveSubscriptionsCount() {
 }
 async function deleteUser(telegramId) {
   await db.delete(subscriptionsTable).where(eq(subscriptionsTable.telegramId, telegramId));
-  // Remove referral entry where this user was referred (userId side)
-  await db.delete(referralsTable).where(eq(referralsTable.userId, telegramId));
-  // Remove referral entry where this user was the inviter (inviterId side) and decrement counts
+  // Remove referral entry where this user was referred (userId side) and decrement the inviter's count
+  const asReferred = await db.select().from(referralsTable).where(eq(referralsTable.userId, telegramId)).limit(1);
+  if (asReferred.length > 0) {
+    const inviterId = asReferred[0].inviterId;
+    await db.delete(referralsTable).where(eq(referralsTable.userId, telegramId));
+    // Decrement inviter's referral count (min 0)
+    await db.update(referralCountsTable).set({ count: sql`GREATEST(${referralCountsTable.count} - 1, 0)` }).where(eq(referralCountsTable.userId, inviterId));
+  }
+  // Remove referral entries where this user was the inviter
   const asInviter = await db.select().from(referralsTable).where(eq(referralsTable.inviterId, telegramId));
   if (asInviter.length > 0) {
     await db.delete(referralsTable).where(eq(referralsTable.inviterId, telegramId));
@@ -57783,10 +57797,11 @@ async function checkKeyStatus(key) {
       clearTimeout(timeout);
       const ping = Date.now() - start;
       return { online: true, ping };
-    } catch {
+    } catch (err) {
+      // Any fetch error (ECONNREFUSED, abort, timeout, etc.) means server is offline
       const ping = Date.now() - start;
-      if (ping < 5000) return { online: true, ping };
-      return { online: false, ping: null };
+      if (ping >= 5000) return { online: false, ping: null }; // timeout
+      return { online: false, ping: null }; // fast rejection = port closed
     }
   } catch {
     return { online: false, ping: null };
@@ -58091,11 +58106,11 @@ ID: ${inviterId}
 userBot.callbackQuery("open_withdraw", async (ctx) => {
   const userId = String(ctx.from.id);
   const bal = await getUserBalanceInfo(userId);
-  if (bal.balance <= 0) {
-    await ctx.answerCallbackQuery({ text: "У вас нет баланса для вывода", show_alert: true });
+  const refBal = bal.refBalance || 0;
+  if (refBal <= 0) {
+    await ctx.answerCallbackQuery({ text: "У вас нет реферального баланса для вывода", show_alert: true });
     return;
   }
-  const refBal = bal.refBalance || 0;
   if (refBal < 1000) {
     await ctx.answerCallbackQuery({ text: "Минимальная сумма вывода 1000₽. Ваш реферальный баланс: " + refBal + "₽", show_alert: true });
     return;
@@ -58156,6 +58171,8 @@ userBot.callbackQuery("get_free_key_random", async (ctx) => {
     return;
   }
   const expiry = await setSubscription(String(userId), "free_3days", FREE_DAYS, freeKey);
+  // Mark user as having used their free trial (persistent, survives tariff upgrades)
+  await db.update(usersTable).set({ hadFreeTrial: true }).where(eq(usersTable.telegramId, String(userId)));
   const left = daysLeft(expiry);
   setUserState(userId, `key:${freeKey}`);
   await ctx.editMessageText(
@@ -58648,7 +58665,7 @@ function getCountryForIp(ip) {
   if (ipCountryMap[ip]) return ipCountryMap[ip];
   const first = parseInt(ip.split(".")[0], 10);
   if (first >= 5 && first <= 89) return "\u{1F1F7}\u{1F1FA} \u0420\u043E\u0441\u0441\u0438\u044F";
-  if (first >= 77 && first <= 95) return "\u{1F1F7}\u{1F1FA} \u0420\u043E\u0441\u0441\u0438\u044F";
+  if (first >= 90 && first <= 95) return "\u{1F1F7}\u{1F1FA} \u0420\u043E\u0441\u0441\u0438\u044F";
   if (first >= 176 && first <= 195) return "\u{1F1F7}\u{1F1FA} \u0420\u043E\u0441\u0441\u0438\u044F";
   if (first >= 194 && first <= 213) return "\u{1F1F7}\u{1F1FA} \u0420\u043E\u0441\u0441\u0438\u044F";
   if (first >= 217 && first <= 217) return "\u{1F1F7}\u{1F1FA} \u0420\u043E\u0441\u0441\u0438\u044F";
@@ -60590,11 +60607,16 @@ async function startBots() {
   userBot.command("withdraw", async (ctx) => {
     const userId = String(ctx.from.id);
     const bal = await getUserBalanceInfo(userId);
-    if (bal.balance <= 0) {
-      await ctx.reply("\u{1F4B0} <b>\u0412\u044B\u0432\u043E\u0434 \u0441\u0440\u0435\u0434\u0441\u0442\u0432</b>\n\n\u0423 \u0432\u0430\u0441 \u043D\u0435\u0442 \u0434\u043E\u0441\u0442\u0443\u043F\u043D\u043E\u0433\u043E \u0431\u0430\u043B\u0430\u043D\u0441\u0430.", { parse_mode: "HTML", reply_markup: backToMainKb() });
+    const refBal = bal.refBalance || 0;
+    if (refBal <= 0) {
+      await ctx.reply("\u{1F4B0} <b>\u0412\u044B\u0432\u043E\u0434 \u0441\u0440\u0435\u0434\u0441\u0442\u0432</b>\n\n\u0423 \u0432\u0430\u0441 \u043D\u0435\u0442 \u0434\u043E\u0441\u0442\u0443\u043F\u043D\u043E\u0433\u043E \u0440\u0435\u0444\u0435\u0440\u0430\u043B\u044C\u043D\u043E\u0433\u043E \u0431\u0430\u043B\u0430\u043D\u0441\u0430.", { parse_mode: "HTML", reply_markup: backToMainKb() });
       return;
     }
-    await ctx.reply(`\u{1F4B0} <b>\u0412\u044B\u0432\u043E\u0434 \u0447\u0435\u0440\u0435\u0437 \u0421\u0411\u041F</b>\n\n\u0414\u043E\u0441\u0442\u0443\u043F\u043D\u043E: <b>${bal.balance}\u20BD</b>\n\n\u0422\u0435\u043A\u0441\u0442\u043E\u043C \u043E\u0442\u043F\u0440\u0430\u0432\u044C \u043D\u043E\u043C\u0435\u0440 \u0442\u0435\u043B\u0435\u0444\u043E\u043D\u0430 \u0421\u0411\u041F \u0432 \u0444\u043E\u0440\u043C\u0430\u0442\u0435:\n<code>\u0421\u0411\u041F: +7XXXXXXXXXX</code>`, { parse_mode: "HTML", reply_markup: backToMainKb() });
+    if (refBal < 1000) {
+      await ctx.reply(`\u{1F4B0} <b>\u0412\u044B\u0432\u043E\u0434 \u0447\u0435\u0440\u0435\u0437 \u0421\u0411\u041F</b>\n\n\u0420\u0435\u0444\u0435\u0440\u0430\u043B\u044C\u043D\u044B\u0439 \u0431\u0430\u043B\u0430\u043D\u0441: <b>${refBal}\u20BD</b>\n\n\u274C \u041C\u0438\u043D\u0438\u043C\u0430\u043B\u044C\u043D\u0430\u044F \u0441\u0443\u043C\u043C\u0430 \u0432\u044B\u0432\u043E\u0434\u0430 \u2014 1000\u20BD.`, { parse_mode: "HTML", reply_markup: backToMainKb() });
+      return;
+    }
+    await ctx.reply(`\u{1F4B0} <b>\u0412\u044B\u0432\u043E\u0434 \u0447\u0435\u0440\u0435\u0437 \u0421\u0411\u041F</b>\n\n\u0420\u0435\u0444\u0435\u0440\u0430\u043B\u044C\u043D\u044B\u0439 \u0431\u0430\u043B\u0430\u043D\u0441: <b>${refBal}\u20BD</b>\n\n\u0422\u0435\u043A\u0441\u0442\u043E\u043C \u043E\u0442\u043F\u0440\u0430\u0432\u044C \u043D\u043E\u043C\u0435\u0440 \u0442\u0435\u043B\u0435\u0444\u043E\u043D\u0430 \u0421\u0411\u041F \u0432 \u0444\u043E\u0440\u043C\u0430\u0442\u0435:\n<code>\u0421\u0411\u041F: +7XXXXXXXXXX</code>`, { parse_mode: "HTML", reply_markup: backToMainKb() });
     const handler = async (msg) => {
       if (msg.from?.id !== ctx.from.id || !msg.text) return;
       const phone = msg.text.replace("\u0421\u0411\u041F:", "").trim();
@@ -60603,15 +60625,16 @@ async function startBots() {
         return;
       }
       const freshBal = await getUserBalanceInfo(userId);
-      if (freshBal.balance <= 0) {
-        await userBot.api.sendMessage(ctx.from.id, "\u274C \u0411\u0430\u043B\u0430\u043D\u0441 \u0438\u0441\u0447\u0435\u0440\u043F\u0430\u043D.", { reply_markup: backToMainKb() });
+      const freshRefBal = freshBal.refBalance || 0;
+      if (freshRefBal <= 0) {
+        await userBot.api.sendMessage(ctx.from.id, "\u274C \u0420\u0435\u0444\u0435\u0440\u0430\u043B\u044C\u043D\u044B\u0439 \u0431\u0430\u043B\u0430\u043D\u0441 \u0438\u0441\u0447\u0435\u0440\u043F\u0430\u043D.", { reply_markup: backToMainKb() });
         return;
       }
-      await db.update(usersTable).set({ balance: 0 }).where(eq(usersTable.telegramId, userId));
+      await db.update(usersTable).set({ refBalance: 0 }).where(eq(usersTable.telegramId, userId));
       try {
-        await adminNotifier.api.sendMessage(Number(ADMIN_ID), `\u{1F4B8} <b>\u0417\u0410\u042F\u0412\u041A\u0410 \u041D\u0410 \u0412\u042B\u0412\u041E\u0414</b>\n\n\u{1F464} \u041F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u0435\u043B\u044C: <code>${userId}</code>\n\u{1F4B0} \u0421\u0443\u043C\u043C\u0430: <b>${freshBal.balance}\u20BD</b>\n\u{1F4F1} \u0421\u0411\u041F: <b>${phone}</b>`, { parse_mode: "HTML", reply_markup: adminBackKb() });
+        await adminNotifier.api.sendMessage(Number(ADMIN_ID), `\u{1F4B8} <b>\u0417\u0410\u042F\u0412\u041A\u0410 \u041D\u0410 \u0412\u042B\u0412\u041E\u0414</b>\n\n\u{1F464} \u041F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u0435\u043B\u044C: <code>${userId}</code>\n\u{1F4B0} \u0421\u0443\u043C\u043C\u0430: <b>${freshRefBal}\u20BD</b>\n\u{1F4F1} \u0421\u0411\u041F: <b>${phone}</b>`, { parse_mode: "HTML", reply_markup: adminBackKb() });
       } catch {}
-      await userBot.api.sendMessage(ctx.from.id, `\u2705 <b>\u0417\u0430\u044F\u0432\u043A\u0430 \u043E\u0442\u043F\u0440\u0430\u0432\u043B\u0435\u043D\u0430!</b>\n\n\u0410\u0434\u043C\u0438\u043D\u0438\u0441\u0442\u0440\u0430\u0442\u043E\u0440 \u043E\u0431\u0440\u0430\u0431\u043E\u0442\u0430\u0435\u0442 \u0432\u044B\u043F\u043B\u0430\u0442\u0443 <b>${freshBal.balance}\u20BD</b> \u043D\u0430 ${phone} \u0432 \u0431\u043B\u0438\u0436\u0430\u0439\u0448\u0435\u0435 \u0432\u0440\u0435\u043C\u044F.`, { parse_mode: "HTML", reply_markup: backToMainKb() });
+      await userBot.api.sendMessage(ctx.from.id, `\u2705 <b>\u0417\u0430\u044F\u0432\u043A\u0430 \u043E\u0442\u043F\u0440\u0430\u0432\u043B\u0435\u043D\u0430!</b>\n\n\u0410\u0434\u043C\u0438\u043D\u0438\u0441\u0442\u0440\u0430\u0442\u043E\u0440 \u043E\u0431\u0440\u0430\u0431\u043E\u0442\u0430\u0435\u0442 \u0432\u044B\u043F\u043B\u0430\u0442\u0443 <b>${freshRefBal}\u20BD</b> \u043D\u0430 ${phone} \u0432 \u0431\u043B\u0438\u0436\u0430\u0439\u0448\u0435\u0435 \u0432\u0440\u0435\u043C\u044F.`, { parse_mode: "HTML", reply_markup: backToMainKb() });
     };
     userBot.on("message:text", handler);
     setTimeout(() => userBot.off("message:text", handler), 120000);
@@ -60652,6 +60675,7 @@ if (Number.isNaN(port) || port <= 0) {
     await db.execute(`ALTER TABLE users ADD COLUMN IF NOT EXISTS device_fingerprint text DEFAULT ''`);
     await db.execute(`ALTER TABLE users ADD COLUMN IF NOT EXISTS web_cabinet_id text DEFAULT ''`);
     await db.execute(`ALTER TABLE users ADD COLUMN IF NOT EXISTS web_cabinet_code text DEFAULT ''`);
+    await db.execute(`ALTER TABLE users ADD COLUMN IF NOT EXISTS had_free_trial boolean DEFAULT false`);
     logger.info("Cabinet columns migration done");
   } catch (e) { logger.warn({ e }, "Migration skip"); }
 })();
