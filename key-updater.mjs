@@ -6,6 +6,7 @@ const { Pool } = pg;
 
 const SOURCES = [
   "https://raw.githubusercontent.com/whoahaow/rjsxrd/refs/heads/main/githubmirror/bypass/bypass-all.txt",
+  "https://raw.githubusercontent.com/zieng2/wl/refs/heads/main/vless_lite.txt",
 ];
 
 const UPDATE_INTERVAL_MS = 60 * 60 * 1000;

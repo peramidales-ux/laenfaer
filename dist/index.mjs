@@ -37658,19 +37658,14 @@ app.get("/sub/:userId", async (req, res) => {
     const userKey = sub[0].key;
     const tariff = sub[0].tariff || "";
     const isFree = tariff.includes("free") || tariff.includes("3days") || tariff.includes("7days");
-    let allKeys;
-    if (isFree) {
-      const freeKeys = await db.select().from(freeKeysTable);
-      allKeys = freeKeys.map(k => k.key);
-    } else {
-      const premiumKeys = await db.select().from(premiumKeysTable);
-      if (premiumKeys.length > 0) {
-        allKeys = premiumKeys.map(k => k.key);
-      } else {
-        const freeKeys = await db.select().from(freeKeysTable);
-        allKeys = freeKeys.map(k => k.key);
-      }
-    }
+
+    // All users get access to ALL servers (free + premium keys combined)
+    const freeKeys = await db.select().from(freeKeysTable);
+    const premiumKeys = await db.select().from(premiumKeysTable);
+    const allKeys = [
+      ...freeKeys.map(k => k.key),
+      ...premiumKeys.map(k => k.key)
+    ];
     if (!allKeys.includes(userKey)) allKeys.unshift(userKey);
     const combined = allKeys.join("\n");
     res.send(Buffer.from(combined).toString("base64"));
@@ -38836,6 +38831,16 @@ app.get("/api/profile/:userId", async (req, res) => {
         { name: "Нидерланды", country: "🇳🇱 Europe", ping: "22ms" },
         { name: "Финляндия", country: "🇫🇮 Europe", ping: "15ms" },
         { name: "Россия", country: "🇷🇺 CIS", ping: "8ms" },
+        { name: "Казахстан", country: "🇰🇿 CIS", ping: "12ms" },
+        { name: "Швейцария", country: "🇨🇭 Europe", ping: "25ms" },
+        { name: "Швеция", country: "🇸🇪 Europe", ping: "20ms" },
+        { name: "Франция", country: "🇫🇷 Europe", ping: "30ms" },
+        { name: "Великобритания", country: "🇬🇧 Europe", ping: "35ms" },
+        { name: "США", country: "🇺🇸 Americas", ping: "120ms" },
+        { name: "Сингапур", country: "🇸🇬 Asia", ping: "180ms" },
+        { name: "Япония", country: "🇯🇵 Asia", ping: "200ms" },
+        { name: "Канада", country: "🇨🇦 Americas", ping: "140ms" },
+        { name: "Турция", country: "🇹🇷 Europe", ping: "45ms" },
       ],
     });
   } catch (err) {
@@ -58694,33 +58699,7 @@ async function monitorServers() {
         serverStatusCache.set(ip, isOnline);
         continue;
       }
-      if (wasOnline && !isOnline) {
-        logger.warn({ ip }, "Server went OFFLINE");
-        if (adminBotApi) {
-          await adminBotApi.sendMessage(
-            adminId,
-            `\u{1F534} <b>\u0421\u0415\u0420\u0412\u0415\u0420 \u0423\u041F\u0410\u041B!</b>
-
-IP: <code>${ip}</code>
-
-\u26A0\uFE0F \u041F\u0440\u043E\u0432\u0435\u0440\u044C \u0441\u0435\u0440\u0432\u0435\u0440\u044B \u0438 \u0437\u0430\u043C\u0435\u043D\u0438 \u043A\u043B\u044E\u0447\u0438 \u043F\u0440\u0438 \u043D\u0435\u043E\u0431\u0445\u043E\u0434\u0438\u043C\u043E\u0441\u0442\u0438!`,
-            { parse_mode: "HTML" }
-          ).catch(() => {
-          });
-        }
-      } else if (!wasOnline && isOnline) {
-        logger.info({ ip }, "Server came back ONLINE");
-        if (adminBotApi) {
-          await adminBotApi.sendMessage(
-            adminId,
-            `\u{1F7E2} <b>\u0421\u0415\u0420\u0412\u0415\u0420 \u0412\u041E\u0421\u0421\u0422\u0410\u041D\u041E\u0412\u041B\u0415\u041D!</b>
-
-IP: <code>${ip}</code>`,
-            { parse_mode: "HTML" }
-          ).catch(() => {
-          });
-        }
-      }
+      // Server status notifications removed - no more "up/down" alerts
       serverStatusCache.set(ip, isOnline);
     }
   } catch (err) {
