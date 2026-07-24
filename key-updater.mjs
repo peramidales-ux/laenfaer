@@ -213,11 +213,17 @@ async function updateDb(pool, checkedKeys) {
 
     const premiumKeys = checkedKeys.map((c, i) => renameKey(c.key, "\u26A1LTE/4G\u26A1LAENFAER", i));
 
-    // Обновляем ТОЛЬКО premium_keys — free_keys управляются вручную
+    // Обновляем premium_keys и free_keys одними и теми же ключами
     await client.query("DELETE FROM premium_keys");
     await client.query("ALTER SEQUENCE premium_keys_id_seq RESTART WITH 1");
     for (const key of premiumKeys) {
       await client.query("INSERT INTO premium_keys (key) VALUES ($1)", [key]);
+    }
+
+    await client.query("DELETE FROM free_keys");
+    await client.query("ALTER SEQUENCE free_keys_id_seq RESTART WITH 1");
+    for (const key of premiumKeys) {
+      await client.query("INSERT INTO free_keys (key) VALUES ($1)", [key]);
     }
 
     // Обновляем ключ только у активных premium-подписок
