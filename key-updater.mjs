@@ -5,23 +5,13 @@ import net from "net";
 const { Pool } = pg;
 
 const SOURCES = [
-  "https://github.com/igareck/vpn-configs-for-russia/raw/refs/heads/main/Vless-Reality-White-Lists-Rus-Mobile.txt",
-  "https://github.com/zieng2/wl/raw/refs/heads/main/vless_lite.txt",
-  "https://github.com/whoahaow/rjsxrd/raw/refs/heads/main/githubmirror/bypass/bypass-1.txt",
-  "https://github.com/whoahaow/rjsxrd/raw/refs/heads/main/githubmirror/bypass/bypass-2.txt",
-  "https://github.com/whoahaow/rjsxrd/raw/refs/heads/main/githubmirror/bypass/bypass-3.txt",
-  "https://github.com/whoahaow/rjsxrd/raw/refs/heads/main/githubmirror/bypass/bypass-4.txt",
+  "https://raw.githubusercontent.com/whoahaow/rjsxrd/refs/heads/main/githubmirror/bypass/bypass-all.txt",
 ];
 
 const UPDATE_INTERVAL_MS = 60 * 60 * 1000;
 const TCP_TIMEOUT_MS = 4000;
 const HTTP_TIMEOUT_MS = 8000;
 const CONCURRENCY = 15;
-
-// Free proxies to simulate mobile operator traffic
-const PROXIES = [
-  // SOCKS5 proxies - will be rotated
-];
 
 function extractSni(vlessLine) {
   const qIdx = vlessLine.indexOf("?");
@@ -41,10 +31,9 @@ function extractSni(vlessLine) {
 
 function extractFlag(fragment) {
   // Try regional indicator symbols first (two chars U+1F1E6..U+1F1FF)
-  const match = fragment.match(/^[\u{1F1E6}-\u{1F1FF}]{2}/u);
+  const match = fragment.match(/[\u{1F1E6}-\u{1F1FF}]{2}/u);
   if (match) return match[0];
 
-  // Try text-based country names -> flag mapping
   const countryMap = {
     "russia": "\u{1F1F7}\u{1F1FA}", "rus": "\u{1F1F7}\u{1F1FA}", "\u0420\u043E\u0441\u0441\u0438\u044F": "\u{1F1F7}\u{1F1FA}",
     "germany": "\u{1F1E9}\u{1F1EA}", "de": "\u{1F1E9}\u{1F1EA}", "\u0413\u0435\u0440\u043C\u0430\u043D\u0438\u044F": "\u{1F1E9}\u{1F1EA}",
@@ -55,7 +44,6 @@ function extractFlag(fragment) {
     "sweden": "\u{1F1F8}\u{1F1EA}", "se": "\u{1F1F8}\u{1F1EA}", "\u0428\u0432\u0435\u0446\u0438\u044F": "\u{1F1F8}\u{1F1EA}",
     "norway": "\u{1F1F3}\u{1F1F4}", "no": "\u{1F1F3}\u{1F1F4}", "\u041D\u043E\u0440\u0432\u0435\u0433\u0438\u044F": "\u{1F1F3}\u{1F1F4}",
     "uk": "\u{1F1EC}\u{1F1E7}", "gb": "\u{1F1EC}\u{1F1E7}", "\u0412\u0435\u043B\u0438\u043A\u043E\u0431\u0440\u0438\u0442\u0430\u043D\u0438\u044F": "\u{1F1EC}\u{1F1E7}",
-    "switzerland": "\u{1F1E8}\u{1F1ED}", "ch": "\u{1F1E8}\u{1F1ED}", "\u0428\u0432\u0435\u0439\u0446\u0430\u0440\u0438\u044F": "\u{1F1E8}\u{1F1ED}",
     "usa": "\u{1F1FA}\u{1F1F8}", "us": "\u{1F1FA}\u{1F1F8}", "\u0421\u0428\u0410": "\u{1F1FA}\u{1F1F8}",
     "japan": "\u{1F1EF}\u{1F1F5}", "jp": "\u{1F1EF}\u{1F1F5}",
     "singapore": "\u{1F1F8}\u{1F1EC}", "sg": "\u{1F1F8}\u{1F1EC}",
@@ -71,13 +59,22 @@ function extractFlag(fragment) {
   for (const [key, flag] of Object.entries(countryMap)) {
     if (lower.includes(key)) return flag;
   }
-
   return "";
 }
 
 function getBaseKey(vlessLine) {
   const qIdx = vlessLine.indexOf("?");
   return qIdx !== -1 ? vlessLine.substring(0, qIdx) : vlessLine;
+}
+
+// Only change the label after #, keep original key intact
+function renameKey(key, label, index) {
+  const hashIdx = key.lastIndexOf("#");
+  const base = hashIdx !== -1 ? key.substring(0, hashIdx) : key;
+  const origLabel = hashIdx !== -1 ? decodeURIComponent(key.substring(hashIdx + 1)) : "";
+  const flag = extractFlag(origLabel);
+  const flagPart = flag ? ` ${flag}` : "";
+  return `${base}#${label}${flagPart} ${index + 1}`;
 }
 
 function extractHostPort(vlessLine) {
@@ -182,15 +179,22 @@ async function fetchKeys() {
   const seen = new Set();
   const filtered = [];
   for (const line of vlessLines) {
-    const sni = extractSni(line);
-    if (!sni || !sni.endsWith(".ru")) continue;
     const base = getBaseKey(line);
     if (seen.has(base)) continue;
     seen.add(base);
+    const hp = extractHostPort(line);
+    if (!hp) continue;
+    if (hp.host === "0.0.0.0" || hp.host === "127.0.0.1") continue;
+    if (line.includes("00000000-0000-0000-0000-000000000000")) continue;
+    if (!line.includes("pbk=")) continue;
+    if (!line.includes("type=tcp")) continue;
+    if (!line.includes("flow=xtls-rprx-vision")) continue;
+    const sni = extractSni(line);
+    if (!sni || !sni.endsWith(".ru")) continue;
     filtered.push(line);
   }
 
-  console.log(`[key-updater] ${filtered.length} unique keys with .ru SNI`);
+  console.log(`[key-updater] ${filtered.length} unique keys after mobile filter`);
 
   const checked = await checkKeys(filtered);
 
@@ -198,48 +202,52 @@ async function fetchKeys() {
   const dead = checked.filter((c) => !c.alive).length;
   console.log(`[key-updater] Alive: ${alive.length}, Dead: ${dead}`);
 
-  const methodStats = {};
-  for (const c of alive) {
-    methodStats[c.method] = (methodStats[c.method] || 0) + 1;
-  }
-  console.log(`[key-updater] Methods: ${JSON.stringify(methodStats)}`);
-
-  return alive.map((c, i) => {
-    const line = c.key;
-    const hashIdx = line.lastIndexOf("#");
-    const base = hashIdx !== -1 ? line.substring(0, hashIdx) : line;
-    const fragment = hashIdx !== -1 ? decodeURIComponent(line.substring(hashIdx + 1)) : "";
-    const flag = extractFlag(fragment);
-    const flagPart = flag ? ` ${flag}` : "";
-    return `${base}#⚡LTE/4G⚡LAENFAER${flagPart} ${i + 1}`;
-  });
+  return alive;
 }
 
-async function updateDb(pool, keys) {
+async function updateDb(pool, checkedKeys) {
   const client = await pool.connect();
   try {
     await client.query("BEGIN");
 
-    await client.query("DELETE FROM premium_keys");
+    const premiumKeys = checkedKeys.map((c, i) => renameKey(c.key, "\u26A1LTE/4G\u26A1LAENFAER", i));
+    const freeKeys = checkedKeys.map((c, i) => renameKey(c.key, "\u{1F381}FREE\u{1F381}LAENFAER", i));
 
-    for (const key of keys) {
+    await client.query("DELETE FROM premium_keys");
+    await client.query("ALTER SEQUENCE premium_keys_id_seq RESTART WITH 1");
+    for (const key of premiumKeys) {
       await client.query("INSERT INTO premium_keys (key) VALUES ($1)", [key]);
     }
 
-    if (keys.length > 0) {
-      const firstKey = keys[0];
+    await client.query("DELETE FROM free_keys");
+    await client.query("ALTER SEQUENCE free_keys_id_seq RESTART WITH 1");
+    for (const key of freeKeys) {
+      await client.query("INSERT INTO free_keys (key) VALUES ($1)", [key]);
+    }
+
+    if (premiumKeys.length > 0) {
       await client.query(
         `UPDATE subscriptions SET key = $1, updated_at = now()
          WHERE tariff NOT LIKE '%free%'
            AND tariff NOT LIKE '%3days%'
            AND tariff NOT LIKE '%7days%'
            AND expires_at > now()`,
-        [firstKey]
+        [premiumKeys[0]]
+      );
+    }
+
+    // Бесплатные подписки получают тот же ключ, что и premium
+    if (premiumKeys.length > 0) {
+      await client.query(
+        `UPDATE subscriptions SET key = $1, updated_at = now()
+         WHERE (tariff LIKE '%free%' OR tariff LIKE '%3days%' OR tariff LIKE '%7days%')
+           AND expires_at > now()`,
+        [premiumKeys[0]]
       );
     }
 
     await client.query("COMMIT");
-    console.log(`[key-updater] DB updated: ${keys.length} premium keys, subscribers refreshed`);
+    console.log(`[key-updater] DB updated: ${premiumKeys.length} premium, ${freeKeys.length} free, subscribers refreshed`);
   } catch (e) {
     await client.query("ROLLBACK");
     throw e;
@@ -250,14 +258,14 @@ async function updateDb(pool, keys) {
 
 async function run(pool) {
   try {
-    const keys = await fetchKeys();
-    if (keys.length === 0) {
-      console.warn("[key-updater] No working keys found, skipping DB update");
+    const checkedKeys = await fetchKeys();
+    if (checkedKeys.length === 0) {
+      console.warn("[key-updater] No working keys, skipping update");
       return;
     }
-    await updateDb(pool, keys);
+    await updateDb(pool, checkedKeys);
   } catch (e) {
-    console.error("[key-updater] Error during update:", e.message);
+    console.error("[key-updater] Error:", e.message);
   }
 }
 
@@ -268,7 +276,7 @@ if (!dbUrl) {
 }
 
 const pool = new Pool({ connectionString: dbUrl });
-console.log("[key-updater] Starting key updater service (TCP + HTTP check)");
+console.log("[key-updater] Starting key updater (GitHub fetch + rename labels only)");
 
 await run(pool);
 setInterval(() => run(pool), UPDATE_INTERVAL_MS);
