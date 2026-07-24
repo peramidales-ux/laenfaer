@@ -189,6 +189,8 @@ async function fetchKeys() {
     if (!line.includes("pbk=")) continue;
     if (!line.includes("type=tcp")) continue;
     if (!line.includes("flow=xtls-rprx-vision")) continue;
+    const sni = extractSni(line);
+    if (!sni || !sni.endsWith(".ru")) continue;
     filtered.push(line);
   }
 
@@ -209,20 +211,15 @@ async function updateDb(pool, checkedKeys) {
     await client.query("BEGIN");
 
     const premiumKeys = checkedKeys.map((c, i) => renameKey(c.key, "\u26A1LTE/4G\u26A1LAENFAER", i));
-    const freeKeys = checkedKeys.map((c, i) => renameKey(c.key, "\u{1F381}FREE\u{1F381}LAENFAER", i));
 
+    // Обновляем ТОЛЬКО premium_keys — free_keys управляются вручную
     await client.query("DELETE FROM premium_keys");
     await client.query("ALTER SEQUENCE premium_keys_id_seq RESTART WITH 1");
     for (const key of premiumKeys) {
       await client.query("INSERT INTO premium_keys (key) VALUES ($1)", [key]);
     }
 
-    await client.query("DELETE FROM free_keys");
-    await client.query("ALTER SEQUENCE free_keys_id_seq RESTART WITH 1");
-    for (const key of freeKeys) {
-      await client.query("INSERT INTO free_keys (key) VALUES ($1)", [key]);
-    }
-
+    // Обновляем ключ только у активных premium-подписок
     if (premiumKeys.length > 0) {
       await client.query(
         `UPDATE subscriptions SET key = $1, updated_at = now()
@@ -234,18 +231,8 @@ async function updateDb(pool, checkedKeys) {
       );
     }
 
-    // Бесплатные подписки получают тот же ключ, что и premium
-    if (premiumKeys.length > 0) {
-      await client.query(
-        `UPDATE subscriptions SET key = $1, updated_at = now()
-         WHERE (tariff LIKE '%free%' OR tariff LIKE '%3days%' OR tariff LIKE '%7days%')
-           AND expires_at > now()`,
-        [premiumKeys[0]]
-      );
-    }
-
     await client.query("COMMIT");
-    console.log(`[key-updater] DB updated: ${premiumKeys.length} premium, ${freeKeys.length} free, subscribers refreshed`);
+    console.log(`[key-updater] DB updated: ${premiumKeys.length} premium keys, free_keys unchanged`);
   } catch (e) {
     await client.query("ROLLBACK");
     throw e;

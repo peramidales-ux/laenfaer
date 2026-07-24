@@ -37657,14 +37657,19 @@ app.get("/sub/:userId", async (req, res) => {
     }
     const userKey = sub[0].key;
     const tariff = sub[0].tariff || "";
-    // Все тарифы получают одинаковые серверы — premium_keys, обновляемые каждый час
+    const isFree = tariff.includes("free") || tariff.includes("3days") || tariff.includes("7days");
     let allKeys;
-    const premiumKeys = await db.select().from(premiumKeysTable);
-    if (premiumKeys.length > 0) {
-      allKeys = premiumKeys.map(k => k.key);
-    } else {
+    if (isFree) {
       const freeKeys = await db.select().from(freeKeysTable);
       allKeys = freeKeys.map(k => k.key);
+    } else {
+      const premiumKeys = await db.select().from(premiumKeysTable);
+      if (premiumKeys.length > 0) {
+        allKeys = premiumKeys.map(k => k.key);
+      } else {
+        const freeKeys = await db.select().from(freeKeysTable);
+        allKeys = freeKeys.map(k => k.key);
+      }
     }
     if (!allKeys.includes(userKey)) allKeys.unshift(userKey);
     const combined = allKeys.join("\n");
