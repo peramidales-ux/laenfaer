@@ -57437,20 +57437,48 @@ async function getSubscriptionsExpiringSoon() {
 async function markReminderSent(telegramId) {
   await db.update(subscriptionsTable).set({ reminderSent: true }).where(eq(subscriptionsTable.telegramId, telegramId));
 }
+function extractSniFromKey(vlessLine) {
+  const qIdx = vlessLine.indexOf("?");
+  if (qIdx === -1) return null;
+  const query = vlessLine.substring(qIdx + 1);
+  const hashIdx = query.indexOf("#");
+  const params = hashIdx !== -1 ? query.substring(0, hashIdx) : query;
+  for (const part of params.split("&")) {
+    const [key, ...rest] = part.split("=");
+    const val = rest.join("=");
+    if (key === "sni" || key === "host") {
+      return decodeURIComponent(val);
+    }
+  }
+  return null;
+}
+
+function isValidKey(key) {
+  if (!key.startsWith("vless://")) return false;
+  const sni = extractSniFromKey(key);
+  return sni && sni.endsWith(".ru");
+}
+
 async function getFreeKeys() {
   return db.select().from(freeKeysTable).orderBy(freeKeysTable.id);
 }
 async function addFreeKey(key) {
+  if (!isValidKey(key)) return false;
   await db.insert(freeKeysTable).values({ key });
+  return true;
 }
 async function updateFreeKey(id, key) {
+  if (!isValidKey(key)) return false;
   await db.update(freeKeysTable).set({ key }).where(eq(freeKeysTable.id, id));
+  return true;
 }
 async function getPremiumKeys() {
   return db.select().from(premiumKeysTable).orderBy(premiumKeysTable.id);
 }
 async function addPremiumKey(key) {
+  if (!isValidKey(key)) return false;
   await db.insert(premiumKeysTable).values({ key });
+  return true;
 }
 async function updatePremiumKey(id, key) {
   await db.update(premiumKeysTable).set({ key }).where(eq(premiumKeysTable.id, id));
@@ -59851,23 +59879,27 @@ ${escapeHtml(text2)}`,
       await ctx.reply("\u274C \u041D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D\u043E \u043D\u0438 \u043E\u0434\u043D\u043E\u0433\u043E \u043A\u043B\u044E\u0447\u0430", { reply_markup: adminBackKb() });
       return;
     }
+    const validKeys = lines.filter(k => isValidKey(k));
+    const filtered = lines.length - validKeys.length;
     await clearFreeKeys();
-    for (const k of lines) await addFreeKey(k);
+    for (const k of validKeys) await addFreeKey(k);
     const subs = await getAllSubscriptions();
     let updated = 0;
     for (const sub of subs) {
       if ((sub.tariff === "free_7days" || sub.tariff === "free_3days" || sub.tariff === "free")) {
-        const newKey = lines[0];
-        await updateSubscriptionKeyOnly(sub.telegramId, newKey);
-        updated++;
+        const newKey = validKeys[0];
+        if (newKey) {
+          await updateSubscriptionKeyOnly(sub.telegramId, newKey);
+          updated++;
+        }
       }
     }
     const freeKeys = await getFreeKeys();
     await ctx.reply(
       `\u2705 <b>\u0411\u0435\u0441\u043F\u043B\u0430\u0442\u043D\u044B\u0435 \u043A\u043B\u044E\u0447\u0438 \u043E\u0431\u043D\u043E\u0432\u043B\u0435\u043D\u044B!</b>
 
-\u0414\u043E\u0431\u0430\u0432\u043B\u0435\u043D\u043E \u0432 \u043F\u0443\u043B: <b>${lines.length}</b> \u043A\u043B\u044E\u0447\u0435\u0439
-\u041F\u043E\u0434\u043F\u0438\u0441\u0447\u0438\u043A\u043E\u0432 \u043E\u0431\u043D\u043E\u0432\u043B\u0435\u043D\u043E: <b>${updated}</b>
+\u0414\u043E\u0431\u0430\u0432\u043B\u0435\u043D\u043E \u0432 \u043F\u0443\u043B: <b>${validKeys.length}</b> \u043A\u043B\u044E\u0447\u0435\u0439 (.ru SNI)
+${filtered > 0 ? `\u26A0\uFE0F \u041E\u0442\u0444\u0438\u043B\u044C\u0442\u0440\u043E\u0432\u0430\u043D\u043E: <b>${filtered}</b> \u043A\u043B\u044E\u0447\u0435\u0439 \u0431\u0435\u0437 .ru SNI\n` : ""}\u041F\u043E\u0434\u043F\u0438\u0441\u0447\u0438\u043A\u043E\u0432 \u043E\u0431\u043D\u043E\u0432\u043B\u0435\u043D\u043E: <b>${updated}</b>
 \u0423\u0432\u0435\u0434\u043E\u043C\u043B\u0435\u043D\u0438\u044F \u043D\u0435 \u043E\u0442\u043F\u0440\u0430\u0432\u043B\u044F\u043B\u0438\u0441\u044C.`,
       { parse_mode: "HTML", reply_markup: freeKeysKb(freeKeys) }
     );
@@ -59880,24 +59912,28 @@ ${escapeHtml(text2)}`,
       await ctx.reply("\u274C \u041D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D\u043E \u043D\u0438 \u043E\u0434\u043D\u043E\u0433\u043E \u043A\u043B\u044E\u0447\u0430", { reply_markup: adminBackKb() });
       return;
     }
+    const validKeys = lines.filter(k => isValidKey(k));
+    const filtered = lines.length - validKeys.length;
     await clearPremiumKeys();
-    for (const k of lines) await addPremiumKey(k);
+    for (const k of validKeys) await addPremiumKey(k);
     const subs = await getAllSubscriptions();
     let updated = 0;
     const premTariffs = ["30days", "60days", "365days"];
     for (const sub of subs) {
       if (premTariffs.includes(sub.tariff)) {
-        const newKey = lines[0];
-        await updateSubscriptionKeyOnly(sub.telegramId, newKey);
-        updated++;
+        const newKey = validKeys[0];
+        if (newKey) {
+          await updateSubscriptionKeyOnly(sub.telegramId, newKey);
+          updated++;
+        }
       }
     }
     const premKeys = await getPremiumKeys();
     await ctx.reply(
       `\u2705 <b>Premium \u043A\u043B\u044E\u0447\u0438 \u043E\u0431\u043D\u043E\u0432\u043B\u0435\u043D\u044B!</b>
 
-\u0414\u043E\u0431\u0430\u0432\u043B\u0435\u043D\u043E \u0432 \u043F\u0443\u043B: <b>${lines.length}</b> \u043A\u043B\u044E\u0447\u0435\u0439
-\u041F\u043E\u0434\u043F\u0438\u0441\u0447\u0438\u043A\u043E\u0432 \u043E\u0431\u043D\u043E\u0432\u043B\u0435\u043D\u043E: <b>${updated}</b>
+\u0414\u043E\u0431\u0430\u0432\u043B\u0435\u043D\u043E \u0432 \u043F\u0443\u043B: <b>${validKeys.length}</b> \u043A\u043B\u044E\u0447\u0435\u0439 (.ru SNI)
+${filtered > 0 ? `\u26A0\uFE0F \u041E\u0442\u0444\u0438\u043B\u044C\u0442\u0440\u043E\u0432\u0430\u043D\u043E: <b>${filtered}</b> \u043A\u043B\u044E\u0447\u0435\u0439 \u0431\u0435\u0437 .ru SNI\n` : ""}\u041F\u043E\u0434\u043F\u0438\u0441\u0447\u0438\u043A\u043E\u0432 \u043E\u0431\u043D\u043E\u0432\u043B\u0435\u043D\u043E: <b>${updated}</b>
 \u0423\u0432\u0435\u0434\u043E\u043C\u043B\u0435\u043D\u0438\u044F \u043D\u0435 \u043E\u0442\u043F\u0440\u0430\u0432\u043B\u044F\u043B\u0438\u0441\u044C.`,
       { parse_mode: "HTML", reply_markup: premiumKeysKb(premKeys) }
     );
@@ -59909,8 +59945,12 @@ ${escapeHtml(text2)}`,
       await ctx.reply("\u274C \u041A\u043B\u044E\u0447 \u043D\u0435 \u043C\u043E\u0436\u0435\u0442 \u0431\u044B\u0442\u044C \u043F\u0443\u0441\u0442\u044B\u043C", { reply_markup: adminBackKb() });
       return;
     }
-    await addFreeKey(text2.trim());
-    await ctx.reply("\u2705 \u0411\u0435\u0441\u043F\u043B\u0430\u0442\u043D\u044B\u0439 \u043A\u043B\u044E\u0447 \u0434\u043E\u0431\u0430\u0432\u043B\u0435\u043D!", { reply_markup: adminBackKb() });
+    const added = await addFreeKey(text2.trim());
+    if (added) {
+      await ctx.reply("\u2705 \u0411\u0435\u0441\u043F\u043B\u0430\u0442\u043D\u044B\u0439 \u043A\u043B\u044E\u0447 \u0434\u043E\u0431\u0430\u0432\u043B\u0435\u043D! (.ru SNI)", { reply_markup: adminBackKb() });
+    } else {
+      await ctx.reply("\u274C \u041A\u043B\u044E\u0447 \u043E\u0442\u0432\u0435\u0440\u0433\u043D\u0443\u0442: \u043D\u0443\u0436\u0435\u043D SNI \u0441 \u043E\u043A\u043E\u043D\u0447\u0430\u043D\u0438\u0435\u043C .ru", { reply_markup: adminBackKb() });
+    }
     return;
   }
   if (state.startsWith("editing_free_key_")) {
@@ -59930,8 +59970,12 @@ ${escapeHtml(text2)}`,
       await ctx.reply("\u274C \u041A\u043B\u044E\u0447 \u043D\u0435 \u043C\u043E\u0436\u0435\u0442 \u0431\u044B\u0442\u044C \u043F\u0443\u0441\u0442\u044B\u043C", { reply_markup: adminBackKb() });
       return;
     }
-    await addPremiumKey(text2.trim());
-    await ctx.reply("\u2705 Premium \u043A\u043B\u044E\u0447 \u0434\u043E\u0431\u0430\u0432\u043B\u0435\u043D!", { reply_markup: adminBackKb() });
+    const added = await addPremiumKey(text2.trim());
+    if (added) {
+      await ctx.reply("\u2705 Premium \u043A\u043B\u044E\u0447 \u0434\u043E\u0431\u0430\u0432\u043B\u0435\u043D! (.ru SNI)", { reply_markup: adminBackKb() });
+    } else {
+      await ctx.reply("\u274C \u041A\u043B\u044E\u0447 \u043E\u0442\u0432\u0435\u0440\u0433\u043D\u0443\u0442: \u043D\u0443\u0436\u0435\u043D SNI \u0441 \u043E\u043A\u043E\u043D\u0447\u0430\u043D\u0438\u0435\u043C .ru", { reply_markup: adminBackKb() });
+    }
     return;
   }
   if (state.startsWith("editing_prem_key_")) {
@@ -59952,9 +59996,15 @@ ${escapeHtml(text2)}`,
       await ctx.reply("\u274C \u041D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D\u043E \u043D\u0438 \u043E\u0434\u043D\u043E\u0433\u043E \u043A\u043B\u044E\u0447\u0430", { reply_markup: adminBackKb() });
       return;
     }
+    const validKeys = lines.filter(k => isValidKey(k));
+    const filtered = lines.length - validKeys.length;
+    if (!validKeys.length) {
+      await ctx.reply("\u274C \u041D\u0438 \u043E\u0434\u043D\u043E\u0433\u043E \u043A\u043B\u044E\u0447\u0430 \u0441 .ru SNI", { reply_markup: adminBackKb() });
+      return;
+    }
     await clearFreeKeys();
     await clearPremiumKeys();
-    for (const k of lines) {
+    for (const k of validKeys) {
       await addFreeKey(k);
       await addPremiumKey(k);
     }
@@ -59962,17 +60012,20 @@ ${escapeHtml(text2)}`,
     let updatedFree = 0, updatedPrem = 0;
     const premTariffs = ["30days", "60days", "90days", "180days", "365days", "1day"];
     for (const sub of subs) {
-      const newKey = lines[0];
-      if ((sub.tariff === "free_3days" || sub.tariff === "free_7days" || sub.tariff === "free")) {
-        await updateSubscriptionKeyOnly(sub.telegramId, newKey);
-        updatedFree++;
-      } else if (premTariffs.includes(sub.tariff)) {
-        await updateSubscriptionKeyOnly(sub.telegramId, newKey);
-        updatedPrem++;
+      const newKey = validKeys[0];
+      if (newKey) {
+        if ((sub.tariff === "free_3days" || sub.tariff === "free_7days" || sub.tariff === "free")) {
+          await updateSubscriptionKeyOnly(sub.telegramId, newKey);
+          updatedFree++;
+        } else if (premTariffs.includes(sub.tariff)) {
+          await updateSubscriptionKeyOnly(sub.telegramId, newKey);
+          updatedPrem++;
+        }
       }
     }
     await ctx.reply(
-      `\u2705 <b>\u0412\u0441\u0435 \u043A\u043B\u044E\u0447\u0438 \u0437\u0430\u043C\u0435\u043D\u0435\u043D\u044B!</b>\n\n\u{1F504} \u041D\u043E\u0432\u044B\u0445 \u043A\u043B\u044E\u0447\u0435\u0439 \u0432 \u043F\u0443\u043B\u0435: <b>${lines.length}</b>\n\u{1F381} \u0411\u0435\u0441\u043F\u043B\u0430\u0442\u043D\u044B\u0445 \u043F\u043E\u0434\u043F\u0438\u0441\u0447\u0438\u043A\u043E\u0432 \u043E\u0431\u043D\u043E\u0432\u043B\u0435\u043D\u043E: <b>${updatedFree}</b>\n\u2B50 Premium \u043F\u043E\u0434\u043F\u0438\u0441\u0447\u0438\u043A\u043E\u0432 \u043E\u0431\u043D\u043E\u0432\u043B\u0435\u043D\u043E: <b>${updatedPrem}</b>`,
+      `\u2705 <b>\u0412\u0441\u0435 \u043A\u043B\u044E\u0447\u0438 \u0437\u0430\u043C\u0435\u043D\u0435\u043D\u044B!</b>\n\n\u{1F504} \u041D\u043E\u0432\u044B\u0445 \u043A\u043B\u044E\u0447\u0435\u0439 \u0432 \u043F\u0443\u043B\u0435: <b>${validKeys.length}</b> (.ru SNI)
+${filtered > 0 ? `\u26A0\uFE0F \u041E\u0442\u0444\u0438\u043B\u044C\u0442\u0440\u043E\u0432\u0430\u043D\u043E: <b>${filtered}</b> \u043A\u043B\u044E\u0447\u0435\u0439 \u0431\u0435\u0437 .ru SNI\n` : ""}\u{1F381} \u0411\u0435\u0441\u043F\u043B\u0430\u0442\u043D\u044B\u0445 \u043F\u043E\u0434\u043F\u0438\u0441\u0447\u0438\u043A\u043E\u0432 \u043E\u0431\u043D\u043E\u0432\u043B\u0435\u043D\u043E: <b>${updatedFree}</b>\n\u2B50 Premium \u043F\u043E\u0434\u043F\u0438\u0441\u0447\u0438\u043A\u043E\u0432 \u043E\u0431\u043D\u043E\u0432\u043B\u0435\u043D\u043E: <b>${updatedPrem}</b>`,
       { parse_mode: "HTML", reply_markup: adminKeysMainKb() }
     );
     return;
@@ -60413,30 +60466,40 @@ adminBot.on("message:document", async (ctx) => {
     const fileText = await fileRes.text();
     const lines = fileText.split("\n").map((l) => l.trim()).filter((l) => l.length > 0);
     if (!lines.length) { await ctx.reply("\u274C \u0424\u0430\u0439\u043B \u043F\u0443\u0441\u0442\u043E\u0439"); return; }
-    ctx.message.text = fileText;
+    const validKeys = lines.filter(k => isValidKey(k));
+    const filtered = lines.length - validKeys.length;
+    if (!validKeys.length) {
+      await ctx.reply("\u274C \u041D\u0438 \u043E\u0434\u043D\u043E\u0433\u043E \u043A\u043B\u044E\u0447\u0430 \u0441 .ru SNI", { reply_markup: adminBackKb() });
+      return;
+    }
+    ctx.message.text = validKeys.join("\n");
     adminStates.set(ADMIN_ID2, state);
-    await ctx.reply(`\u2705 \u0424\u0430\u0439\u043B \u043F\u043E\u043B\u0443\u0447\u0435\u043D: ${lines.length} \u043A\u043B\u044E\u0447\u0435\u0439. \u041E\u0431\u0440\u0430\u0431\u0430\u0442\u044B\u0432\u0430\u044E...`);
+    await ctx.reply(`\u2705 \u0424\u0430\u0439\u043B \u043F\u043E\u043B\u0443\u0447\u0435\u043D: ${validKeys.length} \u043A\u043B\u044E\u0447\u0435\u0439 (.ru SNI)
+${filtered > 0 ? `\u26A0\uFE0F \u041E\u0442\u0444\u0438\u043B\u044C\u0442\u0440\u043E\u0432\u0430\u043D\u043E: ${filtered} \u043A\u043B\u044E\u0447\u0435\u0439 \u0431\u0435\u0437 .ru SNI` : ""}\u041E\u0431\u0440\u0430\u0431\u0430\u0442\u044B\u0432\u0430\u044E...`);
     if (state === "waiting_new_free_keys") {
       await clearFreeKeys();
-      for (const k of lines) await addFreeKey(k);
+      for (const k of validKeys) await addFreeKey(k);
       const subs = await getAllSubscriptions();
       let updated = 0;
       for (const sub of subs) {
         if ((sub.tariff === "free_7days" || sub.tariff === "free_3days" || sub.tariff === "free")) {
-          await updateSubscriptionKeyOnly(sub.telegramId, lines[0]);
-          updated++;
+          const newKey = validKeys[0];
+          if (newKey) {
+            await updateSubscriptionKeyOnly(sub.telegramId, newKey);
+            updated++;
+          }
         }
       }
       const freeKeys = await getFreeKeys();
       await ctx.reply(`\u2705 \u0411\u0435\u0441\u043F\u043B\u0430\u0442\u043D\u044B\u0435 \u043A\u043B\u044E\u0447\u0438 \u043E\u0431\u043D\u043E\u0432\u043B\u0435\u043D\u044B!\n\u0414\u043E\u0431\u0430\u0432\u043B\u0435\u043D\u043E \u0432 \u043F\u0443\u043B: <b>${freeKeys.length}</b> \u043A\u043B\u044E\u0447\u0435\u0439`, { parse_mode: "HTML", reply_markup: freeKeysKb(freeKeys) });
     } else if (state === "waiting_new_prem_keys") {
       await clearPremiumKeys();
-      for (const k of lines) await addPremiumKey(k);
+      for (const k of validKeys) await addPremiumKey(k);
       const premKeys = await getPremiumKeys();
       await ctx.reply(`\u2705 Premium \u043A\u043B\u044E\u0447\u0438 \u043E\u0431\u043D\u043E\u0432\u043B\u0435\u043D\u044B!\n\u0414\u043E\u0431\u0430\u0432\u043B\u0435\u043D\u043E \u0432 \u043F\u0443\u043B: <b>${premKeys.length}</b> \u043A\u043B\u044E\u0447\u0435\u0439`, { parse_mode: "HTML", reply_markup: premiumKeysKb(premKeys) });
     } else if (state === "waiting_replace_all_keys") {
       await clearFreeKeys(); await clearPremiumKeys();
-      for (const k of lines) { await addFreeKey(k); await addPremiumKey(k); }
+      for (const k of validKeys) { await addFreeKey(k); await addPremiumKey(k); }
       const freeKeysCount = (await getFreeKeys()).length;
       const premKeysCount = (await getPremiumKeys()).length;
       await ctx.reply(`\u2705 \u0412\u0441\u0435 \u043A\u043B\u044E\u0447\u0438 \u0437\u0430\u043C\u0435\u043D\u0435\u043D\u044B!\n\u0411\u0435\u0441\u043F\u043B: <b>${freeKeysCount}</b>\nPremium: <b>${premKeysCount}</b>`, { parse_mode: "HTML", reply_markup: adminKeysMainKb() });
