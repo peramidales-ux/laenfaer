@@ -189,8 +189,6 @@ async function fetchKeys() {
     if (!line.includes("pbk=")) continue;
     if (!line.includes("type=tcp")) continue;
     if (!line.includes("flow=xtls-rprx-vision")) continue;
-    const sni = extractSni(line);
-    if (!sni || !sni.endsWith(".ru")) continue;
     filtered.push(line);
   }
 
