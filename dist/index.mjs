@@ -58028,20 +58028,6 @@ userBot.command("support", async (ctx) => {
     { reply_markup: activeSupportKb() }
   );
 });
-userBot.command("status", async (ctx) => {
-  const serverStatus = getServerStatus();
-  let serverText = "\u{1F4CA} <b>\u0421\u0422\u0410\u0422\u0423\u0421 \u0421\u0415\u0420\u0412\u0415\u0420\u041E\u0412</b>\n\n";
-  if (serverStatus.size > 0) {
-    for (const [ip, online] of serverStatus) {
-      serverText += `${online ? "\u{1F7E2}" : "\u{1F534}"} ${getCountryForIp(ip)} \u2014 ${online ? "\u041E\u043D\u043B\u0430\u0439\u043D" : "\u041E\u0444\u0444\u043B\u0430\u0439\u043D"}\n`;
-    }
-    const onlineCount = [...serverStatus.values()].filter(Boolean).length;
-    serverText += `\n\u0414\u043E\u0441\u0442\u0443\u043F\u043D\u043E: ${onlineCount}/${serverStatus.size}`;
-  } else {
-    serverText += "\u23F3 \u041F\u0440\u043E\u0432\u0435\u0440\u043A\u0430 \u0435\u0449\u0451 \u043D\u0435 \u0437\u0430\u043F\u0443\u0441\u043A\u0430\u043B\u0430\u0441\u044C";
-  }
-  await ctx.reply(serverText, { parse_mode: "HTML", reply_markup: backToMainKb() });
-});
 userBot.command("start", async (ctx) => {
   const userId = ctx.from.id;
   const name = ctx.from.first_name ?? "\u041F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u0435\u043B\u044C";
@@ -60507,7 +60493,6 @@ async function registerCommands() {
     { command: "profile", description: "\u{1F464} \u041B\u0438\u0447\u043D\u044B\u0439 \u043A\u0430\u0431\u0438\u043D\u0435\u0442" },
     { command: "shop", description: "\u{1F6D2} \u041A\u0443\u043F\u0438\u0442\u044C \u043F\u043E\u0434\u043F\u0438\u0441\u043A\u0443" },
     { command: "support", description: "\u{1F91D} \u041D\u0430\u043F\u0438\u0441\u0430\u0442\u044C \u0432 \u043F\u043E\u0434\u0434\u0435\u0440\u0436\u043A\u0443" },
-    { command: "status", description: "\u{1F4CA} \u0421\u0442\u0430\u0442\u0443\u0441 \u0441\u0435\u0440\u0432\u0435\u0440\u043E\u0432" },
     { command: "withdraw", description: "\u{1F4B8} \u0412\u044B\u0432\u043E\u0434 \u0441\u0440\u0435\u0434\u0441\u0442\u0432" }
   ]);
   await adminBot.api.setMyCommands([
