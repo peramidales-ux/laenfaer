@@ -58468,25 +58468,78 @@ userBot.callbackQuery("help", async (ctx) => {
 });
 
 userBot.callbackQuery("open_support", async (ctx) => {
+  const userId = String(ctx.from.id);
+  const chat = await getSupportChat(userId);
+  const msgs = chat?.messages ?? [];
+  const isClosed = chat?.closed ?? false;
+
   userStates.set(ctx.from.id, "support_mode");
+
+  let text = `💬 <b>ЧАТ ПОДДЕРЖКИ</b>\n\n`;
+  text += `📝 Статус: ${isClosed ? "🔴 Закрыт" : "🟢 Активен"}\n`;
+  text += `💬 Всего сообщений: ${msgs.length}\n\n`;
+
+  if (msgs.length > 0) {
+    text += `━━━━━━━━━━━━━━━━━━━━\n`;
+    text += `<b>Последние сообщения:</b>\n\n`;
+    for (const msg of msgs.slice(-5)) {
+      const who = msg.fromUser ? "👤 Вы" : "👨‍💻 Админ";
+      const date = msg.time ? new Date(msg.time * 1000).toLocaleString("ru-RU") : "";
+      text += `${who} (${date}):\n${msg.text}\n\n`;
+    }
+    text += `━━━━━━━━━━━━━━━━━━━━\n\n`;
+  }
+
+  if (isClosed) {
+    text += `Чат закрыт. Напиши новый вопрос — чат откроется заново. 👇`;
+  } else {
+    text += `Просто напиши свой вопрос в этот чат.\nАдминистратор ответит тебе.\n\n`;
+    text += `❗ Чат активен — ты можешь писать сообщения.`;
+  }
+
+  const keyboard = new InlineKeyboard();
+  if (isClosed) {
+    keyboard.text("🔄 Открыть новый чат", "reopen_support_chat");
+  } else {
+    keyboard.text("🔒 Закрыть чат", "close_support_chat");
+  }
+  keyboard.row().text("◀️ Назад", "back_to_menu");
+
+  return ctx.editMessageText(text, { parse_mode: "HTML", reply_markup: keyboard });
+});
+
+userBot.callbackQuery("close_support_chat", async (ctx) => {
+  const userId = String(ctx.from.id);
+  await closeSupportChat(userId);
+  userStates.delete(ctx.from.id);
+
   const keyboard = new InlineKeyboard()
-    .text("❌ Закрыть чат", "close_support_chat")
+    .text("🔄 Открыть новый чат", "reopen_support_chat")
+    .row()
     .text("◀️ Назад", "back_to_menu");
 
   return ctx.editMessageText(
-    `💬 <b>ЧАТ ПОДДЕРЖКИ</b>\n\n` +
-    `Просто напиши свой вопрос в этот чат.\n` +
-    `Администратор ответит тебе.\n\n` +
-    `❗ Чат активен — ты можешь писать сообщения.`,
+    `🔒 <b>Чат поддержки закрыт</b>\n\n` +
+    `Если у тебя появятся новые вопросы — напиши нам!`,
     { parse_mode: "HTML", reply_markup: keyboard }
   );
 });
 
-userBot.callbackQuery("close_support_chat", async (ctx) => {
-  userStates.delete(ctx.from.id);
-  const name = ctx.from.first_name || "друг";
-  const menu = getMainMenu(name);
-  return ctx.editMessageText(menu.text, { reply_markup: menu.reply_markup, parse_mode: "HTML" });
+userBot.callbackQuery("reopen_support_chat", async (ctx) => {
+  const userId = String(ctx.from.id);
+  await reopenSupportChat(userId);
+  userStates.set(ctx.from.id, "support_mode");
+
+  const keyboard = new InlineKeyboard()
+    .text("🔒 Закрыть чат", "close_support_chat")
+    .row()
+    .text("◀️ Назад", "back_to_menu");
+
+  return ctx.editMessageText(
+    `🔄 <b>Чат поддержки открыт заново!</b>\n\n` +
+    `Просто напиши свой вопрос — администратор ответит тебе.`,
+    { parse_mode: "HTML", reply_markup: keyboard }
+  );
 });
 
 userBot.callbackQuery(/^pay_/, async (ctx) => {
@@ -58513,7 +58566,7 @@ userBot.callbackQuery(/^pay_/, async (ctx) => {
   );
 });
 
-// Message handler for support chat and promo codes
+// Message handler for support chat
 userBot.on("message:text", async (ctx) => {
   const text = ctx.message.text.trim();
   if (text.startsWith("/")) return;
@@ -58523,23 +58576,48 @@ userBot.on("message:text", async (ctx) => {
 
   if (state === "support_mode") {
     try {
+      const userId = String(ctx.from.id);
       // Save message to support chat
-      await addSupportMessage(String(ctx.from.id), { text: ctx.message.text, time: Date.now() / 1000, fromUser: true });
+      await addSupportMessage(userId, { text: ctx.message.text, time: Date.now() / 1000, fromUser: true });
 
-      const kb = new InlineKeyboard()
-        .text("📤 Ответить", `reply_support_${ctx.from.id}`);
+      // Notify admin
+      const chat = await getSupportChat(userId);
+      const msgs = chat?.messages ?? [];
+      const adminKb = new InlineKeyboard()
+        .text("📤 Ответить", `reply_support_${userId}`)
+        .row()
+        .text("🔒 Закрыть чат", `close_support_chat_${userId}`);
 
       await adminNotifier.api.sendMessage(
         ADMIN_ID,
         `📩 <b>ВОПРОС В ПОДДЕРЖКУ</b>\n\n` +
         `👤 ${ctx.from.first_name}\n` +
-        `🆔 ID: <code>${ctx.from.id}</code>\n\n` +
+        `🆔 ID: <code>${userId}</code>\n` +
+        `💬 Сообщений в чате: ${msgs.length}\n\n` +
         `💬 Сообщение:\n${ctx.message.text}`,
-        { parse_mode: "HTML", reply_markup: kb }
+        { parse_mode: "HTML", reply_markup: adminKb }
       );
 
-      await ctx.reply("✅ Сообщение отправлено администратору. Ожидай ответа...");
+      // Show confirmation with last messages
+      let replyText = `✅ <b>Сообщение отправлено!</b>\n\n`;
+      const recentMsgs = msgs.slice(-3);
+      if (recentMsgs.length > 1) {
+        replyText += `📜 <b>Последние сообщения:</b>\n\n`;
+        for (const msg of recentMsgs) {
+          const who = msg.fromUser ? "👤 Вы" : "👨‍💻 Админ";
+          replyText += `${who}: ${msg.text}\n\n`;
+        }
+      }
+      replyText += `Ожидай ответа администратора.`;
+
+      const keyboard = new InlineKeyboard()
+        .text("🔒 Закрыть чат", "close_support_chat")
+        .row()
+        .text("◀️ Назад", "back_to_menu");
+
+      await ctx.reply(replyText, { parse_mode: "HTML", reply_markup: keyboard });
     } catch (e) {
+      console.error("Support error:", e);
       await ctx.reply("❌ Не удалось отправить. Попробуй позже.");
     }
     return;
