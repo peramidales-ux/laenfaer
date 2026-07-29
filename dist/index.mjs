@@ -59160,85 +59160,23 @@ adminBot.callbackQuery(/.*/, async (ctx) => {
     return;
   }
   if (data.startsWith("confirm_pay_")) {
-    const payId = data.replace("confirm_pay_", "");
-    const req = await getPaymentRequest(payId);
-    if (!req) {
-      await ctx.answerCallbackQuery({ text: "\u274C \u0417\u0430\u044F\u0432\u043A\u0430 \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D\u0430 \u0438\u043B\u0438 \u0443\u0436\u0435 \u043E\u0431\u0440\u0430\u0431\u043E\u0442\u0430\u043D\u0430", show_alert: true });
-      return;
-    }
-    const cfg = TARIFF_CONFIG[req.tariff];
-    if (!cfg) {
-      await ctx.answerCallbackQuery({ text: "\u274C \u041D\u0435\u0438\u0437\u0432\u0435\u0441\u0442\u043D\u044B\u0439 \u0442\u0430\u0440\u0438\u0444", show_alert: true });
-      return;
-    }
-    let key = await getRandomPremiumKey();
-    if (!key) key = await getTestKey() || "vless://NO_KEY_CONTACT_SUPPORT";
-    const expiresAt = await setSubscription(req.telegramId, req.tariff, cfg.days, key);
-    await addToUserBalance(req.telegramId, req.amount);
-    // Реферальное начисление 10%
-    try {
-      const refRows = await db.select().from(referralsTable).where(eq(referralsTable.userId, req.telegramId)).limit(1);
-      if (refRows.length > 0) {
-        const inviterId = refRows[0].inviterId;
-        const bonus = Math.floor(req.amount * 0.1);
-        if (bonus > 0) {
-          await db.update(usersTable).set({ refBalance: sql`${usersTable.refBalance} + ${bonus}` }).where(eq(usersTable.telegramId, inviterId));
-          try {
-            await mainBotSender.api.sendMessage(Number(inviterId), `\u{1F4B0} <b>\u0420\u0435\u0444\u0435\u0440\u0430\u043B\u044C\u043D\u044B\u0439 \u0431\u043E\u043D\u0443\u0441!</b>\n\n\u0412\u0430\u0448 \u0440\u0435\u0444\u0435\u0440\u0430\u043B \u043E\u043F\u043B\u0430\u0442\u0438\u043B \u043F\u043E\u0434\u043F\u0438\u0441\u043A\u0443. \u0412\u0430\u043C \u043D\u0430\u0447\u0438\u0441\u043B\u0435\u043D\u043E <b>+${bonus}\u20BD</b> (10% \u043E\u0442 ${req.amount}\u20BD)`, { parse_mode: "HTML", reply_markup: backToMainKb() });
-          } catch {}
-        }
-      }
-    } catch {}
-    await deletePaymentRequest(payId);
-    try {
-      await mainBotSender.api.sendMessage(
-        Number(req.telegramId),
-        `\u{1F389} <b>\u041E\u041F\u041B\u0410\u0422\u0410 \u041F\u041E\u0414\u0422\u0412\u0415\u0420\u0416\u0414\u0415\u041D\u0410!</b>
-
-\u2705 \u041F\u043E\u0434\u043F\u0438\u0441\u043A\u0430 \u0430\u043A\u0442\u0438\u0432\u0438\u0440\u043E\u0432\u0430\u043D\u0430: <b>${cfg.title}</b>
-\u{1F4C5} \u0414\u043E: ${formatDate(expiresAt)}
-
-\u{1F447} \u041D\u0430\u0436\u043C\u0438 \xAB\u041F\u043E\u0434\u043A\u043B\u044E\u0447\u0438\u0442\u044C\u0441\u044F\xBB \u0432 \u0433\u043B\u0430\u0432\u043D\u043E\u043C \u043C\u0435\u043D\u044E \u0447\u0442\u043E\u0431\u044B \u043F\u043E\u043B\u0443\u0447\u0438\u0442\u044C \u043A\u043B\u044E\u0447.`,
-        { parse_mode: "HTML", reply_markup: mainMenuKb() }
-      );
-    } catch {
-    }
-    await ctx.editMessageCaption({
-      caption: `\u2705 <b>\u041E\u043F\u043B\u0430\u0442\u0430 \u043F\u043E\u0434\u0442\u0432\u0435\u0440\u0436\u0434\u0435\u043D\u0430!</b>
-
-ID: <code>${req.telegramId}</code>
-\u0422\u0430\u0440\u0438\u0444: ${cfg.title}
-\u0421\u0443\u043C\u043C\u0430: ${req.amount}\u20BD
-
-\u041F\u043E\u0434\u043F\u0438\u0441\u043A\u0430 \u0430\u043A\u0442\u0438\u0432\u0438\u0440\u043E\u0432\u0430\u043D\u0430. \u041A\u043B\u044E\u0447 \u0432\u044B\u0434\u0430\u043D.`,
-      parse_mode: "HTML"
-    });
+    const rest = data.replace("confirm_pay_", "");
+    const lastUnderscore = rest.lastIndexOf("_");
+    const uid = rest.substring(0, lastUnderscore);
+    const days = parseInt(rest.substring(lastUnderscore + 1), 10);
+    const key = await getRandomPremiumKey() || await getRandomFreeKey() || "vless://NO_KEY";
+    await addDaysToSubscription(uid, days + "days", days, key);
+    await ctx.editMessageText("\u2705 <b>\u041F\u043B\u0430\u0442\u0451\u0436 \u043F\u043E\u0434\u0442\u0432\u0435\u0440\u0436\u0434\u0451\u043D</b>\n\n\u041F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u0435\u043B\u044E <code>" + uid + "</code> \u0432\u044B\u0434\u0430\u043D\u043E <b>" + days + "</b> \u0434\u043D.", { parse_mode: "HTML", reply_markup: adminBackKb() });
+    try { await mainBotSender.api.sendMessage(Number(uid), "\u2705 <b>\u041E\u043F\u043B\u0430\u0442\u0430 \u043F\u043E\u0434\u0442\u0432\u0435\u0440\u0436\u0434\u0435\u043D\u0430!</b>\n\n\u041F\u043E\u0434\u043F\u0438\u0441\u043A\u0430 \u043D\u0430 <b>" + days + " \u0434\u043D.</b> \u0430\u043A\u0442\u0438\u0432\u043D\u0430.\n\u0418\u0441\u043F\u043E\u043B\u044C\u0437\u0443\u0439 /key \u0434\u043B\u044F \u043F\u043E\u0434\u043A\u043B\u044E\u0447\u0435\u043D\u0438\u044F.", { parse_mode: "HTML", reply_markup: mainMenuKb() }); } catch {}
     return;
   }
   if (data.startsWith("reject_pay_")) {
-    const payId = data.replace("reject_pay_", "");
-    const req = await getPaymentRequest(payId);
-    if (!req) {
-      await ctx.answerCallbackQuery({ text: "\u274C \u0417\u0430\u044F\u0432\u043A\u0430 \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D\u0430 \u0438\u043B\u0438 \u0443\u0436\u0435 \u043E\u0431\u0440\u0430\u0431\u043E\u0442\u0430\u043D\u0430", show_alert: true });
-      return;
-    }
-    await deletePaymentRequest(payId);
-    try {
-      await mainBotSender.api.sendMessage(
-        Number(req.telegramId),
-        "\u274C <b>\u041E\u043F\u043B\u0430\u0442\u0430 \u043E\u0442\u043A\u043B\u043E\u043D\u0435\u043D\u0430.</b>\n\n\u0410\u0434\u043C\u0438\u043D\u0438\u0441\u0442\u0440\u0430\u0442\u043E\u0440 \u043D\u0435 \u0441\u043C\u043E\u0433 \u043F\u043E\u0434\u0442\u0432\u0435\u0440\u0434\u0438\u0442\u044C \u043F\u043B\u0430\u0442\u0451\u0436.\n\n\u0415\u0441\u043B\u0438 \u044D\u0442\u043E \u043E\u0448\u0438\u0431\u043A\u0430 \u2014 \u043E\u0431\u0440\u0430\u0442\u0438\u0441\u044C \u0432 \u043F\u043E\u0434\u0434\u0435\u0440\u0436\u043A\u0443.",
-        { parse_mode: "HTML", reply_markup: mainMenuKb() }
-      );
-    } catch {
-    }
-    await ctx.editMessageCaption({
-      caption: `\u274C <b>\u041E\u043F\u043B\u0430\u0442\u0430 \u043E\u0442\u043A\u043B\u043E\u043D\u0435\u043D\u0430.</b>
-
-ID: <code>${req.telegramId}</code>`,
-      parse_mode: "HTML"
-    });
+    const uid = data.replace("reject_pay_", "");
+    await ctx.editMessageText("\u274C <b>\u041F\u043B\u0430\u0442\u0451\u0436 \u043E\u0442\u043A\u043B\u043E\u043D\u0451\u043D</b>\n\n\u041F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u0435\u043B\u044C <code>" + uid + "</code>", { parse_mode: "HTML", reply_markup: adminBackKb() });
+    try { await mainBotSender.api.sendMessage(Number(uid), "\u274C <b>\u041F\u043B\u0430\u0442\u0451\u0436 \u043E\u0442\u043A\u043B\u043E\u043D\u0451\u043D</b>\n\n\u0421\u0432\u044F\u0436\u0438\u0442\u0435\u0441\u044C \u0441 \u043F\u043E\u0434\u0434\u0435\u0440\u0436\u043A\u043E\u0439 \u0434\u043B\u044F \u0443\u0442\u043E\u0447\u043D\u0435\u043D\u0438\u044F.", { parse_mode: "HTML", reply_markup: mainMenuKb() }); } catch {}
     return;
   }
+
   if (data.startsWith("manage_user_")) {
     const uid = data.replace("manage_user_", "");
     await showUserProfile(ctx, uid);
