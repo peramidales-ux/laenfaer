@@ -58556,7 +58556,7 @@ userBot.callbackQuery("reopen_support_chat", async (ctx) => {
 });
 
 userBot.callbackQuery(/^pay_/, async (ctx) => {
-  const tariff = ctx.match[0].replace("pay_", "");
+  const tariff = ctx.callbackQuery.data.replace("pay_", "");
   const tariffInfo = {
     "30": { name: "30 дней", price: "299₽", days: 30 },
     "60": { name: "60 дней", price: "539₽", days: 60 },
