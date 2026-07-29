@@ -59641,19 +59641,14 @@ adminBot.on("message:text", async (ctx) => {
       const domain = getSubDomain();
       const subLink = domain ? `${domain}/sub/${uid}` : `https://laenfaer-vpn-youtube.duckdns.org/sub/${uid}`;
       const connectUrl = `${domain}/api/connect?app=happ_ios&key=${encodeURIComponent(subLink)}`;
-      const msgText = `━━━━━━━━━━━━━━━━━━━━\n` +
-        `🎁 <b>П О Д А Р О К  О Т  А Д М И Н А</b>\n` +
-        `━━━━━━━━━━━━━━━━━━━━\n\n` +
+      const msgText = `📋 <b>П О Д П И С К А</b>\n\n` +
         `Администратор выдал вам подписку на <b>${days} дн.</b> 🎉\n\n` +
-        `━━━━━━━━━━━━━━━━━━━━\n` +
-        `📋 <b>ЧТО ДЕЛАТЬ:</b>\n` +
-        `━━━━━━━━━━━━━━━━━━━━\n\n` +
+        `📋 <b>ЧТО ДЕЛАТЬ:</b>\n\n` +
         `1️⃣ Нажми кнопку «📱 Открыть в Happ»\n` +
         `2️⃣ Приложение откроется само\n` +
         `3️⃣ Нажми «Добавить» → «Подключить»\n\n` +
         `Или скопируй ссылку-подписку:\n` +
-        `<code>${subLink}</code>\n\n` +
-        `━━━━━━━━━━━━━━━━━━━━`;
+        `<code>${subLink}</code>`;
       await mainBotSender.api.sendMessage(Number(uid), msgText, {
         parse_mode: "HTML",
         reply_markup: new InlineKeyboard3()
