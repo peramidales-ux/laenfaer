@@ -58065,7 +58065,7 @@ userBot.use(async (ctx, next) => {
 
     const msgText = ctx.message?.text || "";
     const cbData = ctx.callbackQuery?.data || "";
-    if (cbData !== "check_subscription" && !msgText.startsWith("/start")) {
+    if (cbData !== "check_subscription" && cbData !== "accept_policy" && cbData !== "reject_policy" && !msgText.startsWith("/start")) {
       if (!await checkChannelSubscription(userId)) {
         if (ctx.callbackQuery) {
           await ctx.answerCallbackQuery({ text: "⚠️ Подпишись на канал!", show_alert: true }).catch(() => {});
