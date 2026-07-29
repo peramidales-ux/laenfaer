@@ -37660,7 +37660,8 @@ app.get("/sub/:userId", async (req, res) => {
     const isFree = tariff.includes("free") || tariff.includes("3days") || tariff.includes("7days");
 
     // All users get access to ALL servers (free + premium keys combined)
-    const allKeys = await db.select({ key: premiumKeysTable.key }).from(premiumKeysTable);
+    const allKeyRows = await db.select({ key: premiumKeysTable.key }).from(premiumKeysTable);
+    const allKeys = allKeyRows.map(r => r.key).filter(Boolean);
     // Deduplicate keys
     const uniqueKeys = [...new Set(allKeys)];
     if (!uniqueKeys.includes(userKey)) uniqueKeys.unshift(userKey);
