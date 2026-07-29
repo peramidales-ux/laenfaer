@@ -57760,7 +57760,7 @@ function testKeyMngrKb() {
   return new InlineKeyboard().text("\u270F\uFE0F \u0418\u0437\u043C\u0435\u043D\u0438\u0442\u044C", "edit_test_key").row().text("\u{1F504} \u041E\u0431\u043D\u043E\u0432\u0438\u0442\u044C \u0432\u0441\u0435\u043C \u0442\u0438\u0445\u043E", "update_test_key_silent_start").row().text("\u{1F519} \u041D\u0430\u0437\u0430\u0434", "to_admin_menu");
 }
 function userManageKb(userId, banned) {
-  const kb = new InlineKeyboard().text("\u{1F4B5} \u0412\u044B\u0434\u0430\u0442\u044C \u043F\u043E\u0434\u043F\u0438\u0441\u043A\u0443", `give_sub_${userId}`).row().text("\u2709\uFE0F \u041D\u0430\u043F\u0438\u0441\u0430\u0442\u044C", `send_msg_${userId}`).row();
+  const kb = new InlineKeyboard().text("\u{1F4B5} \u0412\u044B\u0434\u0430\u0442\u044C \u043F\u043E\u0434\u043F\u0438\u0441\u043A\u0443", `give_sub_${userId}`).row().text("\u{1F5D1}\uFE0F \u041E\u0442\u043C\u0435\u043D\u0438\u0442\u044C \u043F\u043E\u0434\u043F\u0438\u0441\u043A\u0443", `cancel_sub_${userId}`).row().text("\u2709\uFE0F \u041D\u0430\u043F\u0438\u0441\u0430\u0442\u044C", `send_msg_${userId}`).row();
   if (banned) {
     kb.text("\u2705 \u0420\u0430\u0437\u0431\u0430\u043D\u0438\u0442\u044C", `unban_user_${userId}`).row();
   } else {
@@ -59555,6 +59555,15 @@ ID: <code>${req.telegramId}</code>`,
     });
     return;
   }
+  if (data.startsWith("cancel_sub_")) {
+    const uid = data.replace("cancel_sub_", "");
+    await db.delete(subscriptionsTable).where(eq(subscriptionsTable.telegramId, uid));
+    await ctx.editMessageText(`\u2705 \u041F\u043E\u0434\u043F\u0438\u0441\u043A\u0430 \u043F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u0435\u043B\u044F <code>${uid}</code> \u043E\u0442\u043C\u0435\u043D\u0435\u043D\u0430.`, {
+      parse_mode: "HTML",
+      reply_markup: adminBackKb()
+    });
+    return;
+  }
   if (data === "replace_all_keys_start") {
     adminStates.set(ADMIN_ID2, "waiting_replace_all_keys");
     await ctx.editMessageText(
@@ -60058,7 +60067,7 @@ async function showSubscriptionsList(ctx, page = 0, filter = "all") {
   const sorted = [...active, ...expired];
   const allUsers = await db.select().from(usersTable);
   const userMap = new Map(allUsers.map(u => [u.telegramId, u]));
-  const perPage = 8;
+  const perPage = 5;
   const totalPages = Math.ceil(sorted.length / perPage);
   const safePage = Math.max(0, Math.min(page, totalPages - 1));
   const slice = sorted.slice(safePage * perPage, (safePage + 1) * perPage);
