@@ -60375,9 +60375,7 @@ async function sendBackup() {
       const caption = `\u{1F4E6} <b>\u0411\u044D\u043A\u0430\u043F \u0411\u0414</b> \u2014 ${date6}
 
 \u{1F465} \u041F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u0435\u043B\u0435\u0439: ${users.length}
-\u{1F381} \u0411\u0435\u0441\u043F\u043B\u0430\u0442\u043D\u044B\u0445 \u043A\u043B\u044E\u0447\u0435\u0439: ${freeKeys.length}
-\u2B50 Premium \u043A\u043B\u044E\u0447\u0435\u0439: ${premiumKeys.length}
-\u{1F511} \u0422\u0435\u0441\u0442\u043E\u0432\u044B\u0439 \u043A\u043B\u044E\u0447: ${testKey ? "\u0435\u0441\u0442\u044C" : "\u043D\u0435\u0442"}`;
+\u{1F511} \u041A\u043B\u044E\u0447\u0435\u0439 \u0432 \u043F\u0443\u043B\u0435: ${freeKeys.length + premiumKeys.length}`;
       await adminBot.api.sendDocument(
         ADMIN_ID2,
         new InputFile2(filePath, `backup_${(/* @__PURE__ */ new Date()).toISOString().split("T")[0]}.sql`),
