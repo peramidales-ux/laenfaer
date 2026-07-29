@@ -57760,7 +57760,7 @@ function testKeyMngrKb() {
   return new InlineKeyboard().text("\u270F\uFE0F \u0418\u0437\u043C\u0435\u043D\u0438\u0442\u044C", "edit_test_key").row().text("\u{1F504} \u041E\u0431\u043D\u043E\u0432\u0438\u0442\u044C \u0432\u0441\u0435\u043C \u0442\u0438\u0445\u043E", "update_test_key_silent_start").row().text("\u{1F519} \u041D\u0430\u0437\u0430\u0434", "to_admin_menu");
 }
 function userManageKb(userId, banned) {
-  const kb = new InlineKeyboard().text("\u2709\uFE0F \u041D\u0430\u043F\u0438\u0441\u0430\u0442\u044C", `send_msg_${userId}`).row();
+  const kb = new InlineKeyboard().text("\u{1F4B5} \u0412\u044B\u0434\u0430\u0442\u044C \u043F\u043E\u0434\u043F\u0438\u0441\u043A\u0443", `give_sub_${userId}`).row().text("\u2709\uFE0F \u041D\u0430\u043F\u0438\u0441\u0430\u0442\u044C", `send_msg_${userId}`).row();
   if (banned) {
     kb.text("\u2705 \u0420\u0430\u0437\u0431\u0430\u043D\u0438\u0442\u044C", `unban_user_${userId}`).row();
   } else {
@@ -59523,8 +59523,24 @@ ID: <code>${req.telegramId}</code>`,
   }
   if (data.startsWith("delete_user_yes_")) {
     const uid = data.replace("delete_user_yes_", "");
-    await deleteUser(uid);
-    await ctx.editMessageText(`\u2705 \u041F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u0435\u043B\u044C <code>${uid}</code> \u043F\u043E\u043B\u043D\u043E\u0441\u0442\u044C\u044E \u0443\u0434\u0430\u043B\u0451\u043D.`, {
+    try {
+      await deleteUser(uid);
+      await ctx.editMessageText(`\u2705 \u041F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u0435\u043B\u044C <code>${uid}</code> \u043F\u043E\u043B\u043D\u043E\u0441\u0442\u044C\u044E \u0443\u0434\u0430\u043B\u0451\u043D.`, {
+        parse_mode: "HTML",
+        reply_markup: adminBackKb()
+      });
+    } catch (e) {
+      await ctx.editMessageText(`\u274C \u041E\u0448\u0438\u0431\u043A\u0430 \u0443\u0434\u0430\u043B\u0435\u043D\u0438\u044F: ${escapeHtml(String(e))}`, {
+        parse_mode: "HTML",
+        reply_markup: adminBackKb()
+      });
+    }
+    return;
+  }
+  if (data.startsWith("give_sub_")) {
+    const uid = data.replace("give_sub_", "");
+    adminStates.set(ADMIN_ID2, `give_sub_days_${uid}`);
+    await ctx.editMessageText(`\u{1F4B5} <b>\u0412\u044B\u0434\u0430\u0442\u044C \u043F\u043E\u0434\u043F\u0438\u0441\u043A\u0443</b>\n\n\u0412\u0432\u0435\u0434\u0438 \u043A\u043E\u043B\u0438\u0447\u0435\u0441\u0442\u0432\u043E \u0434\u043D\u0435\u0439 \u0434\u043B\u044F ID <code>${uid}</code>:`, {
       parse_mode: "HTML",
       reply_markup: adminBackKb()
     });
@@ -59596,7 +59612,29 @@ adminBot.on("message:text", async (ctx) => {
     return;
   }
 
-  const balGiveMatch = adminStates.get(ADMIN_ID2);
+  const state2 = adminStates.get(ADMIN_ID2);
+  if (state2 && state2.startsWith("give_sub_days_")) {
+    const uid = state2.replace("give_sub_days_", "");
+    adminStates.delete(ADMIN_ID2);
+    const days = parseInt(text2.trim(), 10);
+    if (!Number.isInteger(days) || days <= 0) {
+      await ctx.reply("\u274C \u0412\u0432\u0435\u0434\u0438\u0442\u0435 \u0447\u0438\u0441\u043B\u043E > 0");
+      return;
+    }
+    const key = await getRandomFreeKey() || await getRandomPremiumKey();
+    if (!key) {
+      await ctx.reply("\u274C \u041D\u0435\u0442 \u0441\u0432\u043E\u0431\u043E\u0434\u043D\u044B\u0445 \u043A\u043B\u044E\u0447\u0435\u0439");
+      return;
+    }
+    await addDaysToSubscription(uid, `${days}days`, days, key);
+    await ctx.reply(`\u2705 \u041F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u0435\u043B\u044E <code>${uid}</code> \u0432\u044B\u0434\u0430\u043D\u043E <b>${days}</b> \u0434\u043D.`, { parse_mode: "HTML", reply_markup: adminBackKb() });
+    try {
+      const domain = getSubDomain();
+      const subLink = domain ? `${domain}/sub/${uid}` : `https://laenfaer-vpn-youtube.duckdns.org/sub/${uid}`;
+      await mainBotSender.api.sendMessage(Number(uid), `\u{1F381} <b>\u0410\u0434\u043C\u0438\u043D\u0438\u0441\u0442\u0440\u0430\u0442\u043E\u0440 \u0432\u044B\u0434\u0430\u043B \u0432\u0430\u043C \u043F\u043E\u0434\u043F\u0438\u0441\u043A\u0443 \u043D\u0430 ${days} \u0434\u043D.\uFE0F!</b>\n\n\u{1F517} \u0421\u0441\u044B\u043B\u043A\u0430 \u0434\u043B\u044F \u043F\u043E\u0434\u043A\u043B\u044E\u0447\u0435\u043D\u0438\u044F:\n<code>${subLink}</code>`, { parse_mode: "HTML", reply_markup: mainMenuKb() });
+    } catch {}
+    return;
+  }
 
   if (adminDirectMode.has(ADMIN_ID2)) {
     const targetId = adminDirectMode.get(ADMIN_ID2);
