@@ -59941,37 +59941,6 @@ ${filtered > 0 ? `\u26A0\uFE0F \u041E\u0442\u0444\u0438\u043B\u044C\u0442\u0440\
     return;
   }
 });
-async function showUsersList(ctx, page = 0) {
-  const users = await getAllUsers();
-  if (!users.length) {
-    await ctx.editMessageText("\u{1F4CA} \u0412 \u0431\u0430\u0437\u0435 \u043F\u043E\u043A\u0430 \u043D\u0435\u0442 \u0437\u0430\u0440\u0435\u0433\u0438\u0441\u0442\u0440\u0438\u0440\u043E\u0432\u0430\u043D\u043D\u044B\u0445 \u0443\u0447\u0430\u0441\u0442\u043D\u0438\u043A\u043E\u0432.", { reply_markup: adminBackKb() });
-    return;
-  }
-  const perPage = 10;
-  const totalPages = Math.ceil(users.length / perPage);
-  const safePage = Math.max(0, Math.min(page, totalPages - 1));
-  const slice = users.slice(safePage * perPage, (safePage + 1) * perPage);
-  let text2 = `\u{1F4CA} \u0412\u0441\u0435\u0433\u043E: <b>${users.length}</b> | \u0421\u0442\u0440\u0430\u043D\u0438\u0446\u0430 <b>${safePage + 1}/${totalPages}</b>
-
-`;
-  const kb = new InlineKeyboard3();
-  for (const u of slice) {
-    const bannedMark = u.banned ? " \u{1F6AB}" : "";
-    text2 += `\u{1F464} <a href="tg://user?id=${u.telegramId}">${escapeHtml(u.name)}</a>${bannedMark} | ID: ${u.telegramId}
-`;
-    const btnName = sanitizeButtonText(u.name, 18);
-    kb.text(`\u{1F6E0} ${btnName}${u.banned ? " \u{1F6AB}" : ""}`, `manage_user_${u.telegramId}`).row();
-  }
-  const nav = [];
-  if (safePage > 0) nav.push(["\u25C0\uFE0F \u041D\u0430\u0437\u0430\u0434", `users_page_${safePage - 1}`]);
-  if (safePage + 1 < totalPages) nav.push(["\u0412\u043F\u0435\u0440\u0451\u0434 \u25B6\uFE0F", `users_page_${safePage + 1}`]);
-  if (nav.length > 0) {
-    for (const [label, cb] of nav) kb.text(label, cb);
-    kb.row();
-  }
-  kb.text("\u{1F519} \u0412 \u043C\u0435\u043D\u044E \u0443\u043F\u0440\u0430\u0432\u043B\u0435\u043D\u0438\u044F", "to_admin_menu");
-  await ctx.editMessageText(text2, { parse_mode: "HTML", reply_markup: kb });
-}
 async function showPromoMenu(ctx) {
   const kb = new InlineKeyboard3()
     .text("\u2795 \u0421\u043E\u0437\u0434\u0430\u0442\u044C \u043F\u0440\u043E\u043C\u043E\u043A\u043E\u0434", "admin_create_promo").row()
