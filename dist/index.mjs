@@ -58605,7 +58605,7 @@ userBot.on("message:photo", async (ctx) => {
       .text("✅ Подтвердить", `confirm_pay_${ctx.from.id}_${days}`)
       .text("❌ Отклонить", `reject_pay_${ctx.from.id}`);
 
-    await adminNotifier.api.sendPhoto(ADMIN_ID, photo.file_id, {
+    await userBot.api.sendPhoto(ADMIN_ID, photo.file_id, {
       caption:
         `💰 <b>Заявка на оплату</b>\n\n` +
         `👤 Пользователь: <code>${ctx.from.id}</code>\n` +
