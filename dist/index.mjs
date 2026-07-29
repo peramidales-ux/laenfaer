@@ -59596,9 +59596,8 @@ adminBot.on("message:text", async (ctx) => {
     const kb = new InlineKeyboard2();
     let text2out = `\u{1F50D} \u041D\u0430\u0439\u0434\u0435\u043D\u043E: <b>${found.length}</b>\n\n`;
     for (const u of found.slice(0, 10)) {
-      const bal = (u.balance || 0) + (u.refBalance || 0);
       const banned = u.banned ? " \u{1F6AB}" : "";
-      text2out += `\u{1F464} ${escapeHtml(u.name)}${banned} | ID: <code>${u.telegramId}</code> | \u{1F4B0} ${bal}\u20BD\n`;
+      text2out += `\u{1F464} ${escapeHtml(u.name)}${banned} | ID: <code>${u.telegramId}</code>\n`;
       kb.text(`${u.name.slice(0, 20)} →`, `manage_user_${u.telegramId}`).row();
     }
     kb.text("\u{1F519} \u041D\u0430\u0437\u0430\u0434", "to_admin_menu");
