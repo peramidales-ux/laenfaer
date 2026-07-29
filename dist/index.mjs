@@ -58391,6 +58391,143 @@ userBot.callbackQuery("activate_trial", async (ctx) => {
   );
 });
 
+// Additional callbacks for old keyboard functions
+userBot.callbackQuery("open_profile", async (ctx) => {
+  const userId = ctx.from.id;
+  const name = ctx.from.first_name || "друг";
+  const status = await getSubscriptionStatus(String(userId));
+  const bal = await getUserBalanceInfo(String(userId));
+  const user = await getUser(String(userId));
+  const refCountRows = await db.select().from(referralCountsTable).where(eq(referralCountsTable.userId, String(userId))).limit(1);
+  const refCount = refCountRows[0]?.count || 0;
+  const regDate = user?.createdAt ? new Date(user.createdAt).toLocaleDateString("ru-RU") : "—";
+  const botUsername = ctx.me.username;
+  const refLink = `https://t.me/${botUsername}?start=${userId}`;
+
+  await ctx.editMessageText(
+    `👤 <b>ЛИЧНЫЙ КАБИНЕТ</b>\n\n` +
+    `👤 Имя: <b>${name}</b>\n` +
+    `🆔 ID: <code>${userId}</code>\n` +
+    `📅 Регистрация: <b>${regDate}</b>\n\n` +
+    `💳 Пополнено всего: <b>${bal.totalPaid}₽</b>\n` +
+    `🤝 Реферальный баланс: <b>${bal.refBalance || 0}₽</b>\n\n` +
+    `👥 Рефералы: <b>${refCount} чел.</b>\n` +
+    `🔗 Ваша ссылка:\n` +
+    `<code>${refLink}</code>\n\n` +
+    `📋 <b>ПОДПИСКА:</b>\n` +
+    `${status}\n\n` +
+    `👇 Дополнительные разделы:`,
+    { parse_mode: "HTML", reply_markup: profileKb() }
+  );
+});
+
+userBot.callbackQuery("get_free_key_random", async (ctx) => {
+  const userId = ctx.from.id;
+  const sub = await getSubscription(String(userId));
+  
+  if (!sub?.key) {
+    await ctx.answerCallbackQuery({ text: "У тебя нет активного ключа. Получи бесплатный или купи подписку!", show_alert: true });
+    const menu = getKeyMenu();
+    return ctx.editMessageText(menu.text, { reply_markup: menu.reply_markup, parse_mode: "HTML" });
+  }
+
+  const left = daysLeft(sub.expiresAt);
+  const alive = left > 0;
+  
+  await ctx.editMessageText(
+    `✅ <b>Подключение готово!</b>\n\n` +
+    `📅 До: ${formatDate(sub.expiresAt)}\n` +
+    `⏳ Осталось: ${alive ? left + " дн." : "❌ истёк"}\n\n` +
+    `👇 Выбери свою платформу:`,
+    { parse_mode: "HTML", reply_markup: connectKb() }
+  );
+});
+
+userBot.callbackQuery("open_shop", async (ctx) => {
+  const menu = getKeyMenu();
+  return ctx.editMessageText(menu.text, { reply_markup: menu.reply_markup, parse_mode: "HTML" });
+});
+
+userBot.callbackQuery("to_main", async (ctx) => {
+  userStates.delete(ctx.from.id);
+  const name = ctx.from.first_name || "друг";
+  const menu = getMainMenu(name);
+  return ctx.editMessageText(menu.text, { reply_markup: menu.reply_markup, parse_mode: "HTML" });
+});
+
+userBot.callbackQuery("show_key", async (ctx) => {
+  const userId = ctx.from.id;
+  const sub = await getSubscription(String(userId));
+  
+  if (!sub?.key) {
+    return ctx.answerCallbackQuery({ text: "❌ У тебя нет активного ключа", show_alert: true });
+  }
+
+  const left = daysLeft(sub.expiresAt);
+  const alive = left > 0;
+  
+  await ctx.answerCallbackQuery();
+  await ctx.reply(
+    `🔑 <b>Твой ключ:</b>\n\n` +
+    `<code>${sub.key}</code>\n\n` +
+    `📅 До: ${formatDate(sub.expiresAt)}\n` +
+    `⏳ Осталось: ${alive ? left + " дн." : "❌ истёк"}`,
+    { parse_mode: "HTML", reply_markup: backToMainKb() }
+  );
+});
+
+userBot.callbackQuery("connect_android", async (ctx) => {
+  const userId = ctx.from.id;
+  const sub = await getSubscription(String(userId));
+  
+  if (!sub?.key) {
+    return ctx.answerCallbackQuery({ text: "❌ У тебя нет активного ключа", show_alert: true });
+  }
+
+  await ctx.editMessageText(
+    `🤖 <b>Android — HappProxy</b>\n\n` +
+    `Нажми кнопку ниже — приложение откроется автоматически.\n` +
+    `Если HappProxy не установлен, скачай его из Google Play.`,
+    { parse_mode: "HTML", reply_markup: connectAndroidKb(sub.key) }
+  );
+});
+
+userBot.callbackQuery("connect_iphone", async (ctx) => {
+  const userId = ctx.from.id;
+  const sub = await getSubscription(String(userId));
+  
+  if (!sub?.key) {
+    return ctx.answerCallbackQuery({ text: "❌ У тебя нет активного ключа", show_alert: true });
+  }
+
+  await ctx.editMessageText(
+    `📱 <b>iPhone — Happ</b>\n\n` +
+    `Нажми кнопку ниже — приложение откроется автоматически.\n` +
+    `Если Happ не установлен, скачай его из App Store.`,
+    { parse_mode: "HTML", reply_markup: connectIphoneKb(sub.key) }
+  );
+});
+
+userBot.callbackQuery("connect_back", async (ctx) => {
+  const userId = ctx.from.id;
+  const sub = await getSubscription(String(userId));
+  
+  if (!sub?.key) {
+    return ctx.answerCallbackQuery({ text: "❌ У тебя нет активного ключа", show_alert: true });
+  }
+
+  const left = daysLeft(sub.expiresAt);
+  const alive = left > 0;
+  
+  await ctx.editMessageText(
+    `✅ <b>Подключение готово!</b>\n\n` +
+    `📅 До: ${formatDate(sub.expiresAt)}\n` +
+    `⏳ Осталось: ${alive ? left + " дн." : "❌ истёк"}\n\n` +
+    `👇 Выбери свою платформу:`,
+    { parse_mode: "HTML", reply_markup: connectKb() }
+  );
+});
+
 // Error handler
 userBot.catch((err) => {
   logger.error({ err }, "User bot error");
