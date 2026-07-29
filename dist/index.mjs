@@ -57760,14 +57760,14 @@ function testKeyMngrKb() {
   return new InlineKeyboard().text("\u270F\uFE0F \u0418\u0437\u043C\u0435\u043D\u0438\u0442\u044C", "edit_test_key").row().text("\u{1F504} \u041E\u0431\u043D\u043E\u0432\u0438\u0442\u044C \u0432\u0441\u0435\u043C \u0442\u0438\u0445\u043E", "update_test_key_silent_start").row().text("\u{1F519} \u041D\u0430\u0437\u0430\u0434", "to_admin_menu");
 }
 function userManageKb(userId, banned) {
-  const kb = new InlineKeyboard().text("\u{1F381} \u0412\u044B\u0434\u0430\u0442\u044C \u0431\u0435\u0441\u043F\u043B\u0430\u0442\u043D\u044B\u0439", `select_free_key_${userId}`).row().text("\u2B50 \u0412\u044B\u0434\u0430\u0442\u044C Premium", `select_prem_key_${userId}`).row().text("\u270F\uFE0F \u0418\u0437\u043C\u0435\u043D\u0438\u0442\u044C \u043A\u043B\u044E\u0447", `manual_edit_key_${userId}`).row().text("\u{1F50D} \u041F\u0440\u043E\u0432\u0435\u0440\u0438\u0442\u044C \u043A\u043B\u044E\u0447", `check_user_key_${userId}`).row().text("\u2709\uFE0F \u041D\u0430\u043F\u0438\u0441\u0430\u0442\u044C", `send_msg_${userId}`).row();
+  const kb = new InlineKeyboard().text("\u2709\uFE0F \u041D\u0430\u043F\u0438\u0441\u0430\u0442\u044C", `send_msg_${userId}`).row();
   if (banned) {
     kb.text("\u2705 \u0420\u0430\u0437\u0431\u0430\u043D\u0438\u0442\u044C", `unban_user_${userId}`).row();
   } else {
     kb.text("\u{1F6AB} \u0417\u0430\u0431\u0430\u043D\u0438\u0442\u044C", `ban_user_${userId}`).row();
   }
   kb.text("\u{1F5D1}\uFE0F \u0423\u0434\u0430\u043B\u0438\u0442\u044C", `delete_user_confirm_${userId}`).row();
-  kb.text("\u{1F519} \u041A \u0441\u043F\u0438\u0441\u043A\u0443", "admin_get_users");
+  kb.text("\u{1F519} \u041D\u0430\u0437\u0430\u0434", "admin_get_users");
   return kb;
 }
 function supportChatKb(userId) {
@@ -60239,19 +60239,12 @@ async function showUserProfile(ctx, userId) {
 \u{1F4F1} \u042E\u0437\u0435\u0440\u043D\u0435\u0439\u043C: ${escapeHtml(user.username)}${bannedMark}
 `;
   if (sub) {
-    const tariffNames = {
-      "1day": "1 \u0434\u0435\u043D\u044C",
-      "30days": "Premium 30 \u0434\u043D\u0435\u0439",
-      "60days": "Premium 60 \u0434\u043D\u0435\u0439",
-      "90days": "Premium 90 \u0434\u043D\u0435\u0439",
-      "180days": "Premium 180 \u0434\u043D\u0435\u0439",
-      "free_3days": "\u0411\u0435\u0441\u043F\u043B\u0430\u0442\u043D\u044B\u0439 3 \u0434\u043D\u044F",
-      "free_7days": "\u0411\u0435\u0441\u043F\u043B\u0430\u0442\u043D\u044B\u0439 7 \u0434\u043D\u0435\u0439"
-    };
+    const left = daysLeft(sub.expiresAt);
+    const subStatus = left > 0 ? `\u2705 \u0410\u043A\u0442\u0438\u0432\u043D\u0430 (\u043E\u0441\u0442\u0430\u043B\u043E\u0441\u044C ${left} \u0434\u043D.)` : `\u274C \u0418\u0441\u0442\u0435\u043A\u043B\u0430`;
     text2 += `
 \u{1F4CB} <b>\u041F\u041E\u0414\u041F\u0418\u0421\u041A\u0410:</b>
-\u2514 \u0422\u0430\u0440\u0438\u0444: ${tariffNames[sub.tariff] ?? sub.tariff}
-\u2514 \u0414\u0435\u0439\u0441\u0442\u0432\u0443\u0435\u0442 \u0434\u043E: ${formatDate(sub.expiresAt)}
+\u2514 ${subStatus}
+\u2514 \u0414\u043E: ${formatDate(sub.expiresAt)}
 `;
     const domain = getSubDomain();
     if (domain) {
