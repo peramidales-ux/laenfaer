@@ -58132,10 +58132,12 @@ userBot.command("profile", async (ctx) => {
   const name = ctx.from.first_name || "друг";
   const userId = String(ctx.from.id);
   const sub = await getSubscription(userId);
-  const bal = await getUserBalanceInfo(userId);
   const domain = getSubDomain();
   const subLink = domain ? `${domain}/sub/${userId}` : `https://laenfaer-vpn-youtube.duckdns.org/sub/${userId}`;
   const connectUrl = `${domain}/api/connect?app=happ_ios&key=${encodeURIComponent(subLink)}`;
+  const freeKeys = await getFreeKeys();
+  const premKeys = await getPremiumKeys();
+  const totalKeys = freeKeys.length + premKeys.length;
 
   const left = sub ? daysLeft(sub.expiresAt) : 0;
   const isActive = left > 0;
@@ -58143,7 +58145,7 @@ userBot.command("profile", async (ctx) => {
   if (isActive && sub) {
     const dateStr = formatDate(sub.expiresAt);
     const isFree = sub.tariff && (sub.tariff.includes("free") || sub.tariff === "3days" || sub.tariff === "7days");
-    const tariffName = isFree ? "Бесплатный" : "Premium";
+    const tariffLabel = isFree ? `${left} дн.` : `${left} дн.`;
 
     const keyboard = new InlineKeyboard()
       .url("📱 Открыть в Happ", connectUrl)
@@ -58157,22 +58159,23 @@ userBot.command("profile", async (ctx) => {
       `━━━━━━━━━━━━━━━━━━━━\n` +
       `👤  <b>Л И Ч Н Ы Й  К А Б И Н Е Т</b>\n` +
       `━━━━━━━━━━━━━━━━━━━━\n\n` +
-      `👋 Имя: ${name}\n` +
+      `👋 ${name}\n` +
       `🆔 ID: ${ctx.from.id}\n\n` +
-      `💰 Пополнено всего: ${bal.totalPaid}₽\n\n` +
       `━━━━━━━━━━━━━━━━━━━━\n` +
-      `📋 <b>П О Д П И С К А</b>\n` +
+      `📡 <b>П О Д П И С К А</b>\n` +
       `━━━━━━━━━━━━━━━━━━━━\n\n` +
       `✅ Статус: Активна\n` +
-      `📋 Тариф: ${tariffName}\n` +
-      `📅 До: ${dateStr}\n` +
-      `🕐 Осталось: ${left} дн.\n\n` +
+      `📅 Тариф: ${isFree ? "Бесплатный" : "Premium"}\n` +
+      `⏳ Истекает: ${dateStr}\n` +
+      `🕐 Осталось: ${left} дн.\n` +
+      `🔑 Серверов доступно: ${totalKeys}\n\n` +
       `━━━━━━━━━━━━━━━━━━━━\n` +
       `🔗 <b>П О Д К Л Ю Ч Е Н И Е</b>\n` +
       `━━━━━━━━━━━━━━━━━━━━\n\n` +
-      `📋 Ссылка-подписка:\n` +
+      `📋 Ваша ссылка-подписка:\n` +
       `<code>${subLink}</code>\n\n` +
-      `⚠️ Ссылка только для личного использования.`,
+      `⚠️ Ссылка только для личного использования.\n` +
+      `Не передавайте её другим людям.`,
       { parse_mode: "HTML", reply_markup: keyboard }
     );
   } else {
@@ -58182,19 +58185,22 @@ userBot.command("profile", async (ctx) => {
       .text("❓ Помощь", "help")
       .text("◀️ Назад", "back_to_menu");
 
+    const expiresStr = sub ? formatDate(sub.expiresAt) : "—";
+
     return ctx.reply(
       `━━━━━━━━━━━━━━━━━━━━\n` +
       `👤  <b>Л И Ч Н Ы Й  К А Б И Н Е Т</b>\n` +
       `━━━━━━━━━━━━━━━━━━━━\n\n` +
-      `👋 Имя: ${name}\n` +
+      `👋 ${name}\n` +
       `🆔 ID: ${ctx.from.id}\n\n` +
-      `💰 Пополнено всего: ${bal.totalPaid}₽\n\n` +
       `━━━━━━━━━━━━━━━━━━━━\n` +
-      `📋 <b>П О Д П И С К А</b>\n` +
+      `📡 <b>П О Д П И С К А</b>\n` +
       `━━━━━━━━━━━━━━━━━━━━\n\n` +
-      `❌ Статус: Не активна\n\n` +
-      `Продли подписку чтобы получить\n` +
-      `доступ к VPN.`,
+      `❌ Статус: Истекла\n` +
+      `📅 Истекла: ${expiresStr}\n\n` +
+      `Продли подписку чтобы снова\n` +
+      `получить доступ к VPN.\n\n` +
+      `━━━━━━━━━━━━━━━━━━━━`,
       { parse_mode: "HTML", reply_markup: keyboard }
     );
   }
@@ -58360,14 +58366,15 @@ userBot.callbackQuery("activate_trial", async (ctx) => {
 // Missing callbacks for main menu buttons
 userBot.callbackQuery("profile", async (ctx) => {
   await ctx.answerCallbackQuery();
-  // Trigger /profile command
   const name = ctx.from.first_name || "друг";
   const userId = String(ctx.from.id);
   const sub = await getSubscription(userId);
-  const bal = await getUserBalanceInfo(userId);
   const domain = getSubDomain();
   const subLink = domain ? `${domain}/sub/${userId}` : `https://laenfaer-vpn-youtube.duckdns.org/sub/${userId}`;
   const connectUrl = `${domain}/api/connect?app=happ_ios&key=${encodeURIComponent(subLink)}`;
+  const freeKeys = await getFreeKeys();
+  const premKeys = await getPremiumKeys();
+  const totalKeys = freeKeys.length + premKeys.length;
 
   const left = sub ? daysLeft(sub.expiresAt) : 0;
   const isActive = left > 0;
@@ -58375,7 +58382,6 @@ userBot.callbackQuery("profile", async (ctx) => {
   if (isActive && sub) {
     const dateStr = formatDate(sub.expiresAt);
     const isFree = sub.tariff && (sub.tariff.includes("free") || sub.tariff === "3days" || sub.tariff === "7days");
-    const tariffName = isFree ? "Бесплатный" : "Premium";
 
     const keyboard = new InlineKeyboard()
       .url("📱 Открыть в Happ", connectUrl)
@@ -58389,22 +58395,23 @@ userBot.callbackQuery("profile", async (ctx) => {
       `━━━━━━━━━━━━━━━━━━━━\n` +
       `👤  <b>Л И Ч Н Ы Й  К А Б И Н Е Т</b>\n` +
       `━━━━━━━━━━━━━━━━━━━━\n\n` +
-      `👋 Имя: ${name}\n` +
+      `👋 ${name}\n` +
       `🆔 ID: ${ctx.from.id}\n\n` +
-      `💰 Пополнено всего: ${bal.totalPaid}₽\n\n` +
       `━━━━━━━━━━━━━━━━━━━━\n` +
-      `📋 <b>П О Д П И С К А</b>\n` +
+      `📡 <b>П О Д П И С К А</b>\n` +
       `━━━━━━━━━━━━━━━━━━━━\n\n` +
       `✅ Статус: Активна\n` +
-      `📋 Тариф: ${tariffName}\n` +
-      `📅 До: ${dateStr}\n` +
-      `🕐 Осталось: ${left} дн.\n\n` +
+      `📅 Тариф: ${isFree ? "Бесплатный" : "Premium"}\n` +
+      `⏳ Истекает: ${dateStr}\n` +
+      `🕐 Осталось: ${left} дн.\n` +
+      `🔑 Серверов доступно: ${totalKeys}\n\n` +
       `━━━━━━━━━━━━━━━━━━━━\n` +
       `🔗 <b>П О Д К Л Ю Ч Е Н И Е</b>\n` +
       `━━━━━━━━━━━━━━━━━━━━\n\n` +
-      `📋 Ссылка-подписка:\n` +
+      `📋 Ваша ссылка-подписка:\n` +
       `<code>${subLink}</code>\n\n` +
-      `⚠️ Ссылка только для личного использования.`,
+      `⚠️ Ссылка только для личного использования.\n` +
+      `Не передавайте её другим людям.`,
       { parse_mode: "HTML", reply_markup: keyboard }
     );
   } else {
@@ -58414,19 +58421,22 @@ userBot.callbackQuery("profile", async (ctx) => {
       .text("❓ Помощь", "help")
       .text("◀️ Назад", "back_to_menu");
 
+    const expiresStr = sub ? formatDate(sub.expiresAt) : "—";
+
     return ctx.editMessageText(
       `━━━━━━━━━━━━━━━━━━━━\n` +
       `👤  <b>Л И Ч Н Ы Й  К А Б И Н Е Т</b>\n` +
       `━━━━━━━━━━━━━━━━━━━━\n\n` +
-      `👋 Имя: ${name}\n` +
+      `👋 ${name}\n` +
       `🆔 ID: ${ctx.from.id}\n\n` +
-      `💰 Пополнено всего: ${bal.totalPaid}₽\n\n` +
       `━━━━━━━━━━━━━━━━━━━━\n` +
-      `📋 <b>П О Д П И С К А</b>\n` +
+      `📡 <b>П О Д П И С К А</b>\n` +
       `━━━━━━━━━━━━━━━━━━━━\n\n` +
-      `❌ Статус: Не активна\n\n` +
-      `Продли подписку чтобы получить\n` +
-      `доступ к VPN.`,
+      `❌ Статус: Истекла\n` +
+      `📅 Истекла: ${expiresStr}\n\n` +
+      `Продли подписку чтобы снова\n` +
+      `получить доступ к VPN.\n\n` +
+      `━━━━━━━━━━━━━━━━━━━━`,
       { parse_mode: "HTML", reply_markup: keyboard }
     );
   }
