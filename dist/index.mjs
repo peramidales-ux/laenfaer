@@ -58523,6 +58523,9 @@ userBot.on("message:text", async (ctx) => {
 
   if (state === "support_mode") {
     try {
+      // Save message to support chat
+      await addSupportMessage(String(ctx.from.id), { text: ctx.message.text, time: Date.now() / 1000, fromUser: true });
+
       const kb = new InlineKeyboard()
         .text("📤 Ответить", `reply_support_${ctx.from.id}`);
 
