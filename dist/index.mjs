@@ -57688,27 +57688,25 @@ var CHANNEL_URL = process.env.CHANNEL_URL ?? "https://t.me/laenfaer_vpn";
 var BOT_USERNAME = process.env.BOT_USERNAME ?? "laenfaer_vpn_bot";
 var YOOMONEY_URL = "https://yoomoney.ru/to/4100118805863911";
 function mainMenuKb() {
-  const domain = getSubDomain();
-  const appUrl = domain ? domain + "/app" : "https://laenfaer-vpn-youtube.duckdns.org/app";
-  return new InlineKeyboard().text("\u{1F511} \u041F\u043E\u043B\u0443\u0447\u0438\u0442\u044C \u043A\u043B\u044E\u0447", "get_free_key_random").text("\u{1F464} \u041F\u0440\u043E\u0444\u0438\u043B\u044C", "open_profile").row().text("\u{1F3AB} \u041F\u0440\u043E\u043C\u043E\u043A\u043E\u0434", "open_promo").text("\u2753 \u041F\u043E\u043C\u043E\u0449\u044C", "open_help").row().webApp("\u{1F310} \u041B\u0438\u0447\u043D\u044B\u0439 \u043A\u0430\u0431\u0438\u043D\u0435\u0442", appUrl);
+  return new InlineKeyboard().text("🔑 Получить ключ", "get_key").text("👤 Профиль", "profile").row().text("🎫 Промокод", "promo").text("❓ Помощь", "help");
 }
 function profileKb() {
-  return new InlineKeyboard().text("\u{1F511} \u041C\u043E\u0439 \u043A\u043B\u044E\u0447", "show_key").row().text("\u{1F4D6} \u0418\u043D\u0441\u0442\u0440\u0443\u043A\u0446\u0438\u044F", "open_info").row().text("\u{1F4AC} \u041F\u043E\u0434\u0434\u0435\u0440\u0436\u043A\u0430", "open_support").row().text("\u25C0\uFE0F \u041D\u0430\u0437\u0430\u0434", "to_main");
+  return new InlineKeyboard().text("🔑 Мой ключ", "show_key").row().text("❓ Помощь", "help").row().text("◀️ Назад", "back_to_menu");
 }
 function shopKb() {
-  return new InlineKeyboard().text("\u{1F381} \u041F\u0440\u043E\u0431\u043D\u0430\u044F \u2014 3 \u0434\u043D\u044F", "tariff_trial").row().text("\u{1F4C5} 30 \u0434\u043D\u0435\u0439", "tariff_30days").text("\u{1F4C5} 60 \u0434\u043D\u0435\u0439", "tariff_60days").row().text("\u{1F4C5} 90 \u0434\u043D\u0435\u0439", "tariff_90days").text("\u{1F4C5} 180 \u0434\u043D\u0435\u0439", "tariff_180days").row().text("\u25C0\uFE0F \u041D\u0430\u0437\u0430\u0434", "to_main");
+  return new InlineKeyboard().text("🎁 Пробная — 3 дня", "tariff_trial").row().text("📅 30 дней", "tariff_30").text("📅 60 дней", "tariff_60").row().text("📅 90 дней", "tariff_90").text("📅 180 дней", "tariff_180").row().text("◀️ Назад", "back_to_menu");
 }
 function backToMainKb() {
-  return new InlineKeyboard().text("\u{1F3E0} \u0412 \u0433\u043B\u0430\u0432\u043D\u043E\u0435 \u043C\u0435\u043D\u044E", "to_main");
+  return new InlineKeyboard().text("🏠 В главное меню", "back_to_menu");
 }
 function subRequiredKb() {
-  return new InlineKeyboard().url("\u{1F4E2} \u041F\u043E\u0434\u043F\u0438\u0441\u0430\u0442\u044C\u0441\u044F \u043D\u0430 \u043A\u0430\u043D\u0430\u043B", CHANNEL_URL).row().text("\u2705 \u041F\u0440\u043E\u0432\u0435\u0440\u0438\u0442\u044C \u043F\u043E\u0434\u043F\u0438\u0441\u043A\u0443", "check_sub_again");
+  return new InlineKeyboard().url("📢 Подписаться на канал", CHANNEL_URL).row().text("✅ Проверить подписку", "check_subscription");
 }
 function getSubDomain() {
   return process.env.RENDER_EXTERNAL_URL || "https://laenfaer-vpn-youtube.duckdns.org";
 }
 function connectKb() {
-  return new InlineKeyboard().text("\u{1F916} Android", "connect_android").text("\u{1F4F1} iPhone", "connect_iphone").row().text("\u{1F511} \u041F\u043E\u043A\u0430\u0437\u0430\u0442\u044C \u043A\u043B\u044E\u0447", "show_key").row().text("\u2753 \u041A\u0430\u043A \u043F\u043E\u0434\u043A\u043B\u044E\u0447\u0438\u0442\u044C\u0441\u044F", "how_to_connect").row().text("\u{1F3E0} \u0412 \u0433\u043B\u0430\u0432\u043D\u043E\u0435 \u043C\u0435\u043D\u044E", "to_main");
+  return new InlineKeyboard().text("🤖 Android", "connect_android").text("📱 iPhone", "connect_iphone").row().text("🔑 Показать ключ", "show_key").row().text("❓ Как подключиться", "help").row().text("◀️ Назад", "back_to_menu");
 }
 function connectAndroidKb(key) {
   const domain2 = getSubDomain() || "https://laenfaer-vpn-youtube.duckdns.org";
@@ -58416,6 +58414,35 @@ userBot.callbackQuery("activate_trial", async (ctx) => {
 // Error handler
 userBot.catch((err) => {
   logger.error({ err }, "User bot error");
+});
+
+// Старые callback alias'ы для совместимости
+userBot.callbackQuery("to_main", async (ctx) => {
+  userStates.delete(ctx.from.id);
+  const name = ctx.from.first_name || "друг";
+  const menu = getMainMenu(name);
+  return ctx.editMessageText(menu.text, { reply_markup: menu.reply_markup, parse_mode: "HTML" });
+});
+userBot.callbackQuery("check_sub_again", async (ctx) => {
+  const isSubscribed = await checkChannelSubscription(ctx.from.id);
+  if (isSubscribed) {
+    const name = ctx.from.first_name || "друг";
+    const menu = getMainMenu(name);
+    return ctx.editMessageText(menu.text, { reply_markup: menu.reply_markup, parse_mode: "HTML" });
+  }
+  return ctx.answerCallbackQuery({ text: "Вы ещё не подписались на канал", show_alert: true });
+});
+userBot.callbackQuery("show_key", async (ctx) => {
+  return ctx.answerCallbackQuery({ text: "🔑 Используй /key чтобы получить ключ", show_alert: true });
+});
+userBot.callbackQuery("connect_android", async (ctx) => {
+  return ctx.answerCallbackQuery({ text: "📱 Используй /key для подключения", show_alert: true });
+});
+userBot.callbackQuery("connect_iphone", async (ctx) => {
+  return ctx.answerCallbackQuery({ text: "📱 Используй /key для подключения", show_alert: true });
+});
+userBot.callbackQuery("connect_back", async (ctx) => {
+  return ctx.answerCallbackQuery({ text: "⬅️ Назад", show_alert: true });
 });
 
 // src/bots/adminBot.ts
