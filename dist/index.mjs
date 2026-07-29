@@ -59938,22 +59938,14 @@ async function showPromoList(ctx) {
 async function showSubscriptionsList(ctx, page = 0, filter = "all") {
   function fmtTariff(t, daysLeft) {
     if (!t) return "?";
-    const isFree = t.includes("free") || t === "free";
-    const prefix = isFree ? "Бесплатный" : "Premium";
-    if (daysLeft !== undefined && daysLeft > 0) return `${prefix} (${daysLeft} дн.)`;
-    if (isFree) return "Бесплатный";
-    const premMatch = t.match(/^(\d+)days?$/i);
-    if (premMatch) return `Premium ${premMatch[1]} дн.`;
+    if (daysLeft !== undefined && daysLeft > 0) return `${daysLeft} дн.`;
+    const match = t.match(/(\d+)days?$/i);
+    if (match) return `${match[1]} дн.`;
     return t;
   }
   let allSubs = await db.select().from(subscriptionsTable);
-  if (filter === "free") {
-    allSubs = allSubs.filter(s => s.tariff && (s.tariff.includes("free") || s.tariff.includes("trial")));
-  } else if (filter === "premium") {
-    allSubs = allSubs.filter(s => s.tariff && !s.tariff.includes("free") && !s.tariff.includes("trial"));
-  }
   if (!allSubs.length) {
-    await ctx.editMessageText("\u{1F4CB} \u041F\u043E\u0434\u043F\u0438\u0441\u043E\u043A \u043F\u043E \u0444\u0438\u043B\u044C\u0442\u0440\u0443 \u043D\u0435\u0442.", { reply_markup: adminBackKb() });
+    await ctx.editMessageText("\u{1F4CB} \u041F\u043E\u0434\u043F\u0438\u0441\u043E\u043A \u043D\u0435\u0442.", { reply_markup: adminBackKb() });
     return;
   }
   const now = new Date();
@@ -59966,8 +59958,32 @@ async function showSubscriptionsList(ctx, page = 0, filter = "all") {
   const totalPages = Math.ceil(sorted.length / perPage);
   const safePage = Math.max(0, Math.min(page, totalPages - 1));
   const slice = sorted.slice(safePage * perPage, (safePage + 1) * perPage);
-  const filterLabel = filter === "free" ? "\u{1F381} \u0411\u0435\u0441\u043F\u043B\u0430\u0442\u043D\u044B\u0435" : filter === "premium" ? "\u2B50 Premium" : "\u{1F4CB} \u0412\u0441\u0435";
-  let text2 = `${filterLabel} \u041F\u043E\u0434\u043F\u0438\u0441\u043A\u0438\n\n\u2705 \u0410\u043A\u0442\u0438\u0432\u043D\u044B\u0445: <b>${active.length}</b> | \u274C \u0418\u0441\u0442\u0435\u043A\u0448\u0438\u0445: <b>${expired.length}</b> | \u0412\u0441\u0435\u0433\u043E: <b>${sorted.length}</b>\n\u{1F4C4} \u0421\u0442\u0440\u0430\u043D\u0438\u0446\u0430 <b>${safePage + 1}/${totalPages}</b>\n\n`;
+  const totalUsers = allUsers.length;
+  const banned = allUsers.filter(u => u.banned).length;
+  const today = new Date();
+  today.setHours(23, 59, 59, 999);
+  const expiringToday = sorted.filter(s => {
+    const exp = new Date(s.expiresAt);
+    return exp > now && exp <= today;
+  }).length;
+  const in3Days = new Date(now.getTime() + 3 * 86400000);
+  const expiring3d = sorted.filter(s => {
+    const exp = new Date(s.expiresAt);
+    return exp > now && exp <= in3Days;
+  }).length;
+  const totalReferred = 0;
+  let text2 = `\u{1F4CB} <b>\u041F\u043E\u0434\u043F\u0438\u0441\u043A\u0438</b>
+
+\u{1F464} \u0412\u0441\u0435\u0433\u043E \u043F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u0435\u043B\u0435\u0439: <b>${totalUsers}</b>
+\u{1F6AB} \u0417\u0430\u0431\u043B\u043E\u043A\u0438\u0440\u043E\u0432\u0430\u043D\u043D\u044B\u0445: <b>${banned}</b>
+\u{1F511} \u0410\u043A\u0442\u0438\u0432\u043D\u044B\u0445 \u043F\u043E\u0434\u043F\u0438\u0441\u043E\u043A: <b>${active.length}</b>
+\u23F0 \u0418\u0441\u0442\u0435\u043A\u0430\u0435\u0442 \u0441\u0435\u0433\u043E\u0434\u043D\u044F: <b>${expiringToday}</b>
+\u{1F4C5} \u0418\u0441\u0442\u0435\u043A\u0430\u0435\u0442 \u0437\u0430 3 \u0434\u043D\u044F: <b>${expiring3d}</b>
+\u{1F91D} \u041F\u0440\u0438\u0433\u043B\u0430\u0448\u0435\u043D\u043E \u0447\u0435\u0440\u0435\u0437 \u0440\u0435\u0444\u043A\u0443: <b>${totalReferred}</b>
+
+\u2705 \u0410\u043A\u0442\u0438\u0432\u043D\u044B\u0445: <b>${active.length}</b> | \u274C \u0418\u0441\u0442\u0435\u043A\u0448\u0438\u0445: <b>${expired.length}</b> | \u0412\u0441\u0435\u0433\u043E: <b>${sorted.length}</b>
+\u{1F4C4} \u0421\u0442\u0440\u0430\u043D\u0438\u0446\u0430 <b>${safePage + 1}/${totalPages}</b>
+`;
   const kb = new InlineKeyboard3();
   for (const s of slice) {
     const isActive = new Date(s.expiresAt) > now;
@@ -59979,7 +59995,6 @@ async function showSubscriptionsList(ctx, page = 0, filter = "all") {
     text2 += `${isActive ? "\u{1F7E2}" : "\u{1F534}"} <b>${escapeHtml(s.telegramId)}</b>${nameStr} | ${fmtTariff(s.tariff, daysLeft)} | ${status}\n`;
     kb.text(`\u{1F464} ${escapeHtml(name || s.telegramId)}`, `manage_user_${s.telegramId}`).row();
   }
-  kb.text("\u{1F381} \u0411\u0435\u0441\u043F\u043B\u0430\u0442\u043D\u044B\u0435", `subs_filter_free`).text("\u2B50 Premium", `subs_filter_premium`).text("\u{1F4CB} \u0412\u0441\u0435", `subs_filter_all`).row();
   const nav = [];
   if (safePage > 0) nav.push(["\u25C0\uFE0F \u041D\u0430\u0437\u0430\u0434", `subs_page_${safePage - 1}_${filter}`]);
   if (safePage + 1 < totalPages) nav.push(["\u0412\u043F\u0435\u0440\u0451\u0434 \u25B6\uFE0F", `subs_page_${safePage + 1}_${filter}`]);
