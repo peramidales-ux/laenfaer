@@ -58600,6 +58600,7 @@ userBot.on("message:photo", async (ctx) => {
   const tariffName = tariffNames[days] || `${days} дней`;
 
   try {
+    console.log("[PAYMENT] Sending photo to admin:", ADMIN_ID, "file_id:", photo.file_id);
     const adminKb = new InlineKeyboard()
       .text("✅ Подтвердить", `confirm_pay_${ctx.from.id}_${days}`)
       .text("❌ Отклонить", `reject_pay_${ctx.from.id}`);
@@ -58614,8 +58615,9 @@ userBot.on("message:photo", async (ctx) => {
       parse_mode: "HTML",
       reply_markup: adminKb
     });
+    console.log("[PAYMENT] Photo sent successfully");
   } catch (e) {
-    console.error("Send payment error:", e.message);
+    console.error("[PAYMENT] Error:", e.message, e.code, e.description);
   }
 
   const keyboard = new InlineKeyboard()
