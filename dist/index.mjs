@@ -58284,13 +58284,6 @@ userBot.callbackQuery("get_key", async (ctx) => {
   return ctx.editMessageText(menu.text, { reply_markup: menu.reply_markup, parse_mode: "HTML" });
 });
 
-userBot.callbackQuery("profile", async (ctx) => {
-  await ctx.answerCallbackQuery();
-  // Trigger /profile command
-  ctx.message = { text: "/profile" };
-  return userBot.handleUpdate(ctx);
-});
-
 userBot.callbackQuery("back_to_menu", async (ctx) => {
   userStates.delete(ctx.from.id);
   const name = ctx.from.first_name || "друг";
@@ -58361,6 +58354,139 @@ userBot.callbackQuery("activate_trial", async (ctx) => {
         .row()
         .text("◀️ Назад", "back_to_tariffs")
     }
+  );
+});
+
+// Missing callbacks for main menu buttons
+userBot.callbackQuery("profile", async (ctx) => {
+  await ctx.answerCallbackQuery();
+  // Trigger /profile command
+  const name = ctx.from.first_name || "друг";
+  const userId = String(ctx.from.id);
+  const sub = await getSubscription(userId);
+  const bal = await getUserBalanceInfo(userId);
+  const domain = getSubDomain();
+  const subLink = domain ? `${domain}/sub/${userId}` : `https://laenfaer-vpn-youtube.duckdns.org/sub/${userId}`;
+  const connectUrl = `${domain}/api/connect?app=happ_ios&key=${encodeURIComponent(subLink)}`;
+
+  const left = sub ? daysLeft(sub.expiresAt) : 0;
+  const isActive = left > 0;
+
+  if (isActive && sub) {
+    const dateStr = formatDate(sub.expiresAt);
+    const isFree = sub.tariff && (sub.tariff.includes("free") || sub.tariff === "3days" || sub.tariff === "7days");
+    const tariffName = isFree ? "Бесплатный" : "Premium";
+
+    const keyboard = new InlineKeyboard()
+      .url("📱 Открыть в Happ", connectUrl)
+      .row()
+      .text("🔄 Продлить подписку", "get_key")
+      .row()
+      .text("❓ Помощь", "help")
+      .text("◀️ Назад", "back_to_menu");
+
+    return ctx.editMessageText(
+      `━━━━━━━━━━━━━━━━━━━━\n` +
+      `👤  <b>Л И Ч Н Ы Й  К А Б И Н Е Т</b>\n` +
+      `━━━━━━━━━━━━━━━━━━━━\n\n` +
+      `👋 Имя: ${name}\n` +
+      `🆔 ID: ${ctx.from.id}\n\n` +
+      `💰 Пополнено всего: ${bal.totalPaid}₽\n\n` +
+      `━━━━━━━━━━━━━━━━━━━━\n` +
+      `📋 <b>П О Д П И С К А</b>\n` +
+      `━━━━━━━━━━━━━━━━━━━━\n\n` +
+      `✅ Статус: Активна\n` +
+      `📋 Тариф: ${tariffName}\n` +
+      `📅 До: ${dateStr}\n` +
+      `🕐 Осталось: ${left} дн.\n\n` +
+      `━━━━━━━━━━━━━━━━━━━━\n` +
+      `🔗 <b>П О Д К Л Ю Ч Е Н И Е</b>\n` +
+      `━━━━━━━━━━━━━━━━━━━━\n\n` +
+      `📋 Ссылка-подписка:\n` +
+      `<code>${subLink}</code>\n\n` +
+      `⚠️ Ссылка только для личного использования.`,
+      { parse_mode: "HTML", reply_markup: keyboard }
+    );
+  } else {
+    const keyboard = new InlineKeyboard()
+      .text("🔑 Продлить подписку", "get_key")
+      .row()
+      .text("❓ Помощь", "help")
+      .text("◀️ Назад", "back_to_menu");
+
+    return ctx.editMessageText(
+      `━━━━━━━━━━━━━━━━━━━━\n` +
+      `👤  <b>Л И Ч Н Ы Й  К А Б И Н Е Т</b>\n` +
+      `━━━━━━━━━━━━━━━━━━━━\n\n` +
+      `👋 Имя: ${name}\n` +
+      `🆔 ID: ${ctx.from.id}\n\n` +
+      `💰 Пополнено всего: ${bal.totalPaid}₽\n\n` +
+      `━━━━━━━━━━━━━━━━━━━━\n` +
+      `📋 <b>П О Д П И С К А</b>\n` +
+      `━━━━━━━━━━━━━━━━━━━━\n\n` +
+      `❌ Статус: Не активна\n\n` +
+      `Продли подписку чтобы получить\n` +
+      `доступ к VPN.`,
+      { parse_mode: "HTML", reply_markup: keyboard }
+    );
+  }
+});
+
+userBot.callbackQuery("promo", async (ctx) => {
+  userStates.set(ctx.from.id, "waiting_promo_code");
+  const keyboard = new InlineKeyboard()
+    .text("◀️ Назад", "back_to_menu");
+  return ctx.editMessageText(
+    `🎫 <b>Промокод</b>\n\n` +
+    `Введи промокод чтобы получить скидку или бесплатный доступ.\n\n` +
+    `Отправь промокод следующим сообщением 👇`,
+    { parse_mode: "HTML", reply_markup: keyboard }
+  );
+});
+
+userBot.callbackQuery("help", async (ctx) => {
+  const keyboard = new InlineKeyboard()
+    .url("💬 Написать в поддержку", "https://t.me/LF_VPN_BOT")
+    .row()
+    .text("◀️ Назад", "back_to_menu");
+
+  return ctx.editMessageText(
+    `❓ <b>Помощь</b>\n\n` +
+    `📱 <b>Как подключиться:</b>\n` +
+    `1. Получи ключ → "Получить ключ"\n` +
+    `2. Скопируй ссылку-подписку\n` +
+    `3. Открой Happ/HappProxy\n` +
+    `4. Нажми "+" → "Ссылка-подписка"\n` +
+    `5. Вставь ссылку → "Добавить"\n` +
+    `6. Нажми "Подключить"\n\n` +
+    `📲 <b>Где скачать:</b>\n` +
+    `• iPhone: App Store → Happ\n` +
+    `• Android: Google Play → HappProxy`,
+    { parse_mode: "HTML", reply_markup: keyboard }
+  );
+});
+
+userBot.callbackQuery(/^pay_/, async (ctx) => {
+  const tariff = ctx.match[0].replace("pay_", "");
+  const tariffInfo = {
+    "30": { name: "30 дней", price: "299₽", days: 30 },
+    "60": { name: "60 дней", price: "539₽", days: 60 },
+    "90": { name: "90 дней", price: "764₽", days: 90 },
+    "180": { name: "180 дней", price: "1349₽", days: 180 },
+  };
+  const info = tariffInfo[tariff] || { name: tariff, price: "?", days: 0 };
+
+  const keyboard = new InlineKeyboard()
+    .url("💳 Оплатить", "https://finance.ozon.ru/apps/sbp/ozonbankpay/019e9d78-dd6e-793b-a78e-2df0533d996a")
+    .row()
+    .text("◀️ Назад", "back_to_tariffs");
+
+  return ctx.editMessageText(
+    `💳 <b>Оплата — ${info.name}</b>\n\n` +
+    `💰 Сумма: ${info.price}\n\n` +
+    `Нажми "Оплатить" чтобы перейти к оплате.\n` +
+    `После оплаты пришли скриншот чека сюда 👇`,
+    { parse_mode: "HTML", reply_markup: keyboard }
   );
 });
 
