@@ -57617,14 +57617,10 @@ async function addSupportMessage(userId, message) {
   await db.insert(supportChatsTable).values({ userId, messages, closed: false, updatedAt: /* @__PURE__ */ new Date() }).onConflictDoUpdate({ target: supportChatsTable.userId, set: { messages, closed: false, updatedAt: /* @__PURE__ */ new Date() } });
 }
 async function closeSupportChat(userId) {
-  const chat = await getSupportChat(userId);
-  const messages = chat?.messages ?? [];
-  await db.insert(supportChatsTable).values({ userId, messages, closed: true, updatedAt: new Date() }).onConflictDoUpdate({ target: supportChatsTable.userId, set: { closed: true, updatedAt: new Date() } });
+  await db.insert(supportChatsTable).values({ userId, messages: [], closed: true, updatedAt: new Date() }).onConflictDoUpdate({ target: supportChatsTable.userId, set: { closed: true, updatedAt: new Date() } });
 }
 async function reopenSupportChat(userId) {
-  const chat = await getSupportChat(userId);
-  const messages = chat?.messages ?? [];
-  await db.insert(supportChatsTable).values({ userId, messages, closed: false, updatedAt: new Date() }).onConflictDoUpdate({ target: supportChatsTable.userId, set: { messages, closed: false, updatedAt: new Date() } });
+  await db.insert(supportChatsTable).values({ userId, messages: [], closed: false, updatedAt: new Date() }).onConflictDoUpdate({ target: supportChatsTable.userId, set: { messages: [], closed: false, updatedAt: new Date() } });
 }
 async function getActiveSubscriptionsCount() {
   const now = /* @__PURE__ */ new Date();
