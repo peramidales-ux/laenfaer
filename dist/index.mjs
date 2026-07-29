@@ -57767,7 +57767,7 @@ function userManageKb(userId, banned) {
     kb.text("\u{1F6AB} \u0417\u0430\u0431\u0430\u043D\u0438\u0442\u044C", `ban_user_${userId}`).row();
   }
   kb.text("\u{1F5D1}\uFE0F \u0423\u0434\u0430\u043B\u0438\u0442\u044C", `delete_user_confirm_${userId}`).row();
-  kb.text("\u{1F519} \u041D\u0430\u0437\u0430\u0434", "admin_get_users");
+  kb.text("\u{1F519} \u041D\u0430\u0437\u0430\u0434", "to_admin_menu");
   return kb;
 }
 function supportChatKb(userId) {
@@ -59014,10 +59014,6 @@ adminBot.callbackQuery(/.*/, async (ctx) => {
       parse_mode: "HTML",
       reply_markup: adminMainKb()
     });
-    return;
-  }
-  if (data === "admin_get_users") {
-    await showUsersList(ctx, 0);
     return;
   }
   if (data === "admin_get_subs") {
