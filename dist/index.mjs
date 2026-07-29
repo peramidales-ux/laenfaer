@@ -58395,30 +58395,73 @@ userBot.callbackQuery("activate_trial", async (ctx) => {
 userBot.callbackQuery("open_profile", async (ctx) => {
   const userId = ctx.from.id;
   const name = ctx.from.first_name || "друг";
-  const status = await getSubscriptionStatus(String(userId));
+  const sub = await getSubscription(String(userId));
   const bal = await getUserBalanceInfo(String(userId));
-  const user = await getUser(String(userId));
-  const refCountRows = await db.select().from(referralCountsTable).where(eq(referralCountsTable.userId, String(userId))).limit(1);
-  const refCount = refCountRows[0]?.count || 0;
-  const regDate = user?.createdAt ? new Date(user.createdAt).toLocaleDateString("ru-RU") : "—";
-  const botUsername = ctx.me.username;
-  const refLink = `https://t.me/${botUsername}?start=${userId}`;
+  
+  const left = sub ? daysLeft(sub.expiresAt) : 0;
+  const isActive = left > 0;
+  
+  const domain = getSubDomain();
+  const subLink = domain ? `${domain}/sub/${userId}` : `https://laenfaer-vpn-youtube.duckdns.org/sub/${userId}`;
 
-  await ctx.editMessageText(
-    `👤 <b>ЛИЧНЫЙ КАБИНЕТ</b>\n\n` +
-    `👤 Имя: <b>${name}</b>\n` +
-    `🆔 ID: <code>${userId}</code>\n` +
-    `📅 Регистрация: <b>${regDate}</b>\n\n` +
-    `💳 Пополнено всего: <b>${bal.totalPaid}₽</b>\n` +
-    `🤝 Реферальный баланс: <b>${bal.refBalance || 0}₽</b>\n\n` +
-    `👥 Рефералы: <b>${refCount} чел.</b>\n` +
-    `🔗 Ваша ссылка:\n` +
-    `<code>${refLink}</code>\n\n` +
-    `📋 <b>ПОДПИСКА:</b>\n` +
-    `${status}\n\n` +
-    `👇 Дополнительные разделы:`,
-    { parse_mode: "HTML", reply_markup: profileKb() }
-  );
+  if (isActive && sub) {
+    const dateStr = formatDate(sub.expiresAt);
+    const isFree = sub.tariff && (sub.tariff.includes("free") || sub.tariff === "3days" || sub.tariff === "7days");
+    const tariffName = isFree ? "Бесплатный" : "Premium";
+
+    const keyboard = new InlineKeyboard()
+      .url("📱 Открыть в Happ", `${domain}/api/connect?app=happ_ios&key=${encodeURIComponent(subLink)}`)
+      .row()
+      .text("🔄 Продлить подписку", "get_key")
+      .row()
+      .text("❓ Помощь", "help")
+      .text("◀️ Назад", "back_to_menu");
+
+    return ctx.editMessageText(
+      `━━━━━━━━━━━━━━━━━━━━\n` +
+      `👤  <b>Л И Ч Н Ы Й  К А Б И Н Е Т</b>\n` +
+      `━━━━━━━━━━━━━━━━━━━━\n\n` +
+      `👋 Имя: ${name}\n` +
+      `🆔 ID: ${userId}\n\n` +
+      `💰 Пополнено всего: ${bal.totalPaid}₽\n\n` +
+      `━━━━━━━━━━━━━━━━━━━━\n` +
+      `📋 <b>П О Д П И С К А</b>\n` +
+      `━━━━━━━━━━━━━━━━━━━━\n\n` +
+      `✅ Статус: Активна\n` +
+      `📋 Тариф: ${tariffName}\n` +
+      `📅 До: ${dateStr}\n` +
+      `🕐 Осталось: ${left} дн.\n\n` +
+      `━━━━━━━━━━━━━━━━━━━━\n` +
+      `🔗 <b>П О Д К Л Ю Ч Е Н И Е</b>\n` +
+      `━━━━━━━━━━━━━━━━━━━━\n\n` +
+      `📋 Ссылка-подписка:\n` +
+      `<code>${subLink}</code>\n\n` +
+      `⚠️ Ссылка только для личного использования.`,
+      { parse_mode: "HTML", reply_markup: keyboard }
+    );
+  } else {
+    const keyboard = new InlineKeyboard()
+      .text("🔑 Продлить подписку", "get_key")
+      .row()
+      .text("❓ Помощь", "help")
+      .text("◀️ Назад", "back_to_menu");
+
+    return ctx.editMessageText(
+      `━━━━━━━━━━━━━━━━━━━━\n` +
+      `👤  <b>Л И Ч Н Ы Й  К А Б И Н Е Т</b>\n` +
+      `━━━━━━━━━━━━━━━━━━━━\n\n` +
+      `👋 Имя: ${name}\n` +
+      `🆔 ID: ${userId}\n\n` +
+      `💰 Пополнено всего: ${bal.totalPaid}₽\n\n` +
+      `━━━━━━━━━━━━━━━━━━━━\n` +
+      `📋 <b>П О Д П И С К А</b>\n` +
+      `━━━━━━━━━━━━━━━━━━━━\n\n` +
+      `❌ Статус: Не активна\n\n` +
+      `Продли подписку чтобы получить\n` +
+      `доступ к VPN.`,
+      { parse_mode: "HTML", reply_markup: keyboard }
+    );
+  }
 });
 
 userBot.callbackQuery("get_free_key_random", async (ctx) => {
