@@ -58600,12 +58600,20 @@ userBot.on("message:photo", async (ctx) => {
   const tariffName = tariffNames[days] || `${days} дней`;
 
   try {
-    console.log("[PAYMENT] Sending photo to admin:", ADMIN_ID, "file_id:", photo.file_id);
+    console.log("[PAYMENT] Sending photo to admin bot...");
+
+    // Re-upload photo via admin bot (file_id is bot-specific)
+    const fileInfo = await userBot.api.getFile(photo.file_id);
+    const fileUrl = `https://api.telegram.org/file/bot${BOT_TOKEN}/${fileInfo.file_path}`;
+    const resp = await fetch(fileUrl);
+    const buf = Buffer.from(await resp.arrayBuffer());
+    const { InputFile } = await import("grammy");
+
     const adminKb = new InlineKeyboard()
       .text("✅ Подтвердить", `confirm_pay_${ctx.from.id}_${days}`)
       .text("❌ Отклонить", `reject_pay_${ctx.from.id}`);
 
-    await userBot.api.sendPhoto(ADMIN_ID, photo.file_id, {
+    await adminBot.api.sendPhoto(ADMIN_ID2, new InputFile(buf, "receipt.jpg"), {
       caption:
         `💰 <b>Заявка на оплату</b>\n\n` +
         `👤 Пользователь: <code>${ctx.from.id}</code>\n` +
