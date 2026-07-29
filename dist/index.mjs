@@ -57730,9 +57730,6 @@ function adminMainKb() {
 function adminBackKb() {
   return new InlineKeyboard().text("\u{1F519} \u0412 \u043C\u0435\u043D\u044E \u0443\u043F\u0440\u0430\u0432\u043B\u0435\u043D\u0438\u044F", "to_admin_menu");
 }
-function adminBackKb() {
-  return new InlineKeyboard().text("\u{1F519} \u0412 \u043C\u0435\u043D\u044E \u0443\u043F\u0440\u0430\u0432\u043B\u0435\u043D\u0438\u044F", "to_admin_menu");
-}
 function broadcastChoiceKb() {
   return new InlineKeyboard()
     .text("\u{1F512} \u0422\u0440\u0435\u0431\u043E\u0432\u0430\u0442\u044C \u043F\u043E\u0434\u043F\u0438\u0441\u043A\u0443 (\u0432\u0441\u0435\u043C)", "admin_broadcast_sub").row()
