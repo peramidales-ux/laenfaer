@@ -57834,80 +57834,9 @@ if (!ADMIN_BOT_TOKEN) throw new Error("ADMIN_BOT_TOKEN is required");
 var adminNotifier = new Bot(ADMIN_BOT_TOKEN);
 var ADMIN_ID = Number(process.env.ADMIN_ID);
 
-// Get channel from settings or use default
 var CHANNEL_URL = process.env.CHANNEL_URL ?? "https://t.me/laenfaer_vpn";
 const CHANNEL = "@laenfaer_vpn";
 const CHANNEL_ID = -1003575696048;
-const SUB_DOMAIN = process.env.SUB_DOMAIN || getSubDomain();
-const SUBS_FILE = "./subscriptions.json";
-const KEYS_FILE = "./keys.json";
-
-// Load keys
-let keys = [];
-try {
-  keys = JSON.parse(fs.readFileSync(KEYS_FILE, "utf-8"));
-  console.log(`Loaded ${keys.length} keys`);
-} catch {
-  console.log("No keys file found, will fetch on startup");
-}
-
-function loadSubscriptions() {
-  try {
-    return JSON.parse(fs.readFileSync(SUBS_FILE, "utf-8"));
-  } catch {
-    return {};
-  }
-}
-
-function loadUsedPromos() {
-  try {
-    return JSON.parse(fs.readFileSync("./used-promos.json", "utf-8"));
-  } catch {
-    return {};
-  }
-}
-
-function saveSubscription(userId, days) {
-  const subs = loadSubscriptions();
-  const existing = subs[userId];
-
-  if (existing && new Date(existing.expiresAt) > new Date()) {
-    const expires = new Date(existing.expiresAt);
-    expires.setDate(expires.getDate() + days);
-    subs[userId] = { expiresAt: expires.toISOString(), days: existing.days + days };
-  } else {
-    const expiresAt = new Date();
-    expiresAt.setDate(expiresAt.getDate() + days);
-    subs[userId] = { expiresAt: expiresAt.toISOString(), days };
-  }
-
-  fs.writeFileSync(SUBS_FILE, JSON.stringify(subs, null, 2));
-}
-
-function getDaysLeft(userId) {
-  const subs = loadSubscriptions();
-  const sub = subs[userId];
-  if (!sub) return 0;
-  const expires = new Date(sub.expiresAt);
-  const now = new Date();
-  return Math.max(0, Math.ceil((expires - now) / (1000 * 60 * 60 * 24)));
-}
-
-function isSubscriptionActive(userId) {
-  return getDaysLeft(userId) > 0;
-}
-
-function getExpiryMessage(userId) {
-  const daysLeft = getDaysLeft(userId);
-  const subs = loadSubscriptions();
-  const sub = subs[userId];
-  if (!sub) return "У вас нет активной подписки";
-  const expires = new Date(sub.expiresAt);
-  const dateStr = expires.toLocaleDateString("ru-RU");
-  if (daysLeft === 0) return `Подписка истекла ${dateStr}`;
-  if (daysLeft <= 3) return `⚠️ Подписка истекает ${dateStr} (осталось ${daysLeft} дн.)`;
-  return `Подписка активна до ${dateStr} (осталось ${daysLeft} дн.)`;
-}
 
 const ACCEPTED_USERS = new Set();
 const userStates = new Map();
@@ -58103,12 +58032,31 @@ function getKeyMenu() {
   };
 }
 
+// State management helpers (used by old message handler)
+function setUserState(userId, state) {
+  userStates.set(userId, state);
+}
+function getUserState(userId) {
+  return userStates.get(userId);
+}
+function deleteUserState(userId) {
+  userStates.delete(userId);
+}
+
 // Middleware - check ban and subscription
 userBot.use(async (ctx, next) => {
   const userId = ctx.from?.id;
   if (userId) {
-    // Skip ban check - using JSON files only
-    
+    const user = await getUser(String(userId));
+    if (user?.banned) {
+      if (ctx.callbackQuery) {
+        await ctx.answerCallbackQuery({ text: "🚫 Твой аккаунт заблокирован. Обратись в поддержку.", show_alert: true }).catch(() => {});
+      } else {
+        await ctx.reply("🚫 Твой аккаунт заблокирован администратором.\n\nЕсли считаешь это ошибкой — обратись в поддержку.").catch(() => {});
+      }
+      return;
+    }
+
     const msgText = ctx.message?.text || "";
     const cbData = ctx.callbackQuery?.data || "";
     if (cbData !== "check_subscription" && !msgText.startsWith("/start")) {
@@ -58182,17 +58130,20 @@ userBot.command("key", async (ctx) => {
 
 userBot.command("profile", async (ctx) => {
   const name = ctx.from.first_name || "друг";
-  const userId = ctx.from.id;
-  const daysLeft = getDaysLeft(userId);
-  const isActive = isSubscriptionActive(userId);
-  const subs = loadSubscriptions();
-  const sub = subs[userId];
-  const subLink = `${SUB_DOMAIN}/sub/${userId}`;
-  const connectUrl = `${SUB_DOMAIN}/api/connect?app=happ_ios&key=${encodeURIComponent(subLink)}`;
+  const userId = String(ctx.from.id);
+  const sub = await getSubscription(userId);
+  const bal = await getUserBalanceInfo(userId);
+  const domain = getSubDomain();
+  const subLink = domain ? `${domain}/sub/${userId}` : `https://laenfaer-vpn-youtube.duckdns.org/sub/${userId}`;
+  const connectUrl = `${domain}/api/connect?app=happ_ios&key=${encodeURIComponent(subLink)}`;
+
+  const left = sub ? daysLeft(sub.expiresAt) : 0;
+  const isActive = left > 0;
 
   if (isActive && sub) {
-    const expires = new Date(sub.expiresAt);
-    const dateStr = expires.toLocaleDateString("ru-RU", { day: "numeric", month: "long", year: "numeric" });
+    const dateStr = formatDate(sub.expiresAt);
+    const isFree = sub.tariff && (sub.tariff.includes("free") || sub.tariff === "3days" || sub.tariff === "7days");
+    const tariffName = isFree ? "Бесплатный" : "Premium";
 
     const keyboard = new InlineKeyboard()
       .url("📱 Открыть в Happ", connectUrl)
@@ -58207,15 +58158,15 @@ userBot.command("profile", async (ctx) => {
       `👤  <b>Л И Ч Н Ы Й  К А Б И Н Е Т</b>\n` +
       `━━━━━━━━━━━━━━━━━━━━\n\n` +
       `👋 Имя: ${name}\n` +
-      `🆔 ID: ${userId}\n\n` +
-      `💰 Пополнено всего: 0₽\n\n` +
+      `🆔 ID: ${ctx.from.id}\n\n` +
+      `💰 Пополнено всего: ${bal.totalPaid}₽\n\n` +
       `━━━━━━━━━━━━━━━━━━━━\n` +
       `📋 <b>П О Д П И С К А</b>\n` +
       `━━━━━━━━━━━━━━━━━━━━\n\n` +
       `✅ Статус: Активна\n` +
-      `📋 Тариф: ${sub.days} дн.\n` +
+      `📋 Тариф: ${tariffName}\n` +
       `📅 До: ${dateStr}\n` +
-      `🕐 Осталось: ${daysLeft} дн.\n\n` +
+      `🕐 Осталось: ${left} дн.\n\n` +
       `━━━━━━━━━━━━━━━━━━━━\n` +
       `🔗 <b>П О Д К Л Ю Ч Е Н И Е</b>\n` +
       `━━━━━━━━━━━━━━━━━━━━\n\n` +
@@ -58236,8 +58187,8 @@ userBot.command("profile", async (ctx) => {
       `👤  <b>Л И Ч Н Ы Й  К А Б И Н Е Т</b>\n` +
       `━━━━━━━━━━━━━━━━━━━━\n\n` +
       `👋 Имя: ${name}\n` +
-      `🆔 ID: ${userId}\n\n` +
-      `💰 Пополнено всего: 0₽\n\n` +
+      `🆔 ID: ${ctx.from.id}\n\n` +
+      `💰 Пополнено всего: ${bal.totalPaid}₽\n\n` +
       `━━━━━━━━━━━━━━━━━━━━\n` +
       `📋 <b>П О Д П И С К А</b>\n` +
       `━━━━━━━━━━━━━━━━━━━━\n\n` +
@@ -58272,7 +58223,7 @@ userBot.command("help", async (ctx) => {
 });
 
 userBot.command("promo", async (ctx) => {
-  userStates.set(ctx.from.id, "promo");
+  userStates.set(ctx.from.id, "waiting_promo_code");
   const keyboard = new InlineKeyboard()
     .text("◀️ Назад", "back_to_menu");
 
@@ -58378,26 +58329,28 @@ userBot.callbackQuery("tariff_180", async (ctx) => {
 });
 
 userBot.callbackQuery("activate_trial", async (ctx) => {
-  if (keys.length === 0) {
-    return ctx.answerCallbackQuery({ text: "Нет доступных ключей", show_alert: true });
-  }
-
-  if (isSubscriptionActive(ctx.from.id)) {
+  const userId = String(ctx.from.id);
+  const sub = await getSubscription(userId);
+  const left = sub ? daysLeft(sub.expiresAt) : 0;
+  if (left > 0) {
     return ctx.answerCallbackQuery({ text: "У тебя уже есть активная подписка", show_alert: true });
   }
 
+  const key = await getRandomFreeKey() || await getRandomPremiumKey();
+  if (!key) {
+    return ctx.answerCallbackQuery({ text: "Нет доступных ключей. Обратись в поддержку.", show_alert: true });
+  }
+
   await ctx.answerCallbackQuery();
+  await addDaysToSubscription(userId, "free_3days", 3, key);
 
-  saveSubscription(ctx.from.id, 3);
-
-  const subLink = `${SUB_DOMAIN}/sub/${ctx.from.id}`;
-  const daysLeft = getDaysLeft(ctx.from.id);
-  const connectUrl = `${SUB_DOMAIN}/api/connect?app=happ_ios&key=${encodeURIComponent(subLink)}`;
+  const domain = getSubDomain();
+  const subLink = domain ? `${domain}/sub/${userId}` : `https://laenfaer-vpn-youtube.duckdns.org/sub/${userId}`;
+  const connectUrl = `${domain}/api/connect?app=happ_ios&key=${encodeURIComponent(subLink)}`;
 
   return ctx.editMessageText(
     `🎉 <b>Всё готово! Подписка активна.</b>\n\n` +
-    `⏰ Действует: ${daysLeft} дн.\n` +
-    `🔑 Серверов: ${keys.length}\n\n` +
+    `⏰ Действует: 3 дн.\n\n` +
     `Нажми кнопку — Happ откроется и предложит добавить подписку.\n` +
     `Остаётся только нажать "Добавить" и "Подключить".\n\n` +
     `Если Happ не установлен — скачай по ссылке ниже.`,
