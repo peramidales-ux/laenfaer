@@ -57771,7 +57771,13 @@ function userManageKb(userId, banned) {
   return kb;
 }
 function supportChatKb(userId) {
-  return new InlineKeyboard().text("\u{1F4E4} \u041E\u0442\u0432\u0435\u0442\u0438\u0442\u044C", `reply_to_${userId}`).row().text("\u{1F512} \u0417\u0430\u043A\u0440\u044B\u0442\u044C \u0447\u0430\u0442", `close_support_chat_${userId}`).row().text("\u{1F519} \u041D\u0430\u0437\u0430\u0434", "admin_support_chats");
+  return new InlineKeyboard()
+    .text("📤 Ответить", `reply_to_${userId}`)
+    .text("👤 Профиль", `manage_user_${userId}`)
+    .row()
+    .text("🔒 Закрыть чат", `close_support_chat_${userId}`)
+    .row()
+    .text("◀️ К списку", "admin_support_chats");
 }
 
 // src/bots/utils.ts
@@ -60374,34 +60380,56 @@ async function checkAllKeys(ctx) {
 async function showSupportChats(ctx) {
   const chats = await getOpenSupportChats();
   if (!chats.length) {
-    await ctx.editMessageText("\u{1F4AC} \u041D\u0435\u0442 \u0430\u043A\u0442\u0438\u0432\u043D\u044B\u0445 \u0447\u0430\u0442\u043E\u0432 \u043F\u043E\u0434\u0434\u0435\u0440\u0436\u043A\u0438", { reply_markup: adminBackKb() });
+    await ctx.editMessageText("💬 Нет активных чатов поддержки", { reply_markup: adminBackKb() });
     return;
   }
-  let text2 = "\u{1F4AC} <b>\u0410\u041A\u0422\u0418\u0412\u041D\u042B\u0415 \u0427\u0410\u0422\u042B \u041F\u041E\u0414\u0414\u0415\u0420\u0416\u041A\u0418</b>\n\n";
+  const allUsers = await db.select().from(usersTable);
+  const userMap = new Map(allUsers.map(u => [u.telegramId, u]));
+  let text2 = "💬 <b>АКТИВНЫЕ ЧАТЫ ПОДДЕРЖКИ</b>\n\n";
   const kb = new InlineKeyboard3();
   for (const chat of chats.slice(0, 10)) {
     const msgs = chat.messages ?? [];
-    text2 += `\u2514 ID: ${chat.userId} \u2014 ${msgs.length} \u0441\u043E\u043E\u0431\u0449\u0435\u043D\u0438\u0439
-`;
-    kb.text(`\u{1F4AC} \u0427\u0430\u0442 \u0441 ${chat.userId.slice(0, 12)}`, `open_support_chat_${chat.userId}`).row();
+    const lastMsg = msgs.length > 0 ? msgs[msgs.length - 1] : null;
+    const lastTime = lastMsg?.time ? new Date(lastMsg.time * 1000).toLocaleString("ru-RU") : "—";
+    const lastText = lastMsg ? lastMsg.text.slice(0, 40) + (lastMsg.text.length > 40 ? "..." : "") : "—";
+    const u = userMap.get(chat.userId);
+    const name = u?.name || chat.userId;
+    text2 += `👤 <b>${escapeHtml(name)}</b>\n`;
+    text2 += `└ ID: ${chat.userId} | ${msgs.length} сообщ.\n`;
+    text2 += `└ Последнее: ${escapeHtml(lastText)}\n`;
+    text2 += `└ ⏰ ${lastTime}\n\n`;
+    kb.text(`💬 ${escapeHtml(name.slice(0, 15))}`, `open_support_chat_${chat.userId}`).row();
   }
-  kb.text("\u{1F519} \u0412 \u043C\u0435\u043D\u044E", "to_admin_menu");
+  kb.text("🔙 В меню", "to_admin_menu");
   await ctx.editMessageText(text2, { parse_mode: "HTML", reply_markup: kb });
 }
 async function openSupportChat(ctx, userId) {
   const chat = await getSupportChat(userId);
   const msgs = chat?.messages ?? [];
-  let text2 = `\u{1F4AC} <b>\u0427\u0410\u0422 \u041F\u041E\u0414\u0414\u0415\u0420\u0416\u041A\u0418</b>
-ID: ${userId}
+  const u = await getUser(userId);
+  const sub = await getSubscription(userId);
+  const left = sub ? daysLeft(sub.expiresAt) : 0;
+  const subStatus = sub ? (left > 0 ? `✅ Активна (${left} дн.)` : "❌ Истекла") : "❌ Нет";
 
-`;
-  for (const msg of msgs.slice(-10)) {
-    const who = msg.fromUser ? "\u{1F464}" : "\u{1F468}\u200D\u{1F4BB}";
-    text2 += `${who} ${escapeHtml(msg.text.slice(0, 50))}
-`;
+  let text2 = `💬 <b>ЧАТ ПОДДЕРЖКИ</b>\n\n`;
+  text2 += `━━━━━━━━━━━━━━━━━━━━\n`;
+  text2 += `👤 <b>${escapeHtml(u?.name || userId)}</b>\n`;
+  text2 += `🆔 <code>${userId}</code>\n`;
+  text2 += `📡 Подписка: ${subStatus}\n`;
+  text2 += `💬 Сообщений: ${msgs.length}\n`;
+  text2 += `📝 Статус: ${chat?.closed ? "🔴 Закрыт" : "🟢 Активен"}\n`;
+  text2 += `━━━━━━━━━━━━━━━━━━━━\n\n`;
+  if (msgs.length > 0) {
+    const startIdx = Math.max(0, msgs.length - 10);
+    for (let i = startIdx; i < msgs.length; i++) {
+      const msg = msgs[i];
+      const who = msg.fromUser ? "👤" : "👨‍💻";
+      const date = msg.time ? new Date(msg.time * 1000).toLocaleString("ru-RU") : "";
+      text2 += `${who} <b>${msg.fromUser ? "Клиент" : "Админ"}</b> (${date}):\n${escapeHtml(msg.text)}\n\n`;
+    }
+  } else {
+    text2 += "💬 Сообщений пока нет\n";
   }
-  text2 += `
-\u0412\u0441\u0435\u0433\u043E \u0441\u043E\u043E\u0431\u0449\u0435\u043D\u0438\u0439: ${msgs.length}`;
   await ctx.editMessageText(text2, { parse_mode: "HTML", reply_markup: supportChatKb(userId) });
 }
 async function selectFreeKeyForUser(ctx, userId) {
