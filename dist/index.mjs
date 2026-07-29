@@ -58526,7 +58526,7 @@ userBot.on("message:text", async (ctx) => {
       const kb = new InlineKeyboard()
         .text("📤 Ответить", `reply_support_${ctx.from.id}`);
 
-      await userBot.api.sendMessage(
+      await adminNotifier.api.sendMessage(
         ADMIN_ID,
         `📩 <b>ВОПРОС В ПОДДЕРЖКУ</b>\n\n` +
         `👤 ${ctx.from.first_name}\n` +
