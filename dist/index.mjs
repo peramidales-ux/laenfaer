@@ -57835,52 +57835,76 @@ var ADMIN_BOT_TOKEN = process.env.ADMIN_BOT_TOKEN;
 if (!ADMIN_BOT_TOKEN) throw new Error("ADMIN_BOT_TOKEN is required");
 var adminNotifier = new Bot(ADMIN_BOT_TOKEN);
 var ADMIN_ID = Number(process.env.ADMIN_ID);
-var userStates = /* @__PURE__ */ new Map();
-var userStatesTimestamps = /* @__PURE__ */ new Map();
-var USER_STATE_TTL = 30 * 60 * 1000;
-function setUserState(userId, state) {
-  userStates.set(userId, state);
-  userStatesTimestamps.set(userId, Date.now());
-}
-function getUserState(userId) {
-  const ts = userStatesTimestamps.get(userId);
-  if (ts && Date.now() - ts > USER_STATE_TTL) {
-    userStates.delete(userId);
-    userStatesTimestamps.delete(userId);
-    return undefined;
-  }
-  return userStates.get(userId);
-}
-function deleteUserState(userId) {
-  userStates.delete(userId);
-  userStatesTimestamps.delete(userId);
-}
-setInterval(() => {
-  const now = Date.now();
-  for (const [userId, ts] of userStatesTimestamps) {
-    if (now - ts > USER_STATE_TTL) {
-      userStates.delete(userId);
-      userStatesTimestamps.delete(userId);
-    }
-  }
-}, 5 * 60 * 1000);
-var withdrawData = /* @__PURE__ */ new Map();
-var withdrawPending = /* @__PURE__ */ new Map();
-var lastRefNotif = /* @__PURE__ */ new Map();
-function getWelcomeText(firstName) {
-  return `\u{1F525} \u041F\u0440\u0438\u0432\u0435\u0442, ${firstName}! \u{1F525}
 
-\u0414\u043E\u0431\u0440\u043E \u043F\u043E\u0436\u0430\u043B\u043E\u0432\u0430\u0442\u044C \u0432 LAENFAER VPN \u2014 \u043F\u0440\u0435\u043C\u0438\u0430\u043B\u044C\u043D\u044B\u0439 \u0441\u0435\u0440\u0432\u0438\u0441 \u0431\u0435\u0437\u043E\u043F\u0430\u0441\u043D\u043E\u0433\u043E \u0438\u043D\u0442\u0435\u0440\u043D\u0435\u0442\u0430. \u{1F680}
+// User state management
+const ACCEPTED_USERS = new Set();
+const userStates = new Map();
 
-\u041D\u0430\u0448\u0438 \u043F\u0440\u0435\u0438\u043C\u0443\u0449\u0435\u0441\u0442\u0432\u0430:
-\u26A1 \u0421\u043A\u043E\u0440\u043E\u0441\u0442\u044C \u0434\u043E 1 \u0413\u0431\u0438\u0442/\u0441 \u0431\u0435\u0437 \u043E\u0433\u0440\u0430\u043D\u0438\u0447\u0435\u043D\u0438\u0439
-\u{1F4FA} \u0418\u0434\u0435\u0430\u043B\u044C\u043D\u043E \u0434\u043B\u044F YouTube 4K \u0438 \u0441\u043E\u0446\u0441\u0435\u0442\u0435\u0439
-\u{1F512} \u041F\u0440\u043E\u0442\u043E\u043A\u043E\u043B VLESS \u043D\u043E\u0432\u043E\u0433\u043E \u043F\u043E\u043A\u043E\u043B\u0435\u043D\u0438\u044F
-\u{1F6E1} \u041F\u043E\u043B\u043D\u0430\u044F \u0437\u0430\u0449\u0438\u0442\u0430 \u043E\u0442 \u0441\u043B\u0435\u0436\u043A\u0438
+// Policy text
+const POLICIES = `📜 Политика конфиденциальности LAENFAER VPN
 
-\u{1F447} \u0412\u044B\u0431\u0435\u0440\u0438 \u043D\u0443\u0436\u043D\u044B\u0439 \u0440\u0430\u0437\u0434\u0435\u043B \u043D\u0430 \u043A\u043D\u043E\u043F\u043A\u0430\u0445 \u043D\u0438\u0436\u0435:`;
-}
-async function checkSubscription(userId) {
+1. Сбор данных
+Мы собираем только ваш Telegram ID и имя для работы сервиса. Мы не собираем данные о трафике, историях посещений или содержимом соединений.
+
+2. Использование данных
+Ваш Telegram ID используется для:
+• Предоставления доступа к VPN-сервису
+• Связи с вами по вопросам подписки
+• Отправки уведомлений о статусе подписки
+
+3. Хранение данных
+Данные хранятся на защищённых серверах. Мы не передаём данные третьим лицам.
+
+4. Удаление данных
+Вы можете запросить удаление ваших данных в любой момент через /support.
+
+5. Безопасность
+Мы используем протокол VLESS Reality для шифрования трафика. Ваш провайдер не может видеть содержимое соединений.
+
+6. Контакты
+По вопросам конфиденциальности: /support
+
+━━━━━━━━━━━━━━━━━━━━
+
+📜 Политика возвратов LAENFAER VPN
+
+1. Сроки подачи заявки
+Заявка на возврат может быть подана в течение 24 часов с момента оплаты.
+
+2. Сроки рассмотрения
+Заявка рассматривается в течение 3 рабочих дней с момента получения.
+
+3. Сроки осуществления возврата
+Возврат средств осуществляется в течение 5 рабочих дней после одобрения заявки.
+
+4. Способ возврата
+Возврат средств производится на тот же способ оплаты, с которого была произведена оплата.
+
+5. Условия возврата
+Возврат возможен если:
+• Прошло не более 24 часов с момента оплаты
+• Сервис не был использован (не было подключения к серверу)
+
+6. Исключения
+Возврат невозможен если:
+• Сервис был использован (подключение к серверу)
+• Прошло более 24 часов с момента оплаты
+• Нарушены условия использования
+
+7. Контакты
+Для запроса возврата: /support`;
+
+// Tariffs
+const TARIFFS = {
+  trial: { name: "Пробная подписка", days: 3, price: "Бесплатно", discount: "" },
+  30: { name: "30 дней", days: 30, price: "299 ₽", discount: "" },
+  60: { name: "60 дней", days: 60, price: "539 ₽", discount: "Выгода 10%" },
+  90: { name: "90 дней", days: 90, price: "764 ₽", discount: "Выгода 15%" },
+  180: { name: "180 дней", days: 180, price: "1349 ₽", discount: "Выгода 25%" }
+};
+
+// Check channel subscription
+async function checkChannelSubscription(userId) {
   const channelId = await getChannelId();
   if (!channelId) return true;
   try {
@@ -57890,71 +57914,145 @@ async function checkSubscription(userId) {
     return true;
   }
 }
-var TARIFF_LABELS = {
-  "1day": "1 \u0434\u0435\u043D\u044C",
-  "30days": "Premium (30 \u0434\u043D\u0435\u0439)",
-  "60days": "Premium (60 \u0434\u043D\u0435\u0439)",
-  "90days": "Premium (90 \u0434\u043D\u0435\u0439)",
-  "180days": "Premium (180 \u0434\u043D\u0435\u0439)",
-  "free_3days": "\u0411\u0435\u0441\u043F\u043B\u0430\u0442\u043D\u044B\u0439 (3 \u0434\u043D\u044F)",
-  "free_7days": "\u0411\u0435\u0441\u043F\u043B\u0430\u0442\u043D\u044B\u0439 (7 \u0434\u043D\u0435\u0439)"
-};
-async function getSubscriptionStatus(telegramId) {
-  const sub = await getSubscription(telegramId);
-  if (sub) {
-    const left = daysLeft(sub.expiresAt);
-    const isFree = sub.tariff && (sub.tariff.includes("free") || /^free/i.test(sub.tariff) || sub.tariff === "3days" || sub.tariff === "7days");
-    const name = isFree ? `Бесплатный (${left} дн.)` : `Premium (${left} дн.)`;
-    if (left > 0) {
-      return `\u{1F7E2} \u0410\u041A\u0422\u0418\u0412\u041D\u0410
-\u0422\u0430\u0440\u0438\u0444: ${name}
-\u0414\u043E: ${formatDate(sub.expiresAt)}
-\u041E\u0441\u0442\u0430\u043B\u043E\u0441\u044C: ${left} \u0434\u043D.`;
-    } else {
-      return `\u{1F534} \u0418\u0421\u0422\u0415\u041A\u041B\u0410
-\u0422\u0430\u0440\u0438\u0444: ${name}
-\u0418\u0441\u0442\u0435\u043A\u043B\u0430: ${formatDate(sub.expiresAt)}`;
-    }
-  }
-  return "\u26AA \u041D\u0415\u0422 \u0410\u041A\u0422\u0418\u0412\u041D\u041E\u0419 \u041F\u041E\u0414\u041F\u0418\u0421\u041A\u0418\n\u041D\u0430\u0436\u043C\u0438 \xAB\u041F\u043E\u043B\u0443\u0447\u0438\u0442\u044C \u043A\u043B\u044E\u0447\xBB \u0438\u043B\u0438 \u043A\u0443\u043F\u0438 \u0442\u0430\u0440\u0438\u0444 \u0432 \u043C\u0430\u0433\u0430\u0437\u0438\u043D\u0435";
+
+// Main menu
+function getMainMenu(name) {
+  const keyboard = new InlineKeyboard()
+    .text("🔑 Получить ключ", "get_key")
+    .text("👤 Профиль", "profile")
+    .row()
+    .text("🎫 Промокод", "promo")
+    .text("❓ Помощь", "help");
+
+  return {
+    text:
+      `Привет, ${name}! 👋\n\n` +
+      `LAENFAER VPN — ваш ключ к свободному интернету 🔑\n\n` +
+      `⚡ Почему выбирают нас:\n\n` +
+      `🔒 Безопасность — трафик неотличим от обычного HTTPS\n` +
+      `🚀 Скорость — YouTube в 4K без тормозов\n` +
+      `🌍 Доступ — любые сайты и сервисы без ограничений\n` +
+      `📱 Простота — подключение за 2 минуты через Telegram\n` +
+      `🔐 Надёжность — протокол VLESS Reality\n\n` +
+      `Ваш провайдер видит только защищённый сайт.\n` +
+      `Он не может отличить ваш VPN-трафик от обычного просмотра.\n\n` +
+      `Выбери действие 👇`,
+    reply_markup: keyboard
+  };
 }
-var SHOP_TEXT = `\u{1F6D2} <b>\u041C\u0410\u0413\u0410\u0417\u0418\u041D \u041F\u041E\u0414\u041F\u0418\u0421\u041E\u041A</b>
 
-\u041E\u043F\u043B\u0430\u0442\u0430 \u0432 \u0440\u0443\u0431\u043B\u044F\u0445 \u0447\u0435\u0440\u0435\u0437 YooMoney.
-\u041F\u043E\u0441\u043B\u0435 \u043E\u043F\u043B\u0430\u0442\u044B \u043E\u0442\u043F\u0440\u0430\u0432\u044C \u0441\u043A\u0440\u0438\u043D\u0448\u043E\u0442 \u2014 \u0430\u0434\u043C\u0438\u043D\u0438\u0441\u0442\u0440\u0430\u0442\u043E\u0440 \u043F\u043E\u0434\u0442\u0432\u0435\u0440\u0434\u0438\u0442 \u0438 \u0430\u043A\u0442\u0438\u0432\u0438\u0440\u0443\u0435\u0442 \u043F\u043E\u0434\u043F\u0438\u0441\u043A\u0443.
+function getUnsubscribedMessage() {
+  return {
+    text:
+      `Для использования LAENFAER VPN необходимо подписаться на наш канал 📢\n\n` +
+      `В канале:\n` +
+      `• Новости и обновления\n` +
+      `• Инструкции по подключению\n` +
+      `• Поддержка`,
+    reply_markup: subRequiredKb()
+  };
+}
 
-\u{1F48E} 1 \u0434\u0435\u043D\u044C \u2014 10\u20BD
-\u{1F525} 30 \u0434\u043D\u0435\u0439 \u2014 249\u20BD
-\u2B50 60 \u0434\u043D\u0435\u0439 \u2014 473\u20BD  (\u0441\u043A\u0438\u0434\u043A\u0430 5%)
-\u{1F680} 90 \u0434\u043D\u0435\u0439 \u2014 672\u20BD  (\u0441\u043A\u0438\u0434\u043A\u0430 10%)
-\u{1F3C6} 180 \u0434\u043D\u0435\u0439 \u2014 1270\u20BD  (\u0441\u043A\u0438\u0434\u043A\u0430 15%)
+function getKeyMenu() {
+  const keyboard = new InlineKeyboard()
+    .text("🎁 Пробная подписка — 3 дня", "tariff_trial")
+    .row()
+    .text("📅 30 дней", "tariff_30")
+    .text("📅 60 дней", "tariff_60")
+    .row()
+    .text("📅 90 дней", "tariff_90")
+    .text("📅 180 дней", "tariff_180")
+    .row()
+    .text("◀️ Назад", "back_to_menu");
 
-\u{1F447} \u0412\u044B\u0431\u0435\u0440\u0438 \u0442\u0430\u0440\u0438\u0444:`;
+  return {
+    text:
+      `🔑 LAENFAER VPN — выбери свой тариф\n\n` +
+      `🎁 <b>Пробная — 3 дня бесплатно</b>\n` +
+      `Опробуй сервис без рисков.\n\n` +
+      `📅 <b>30 дней — 299₽</b>\n` +
+      `Идеально для старта.\n\n` +
+      `📅 <b>60 дней — 539₽</b> (−10%)\n` +
+      `Выгоднее, чем ежемесячно.\n\n` +
+      `📅 <b>90 дней — 764₽</b> (−15%)\n` +
+      `Оптимальный выбор.\n\n` +
+      `📅 <b>180 дней — 1349₽</b> (−25%)\n` +
+      `Максимальная экономия.\n\n` +
+      `⚡ В тариф входит:\n` +
+      `• Все серверы с флагами стран\n` +
+      `• YouTube 4K без тормозов\n` +
+      `• Instagram, Telegram, любые сайты\n` +
+      `• Подключение за 2 минуты\n` +
+      `• Поддержка 24/7\n\n` +
+      `Выбери тариф 👇`,
+    reply_markup: keyboard
+  };
+}
+
+function getPaymentMenu(tariffId) {
+  const tariff = TARIFFS[tariffId];
+
+  if (tariffId === "trial") {
+    const keyboard = new InlineKeyboard()
+      .text("🎁 Активировать бесплатно", "activate_trial")
+      .row()
+      .text("◀️ Назад к тарифам", "back_to_tariffs");
+
+    return {
+      text:
+        `🎁 <b>Попробуй бесплатно 3 дня</b>\n\n` +
+        `YouTube загружается вечность?\n` +
+        `Instagram не открывается?\n` +
+        `Telegram периодически отваливается?\n\n` +
+        `Мы знаем как это исправить.\n\n` +
+        `3 дня — бесплатно, без привязки карты.\n` +
+        `После — от 299₽/мес.`,
+      reply_markup: keyboard
+    };
+  }
+
+  const keyboard = new InlineKeyboard()
+    .text("💳 Оплатить", `pay_${tariffId}`)
+    .row()
+    .text("◀️ Назад к тарифам", "back_to_tariffs");
+
+  return {
+    text:
+      `💳 <b>${tariff.name}</b>\n\n` +
+      `YouTube загружается вечность?\n` +
+      `Instagram не открывается?\n` +
+      `Telegram периодически отваливается?\n\n` +
+      `Мы знаем как это исправить.\n\n` +
+      `💰 ${tariff.price}` +
+      (tariff.discount ? `  ${tariff.discount}` : "") +
+      `\n\nПолный доступ ко всем серверам.`,
+    reply_markup: keyboard
+  };
+}
+
+// Middleware - check subscription
 userBot.use(async (ctx, next) => {
   const userId = ctx.from?.id;
   if (userId) {
     const user = await getUser(String(userId));
     if (user?.banned) {
       if (ctx.callbackQuery) {
-        await ctx.answerCallbackQuery({ text: "\u{1F6AB} \u0422\u0432\u043E\u0439 \u0430\u043A\u043A\u0430\u0443\u043D\u0442 \u0437\u0430\u0431\u043B\u043E\u043A\u0438\u0440\u043E\u0432\u0430\u043D. \u041E\u0431\u0440\u0430\u0442\u0438\u0441\u044C \u0432 \u043F\u043E\u0434\u0434\u0435\u0440\u0436\u043A\u0443.", show_alert: true }).catch(() => {
-        });
+        await ctx.answerCallbackQuery({ text: "🚫 Твой аккаунт заблокирован. Обратись в поддержку.", show_alert: true }).catch(() => {});
       } else {
-        await ctx.reply("\u{1F6AB} \u0422\u0432\u043E\u0439 \u0430\u043A\u043A\u0430\u0443\u043D\u0442 \u0437\u0430\u0431\u043B\u043E\u043A\u0438\u0440\u043E\u0432\u0430\u043D \u0430\u0434\u043C\u0438\u043D\u0438\u0441\u0442\u0440\u0430\u0442\u043E\u0440\u043E\u043C.\n\n\u0415\u0441\u043B\u0438 \u0441\u0447\u0438\u0442\u0430\u0435\u0448\u044C \u044D\u0442\u043E \u043E\u0448\u0438\u0431\u043A\u043E\u0439 \u2014 \u043E\u0431\u0440\u0430\u0442\u0438\u0441\u044C \u0432 \u043F\u043E\u0434\u0434\u0435\u0440\u0436\u043A\u0443.").catch(() => {
-        });
+        await ctx.reply("🚫 Твой аккаунт заблокирован администратором.\n\nЕсли считаешь это ошибкой — обратись в поддержку.").catch(() => {});
       }
       return;
     }
-    // Check channel subscription for ALL actions except /start and check_sub_again
+
     const msgText = ctx.message?.text || "";
     const cbData = ctx.callbackQuery?.data || "";
-    if (cbData !== "check_sub_again" && !msgText.startsWith("/start")) {
-      if (!await checkSubscription(userId)) {
+    if (cbData !== "check_subscription" && !msgText.startsWith("/start")) {
+      if (!await checkChannelSubscription(userId)) {
         if (ctx.callbackQuery) {
-          await ctx.answerCallbackQuery({ text: "\u26A0\uFE0F \u041F\u043E\u0434\u043F\u0438\u0448\u0438\u0441\u044C \u043D\u0430 \u043A\u0430\u043D\u0430\u043B!", show_alert: true }).catch(() => {});
+          await ctx.answerCallbackQuery({ text: "⚠️ Подпишись на канал!", show_alert: true }).catch(() => {});
         } else {
-          await ctx.reply("\u26A0\uFE0F \u0414\u043E\u0441\u0442\u0443\u043F \u0437\u0430\u0431\u043B\u043E\u043A\u0438\u0440\u043E\u0432\u0430\u043D!\n\n\u041F\u043E\u0434\u043F\u0438\u0441\u0438\u0442\u0435\u0441\u044C \u043D\u0430 \u043A\u0430\u043D\u0430\u043B, \u0447\u0442\u043E\u0431\u044B \u0434\u0430\u043B\u044C\u0448\u0435 \u043E\u0441\u0442\u0430\u0432\u0430\u0442\u044C\u0441\u044F \u043D\u0430 \u0441\u0432\u044F\u0437\u0438! \u{1F525}", {
-            reply_markup: new InlineKeyboard().url("\u{1F4E2} \u041F\u043E\u0434\u043F\u0438\u0441\u0430\u0442\u044C\u0441\u044F \u043D\u0430 \u043A\u0430\u043D\u0430\u043B", CHANNEL_URL).row().text("\u2705 \u041F\u0440\u043E\u0432\u0435\u0440\u0438\u0442\u044C \u043F\u043E\u0434\u043F\u0438\u0441\u043A\u0443", "check_sub_again")
-          });
+          const msg = getUnsubscribedMessage();
+          await ctx.reply(msg.text, { reply_markup: msg.reply_markup });
         }
         return;
       }
@@ -57962,640 +58060,338 @@ userBot.use(async (ctx, next) => {
   }
   await next();
 });
-userBot.command("menu", async (ctx) => {
-  await ctx.reply(getWelcomeText(ctx.from.first_name), { reply_markup: mainMenuKb() });
+
+// /start command
+userBot.command("start", async (ctx) => {
+  const name = ctx.from.first_name || "друг";
+  const userId = ctx.from.id;
+
+  // Check if user already accepted policy and is subscribed
+  if (ACCEPTED_USERS.has(userId)) {
+    const isSubscribed = await checkChannelSubscription(userId);
+    if (isSubscribed) {
+      const menu = getMainMenu(name);
+      return ctx.reply(menu.text, { reply_markup: menu.reply_markup, parse_mode: "HTML" });
+    } else {
+      const msg = getUnsubscribedMessage();
+      return ctx.reply(msg.text, { reply_markup: msg.reply_markup });
+    }
+  }
+
+  // New user - show policy
+  const keyboard = new InlineKeyboard()
+    .text("✅ Принимаю", "accept_policy")
+    .text("❌ Отклоняю", "reject_policy");
+
+  return ctx.reply(
+    `Привет, ${name}! 👋\n\n` +
+    `Для использования LAENFAER VPN необходимо принять политику конфиденциальности и возвратов.\n\n` +
+    POLICIES,
+    { reply_markup: keyboard }
+  );
 });
+
+// /menu command
+userBot.command("menu", async (ctx) => {
+  const name = ctx.from.first_name || "друг";
+  const menu = getMainMenu(name);
+  return ctx.reply(menu.text, { reply_markup: menu.reply_markup, parse_mode: "HTML" });
+});
+
+// /key command
 userBot.command("key", async (ctx) => {
   const userId = ctx.from.id;
   const sub = await getSubscription(String(userId));
+  
   if (!sub?.key) {
-    await ctx.reply("\u274C \u0423 \u0442\u0435\u0431\u044F \u043D\u0435\u0442 \u0430\u043A\u0442\u0438\u0432\u043D\u043E\u0433\u043E \u043A\u043B\u044E\u0447\u0430.\n\n\u041F\u043E\u043B\u0443\u0447\u0438 \u0431\u0435\u0441\u043F\u043B\u0430\u0442\u043D\u044B\u0439 \u043A\u043B\u044E\u0447 \u0438\u043B\u0438 \u043A\u0443\u043F\u0438 \u043F\u043E\u0434\u043F\u0438\u0441\u043A\u0443:", { reply_markup: mainMenuKb() });
+    await ctx.reply("❌ У тебя нет активного ключа.\n\nПолучи бесплатный ключ или купи подписку:", { reply_markup: mainMenuKb() });
     return;
   }
+
   const left = daysLeft(sub.expiresAt);
   const alive = left > 0;
-  setUserState(userId, `key:${sub.key}`);
+  
   await ctx.reply(
-    `\u2705 <b>\u041F\u043E\u0434\u043A\u043B\u044E\u0447\u0435\u043D\u0438\u0435 \u0433\u043E\u0442\u043E\u0432\u043E!</b>
-
-\u{1F4C5} \u0414\u043E: ${formatDate(sub.expiresAt)}
-\u23F3 \u041E\u0441\u0442\u0430\u043B\u043E\u0441\u044C: ${alive ? left + " \u0434\u043D." : "\u274C \u0438\u0441\u0442\u0451\u043A"}
-
-\u{1F447} \u0412\u044B\u0431\u0435\u0440\u0438 \u0441\u0432\u043E\u044E \u043F\u043B\u0430\u0442\u0444\u043E\u0440\u043C\u0443:`,
+    `✅ <b>Подключение готово!</b>\n\n` +
+    `📅 До: ${formatDate(sub.expiresAt)}\n` +
+    `⏳ Осталось: ${alive ? left + " дн." : "❌ истёк"}\n\n` +
+    `👇 Выбери свою платформу:`,
     { parse_mode: "HTML", reply_markup: connectKb() }
   );
 });
+
+// /profile command  
 userBot.command("profile", async (ctx) => {
   const userId = ctx.from.id;
-  const status = await getSubscriptionStatus(String(userId));
+  const name = ctx.from.first_name || "друг";
+  const sub = await getSubscription(String(userId));
   const bal = await getUserBalanceInfo(String(userId));
   const user = await getUser(String(userId));
-  const refCountRows = await db.select().from(referralCountsTable).where(eq(referralCountsTable.userId, String(userId))).limit(1);
-  const refCount = refCountRows[0]?.count || 0;
-  const regDate = user?.createdAt ? new Date(user.createdAt).toLocaleDateString("ru-RU") : "—";
-  const botUsername = ctx.me.username;
-  const refLink = `https://t.me/${botUsername}?start=${userId}`;
-  await ctx.reply(
-    `\u{1F464} <b>\u041B\u0418\u0427\u041D\u042B\u0419 \u041A\u0410\u0411\u0418\u041D\u0415\u0422</b>
+  
+  const left = sub ? daysLeft(sub.expiresAt) : 0;
+  const isActive = left > 0;
+  
+  const domain = getSubDomain();
+  const subLink = domain ? `${domain}/sub/${userId}` : `https://laenfaer-vpn-youtube.duckdns.org/sub/${userId}`;
+  const connectUrl = `${subLink}`;
 
-\u{1F464} \u0418\u043C\u044F: <b>${ctx.from.first_name}</b>
-\u{1F194} ID: <code>${userId}</code>
-\u{1F4C5} \u0420\u0435\u0433\u0438\u0441\u0442\u0440\u0430\u0446\u0438\u044F: <b>${regDate}</b>
+  if (isActive && sub) {
+    const dateStr = formatDate(sub.expiresAt);
+    const isFree = sub.tariff && (sub.tariff.includes("free") || sub.tariff === "3days" || sub.tariff === "7days");
+    const tariffName = isFree ? "Бесплатный" : "Premium";
 
-\u{1F4B3} \u041F\u043E\u043F\u043E\u043B\u043D\u0435\u043D\u043E \u0432\u0441\u0435\u0433\u043E: <b>${bal.totalPaid}\u20BD</b>
-\u{1F91D} \u0420\u0435\u0444\u0435\u0440\u0430\u043B\u044C\u043D\u044B\u0439 \u0431\u0430\u043B\u0430\u043D\u0441: <b>${bal.refBalance || 0}\u20BD</b>
+    const keyboard = new InlineKeyboard()
+      .url("📱 Открыть в Happ", `${domain}/api/connect?app=happ_ios&key=${encodeURIComponent(subLink)}`)
+      .row()
+      .text("🔄 Продлить подписку", "get_key")
+      .row()
+      .text("❓ Помощь", "help")
+      .text("◀️ Назад", "back_to_menu");
 
-\u{1F465} \u0420\u0435\u0444\u0435\u0440\u0430\u043B\u044B: <b>${refCount} \u0447\u0435\u043B.</b>
-\u{1F517} \u0412\u0430\u0448\u0430 \u0441\u0441\u044B\u043B\u043A\u0430:
-<code>${refLink}</code>
+    return ctx.reply(
+      `━━━━━━━━━━━━━━━━━━━━\n` +
+      `👤  <b>Л И Ч Н Ы Й  К А Б И Н Е Т</b>\n` +
+      `━━━━━━━━━━━━━━━━━━━━\n\n` +
+      `👋 ${name}\n` +
+      `🆔 ID: ${userId}\n\n` +
+      `━━━━━━━━━━━━━━━━━━━━\n` +
+      `📡 <b>П О Д П И С К А</b>\n` +
+      `━━━━━━━━━━━━━━━━━━━━\n\n` +
+      `✅ Статус: Активна\n` +
+      `📋 Тариф: ${tariffName}\n` +
+      `📅 Истекает: ${dateStr}\n` +
+      `🕐 Осталось: ${left} дн.\n\n` +
+      `━━━━━━━━━━━━━━━━━━━━\n` +
+      `🔗 <b>П О Д К Л Ю Ч Е Н И Е</b>\n` +
+      `━━━━━━━━━━━━━━━━━━━━\n\n` +
+      `📋 Ссылка-подписка:\n` +
+      `<code>${subLink}</code>\n\n` +
+      `⚠️ Ссылка только для личного использования.`,
+      { parse_mode: "HTML", reply_markup: keyboard }
+    );
+  } else {
+    const keyboard = new InlineKeyboard()
+      .text("🔑 Продлить подписку", "get_key")
+      .row()
+      .text("❓ Помощь", "help")
+      .text("◀️ Назад", "back_to_menu");
 
-\u{1F4CB} <b>\u041F\u041E\u0414\u041F\u0418\u0421\u041A\u0410:</b>
-${status}
+    return ctx.reply(
+      `━━━━━━━━━━━━━━━━━━━━\n` +
+      `👤  <b>Л И Ч Н Ы Й  К А Б И Н Е Т</b>\n` +
+      `━━━━━━━━━━━━━━━━━━━━\n\n` +
+      `👋 ${name}\n` +
+      `🆔 ID: ${userId}\n\n` +
+      `━━━━━━━━━━━━━━━━━━━━\n` +
+      `📡 <b>П О Д П И С К А</b>\n` +
+      `━━━━━━━━━━━━━━━━━━━━\n\n` +
+      `❌ Статус: Не активна\n\n` +
+      `Продли подписку чтобы получить\n` +
+      `доступ к VPN.`,
+      { parse_mode: "HTML", reply_markup: keyboard }
+    );
+  }
+});
 
-\u{1F447} \u0414\u043E\u043F\u043E\u043B\u043D\u0438\u0442\u0435\u043B\u044C\u043D\u044B\u0435 \u0440\u0430\u0437\u0434\u0435\u043B\u044B:`,
-    `\u{1F464} <b>\u041B\u0418\u0427\u041D\u042B\u0419 \u041A\u0410\u0411\u0418\u041D\u0415\u0422</b>\n\n\u{1F464} \u0418\u043C\u044F: <b>${ctx.from.first_name}</b>\n\u{1F194} ID: <code>${userId}</code>\n\n\u{1F4B3} \u041F\u043E\u043F\u043E\u043B\u043D\u0435\u043D\u043E \u0432\u0441\u0435\u0433\u043E: <b>${bal.totalPaid}\u20BD</b>\n\u{1F91D} \u0420\u0435\u0444\u0435\u0440\u0430\u043B\u044C\u043D\u044B\u0439 \u0431\u0430\u043B\u0430\u043D\u0441: <b>${bal.refBalance || 0}\u20BD</b>\n\n\u{1F4CB} <b>\u041F\u041E\u0414\u041F\u0418\u0421\u041A\u0410:</b>\n${status}\n\n\u{1F447} \u0414\u043E\u043F\u043E\u043B\u043D\u0438\u0442\u0435\u043B\u044C\u043D\u044B\u0435 \u0440\u0430\u0437\u0434\u0435\u043B\u044B:`,
-    { parse_mode: "HTML", reply_markup: profileKb() }
+// /shop command
+userBot.command("shop", async (ctx) => {
+  const menu = getKeyMenu();
+  return ctx.reply(menu.text, { reply_markup: menu.reply_markup, parse_mode: "HTML" });
+});
+
+// /help command
+userBot.command("help", async (ctx) => {
+  const keyboard = new InlineKeyboard()
+    .url("💬 Написать в поддержку", "https://t.me/LF_VPN_BOT")
+    .row()
+    .text("◀️ Назад", "back_to_menu");
+
+  return ctx.reply(
+    `❓ <b>Помощь</b>\n\n` +
+    `📱 <b>Как подключиться:</b>\n` +
+    `1. Получи ключ → "Получить ключ"\n` +
+    `2. Скопируй ссылку-подписку\n` +
+    `3. Открой Happ/HappProxy\n` +
+    `4. Нажми "+" → "Ссылка-подписка"\n` +
+    `5. Вставь ссылку → "Добавить"\n` +
+    `6. Нажми "Подключить"\n\n` +
+    `📲 <b>Где скачать:</b>\n` +
+    `• iPhone: App Store → Happ\n` +
+    `• Android: Google Play → HappProxy`,
+    { parse_mode: "HTML", reply_markup: keyboard }
   );
 });
-userBot.command("shop", async (ctx) => {
-  await ctx.reply(SHOP_TEXT, { parse_mode: "HTML", reply_markup: shopKb() });
-});
+
+// /support command
 userBot.command("support", async (ctx) => {
   const userId = ctx.from.id;
-  setUserState(userId, "support_mode");
+  userStates.set(userId, "support_mode");
+  
   await ctx.reply(
-    "\u{1F4AC} \u0427\u0410\u0422 \u041F\u041E\u0414\u0414\u0415\u0420\u0416\u041A\u0418\n\n\u041F\u0440\u043E\u0441\u0442\u043E \u043D\u0430\u043F\u0438\u0448\u0438 \u0441\u0432\u043E\u0439 \u0432\u043E\u043F\u0440\u043E\u0441 \u0432 \u044D\u0442\u043E\u0442 \u0447\u0430\u0442.\n\u0410\u0434\u043C\u0438\u043D\u0438\u0441\u0442\u0440\u0430\u0442\u043E\u0440 \u043E\u0442\u0432\u0435\u0442\u0438\u0442 \u0442\u0435\u0431\u0435.\n\n\u2757 \u0427\u0430\u0442 \u0430\u043A\u0442\u0438\u0432\u0435\u043D \u2014 \u0442\u044B \u043C\u043E\u0436\u0435\u0448\u044C \u043F\u0438\u0441\u0430\u0442\u044C \u0441\u043E\u043E\u0431\u0449\u0435\u043D\u0438\u044F.",
-    { reply_markup: activeSupportKb() }
+    `💬 <b>ЧАТ ПОДДЕРЖКИ</b>\n\n` +
+    `Просто напиши свой вопрос в этот чат.\n` +
+    `Администратор ответит тебе.\n\n` +
+    `❗ Чат активен — ты можешь писать сообщения.`,
+    { parse_mode: "HTML", reply_markup: activeSupportKb() }
   );
 });
-userBot.command("start", async (ctx) => {
-  const userId = ctx.from.id;
-  const name = ctx.from.first_name ?? "\u041F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u0435\u043B\u044C";
-  const username = ctx.from.username ?? "";
-  const existing = await getUser(String(userId));
-  await getOrCreateUser(String(userId), name, username);
-  if (!existing) {
-    try {
-      await adminNotifier.api.sendMessage(ADMIN_ID, `\u{1F195} \u041D\u041E\u0412\u042B\u0419 \u041F\u041E\u041B\u042C\u0417\u041E\u0412\u0410\u0422\u0415\u041B\u042C!\n\n\u0418\u043C\u044F: ${name}\nID: ${userId}`, { reply_markup: adminBackKb() });
-    } catch {
-    }
-  }
-  if (!await checkSubscription(userId)) {
-    await ctx.reply("\u26A0\uFE0F \u0414\u043E\u0441\u0442\u0443\u043F \u0437\u0430\u0431\u043B\u043E\u043A\u0438\u0440\u043E\u0432\u0430\u043D!\n\n\u041F\u043E\u0434\u043F\u0438\u0448\u0438\u0441\u044C \u043D\u0430 \u043A\u0430\u043D\u0430\u043B, \u0447\u0442\u043E\u0431\u044B \u0434\u0430\u043B\u044C\u0448\u0435 \u043E\u0441\u0442\u0430\u0432\u0430\u0442\u044C\u0441\u044F \u043D\u0430 \u0441\u0432\u044F\u0437\u0438! \u{1F525}", {
-      reply_markup: subRequiredKb()
-    });
-    return;
-  }
-  const args = ctx.message?.text?.split(" ") ?? [];
-  if (args.length > 1 && /^\d+$/.test(args[1])) {
-    const inviterId = args[1];
-    if (inviterId !== String(userId)) {
-      const added = await addReferral(String(userId), inviterId);
-      if (added) {
-        const count = await getReferralCount(inviterId);
-        lastRefNotif.set(Number(inviterId), { name, time: Date.now() });
-        if (count === 10) {
-          try {
-            let rewardKey = await getRandomPremiumKey();
-            if (!rewardKey) rewardKey = await getRandomFreeKey();
-            if (rewardKey) {
-              const rewardExpiry = await setSubscription(String(inviterId), "30days", 30, rewardKey);
-              setUserState(Number(inviterId), `key:${rewardKey}`);
-              await userBot.api.sendMessage(
-                Number(inviterId),
-                `\u{1F3C6} <b>\u041F\u041E\u0417\u0414\u0420\u0410\u0412\u041B\u042F\u0415\u041C! \u0422\u044B \u043F\u0440\u0438\u0433\u043B\u0430\u0441\u0438\u043B 10 \u0434\u0440\u0443\u0437\u0435\u0439!</b>
 
-\u{1F381} \u0422\u0435\u0431\u0435 \u0430\u0432\u0442\u043E\u043C\u0430\u0442\u0438\u0447\u0435\u0441\u043A\u0438 \u0432\u044B\u0434\u0430\u043D <b>Premium \u043A\u043B\u044E\u0447 \u043D\u0430 30 \u0434\u043D\u0435\u0439!</b>
-\u{1F4C5} \u0414\u0435\u0439\u0441\u0442\u0432\u0443\u0435\u0442 \u0434\u043E: ${formatDate(rewardExpiry)}
+// /promo command
+userBot.command("promo", async (ctx) => {
+  userStates.set(ctx.from.id, "promo");
+  const keyboard = new InlineKeyboard()
+    .text("◀️ Назад", "back_to_menu");
 
-\u{1F447} \u0412\u044B\u0431\u0435\u0440\u0438 \u0441\u0432\u043E\u044E \u043F\u043B\u0430\u0442\u0444\u043E\u0440\u043C\u0443:`,
-                { parse_mode: "HTML", reply_markup: connectKb() }
-              );
-              try {
-                await adminNotifier.api.sendMessage(
-                  ADMIN_ID,
-                  `\u{1F3C6} \u0420\u0435\u0444\u0435\u0440\u0430\u043B\u044C\u043D\u0430\u044F \u043D\u0430\u0433\u0440\u0430\u0434\u0430!
+  return ctx.reply(
+    `🎫 <b>Промокод</b>\n\n` +
+    `Введи промокод чтобы получить скидку или бесплатный доступ.\n\n` +
+    `Отправь промокод следующим сообщением 👇`,
+    { parse_mode: "HTML", reply_markup: keyboard }
+  );
+});
 
-ID: ${inviterId}
-\u041F\u0440\u0438\u0433\u043B\u0430\u0441\u0438\u043B 10 \u0434\u0440\u0443\u0437\u0435\u0439 \u2192 \u0430\u0432\u0442\u043E\u043C\u0430\u0442\u0438\u0447\u0435\u0441\u043A\u0438 \u0432\u044B\u0434\u0430\u043D Premium \u043A\u043B\u044E\u0447 \u043D\u0430 30 \u0434\u043D\u0435\u0439.`
-                );
-              } catch {
-              }
-            } else {
-              await userBot.api.sendMessage(
-                Number(inviterId),
-                "\u{1F3C6} <b>\u0422\u044B \u043F\u0440\u0438\u0433\u043B\u0430\u0441\u0438\u043B 10 \u0434\u0440\u0443\u0437\u0435\u0439!</b>\n\n\u26A0\uFE0F \u0421\u0432\u043E\u0431\u043E\u0434\u043D\u044B\u0445 \u043A\u043B\u044E\u0447\u0435\u0439 \u043D\u0435\u0442. \u041D\u0430\u043F\u0438\u0448\u0438 \u0432 \u043F\u043E\u0434\u0434\u0435\u0440\u0436\u043A\u0443 \u2014 \u043C\u044B \u0432\u044B\u0434\u0430\u0434\u0438\u043C \u043D\u0430\u0433\u0440\u0430\u0434\u0443 \u0432\u0440\u0443\u0447\u043D\u0443\u044E!",
-                { parse_mode: "HTML", reply_markup: backToMainKb() }
-              );
-            }
-          } catch {
-          }
-        }
-      }
-    }
+// Callback: accept_policy
+userBot.callbackQuery("accept_policy", async (ctx) => {
+  ACCEPTED_USERS.add(ctx.from.id);
+
+  const isSubscribed = await checkChannelSubscription(ctx.from.id);
+  if (isSubscribed) {
+    const name = ctx.from.first_name || "друг";
+    const menu = getMainMenu(name);
+    return ctx.editMessageText(menu.text, { reply_markup: menu.reply_markup, parse_mode: "HTML" });
   }
-  await ctx.reply(getWelcomeText(name), { reply_markup: mainMenuKb() });
+
+  return ctx.editMessageText(
+    `Остался последний шаг! 📢\n\n` +
+    `Подпишись на наш канал чтобы пользоваться LAENFAER VPN.\n\n` +
+    `В канале:\n` +
+    `• Новости и обновления\n` +
+    `• Инструкции по подключению\n` +
+    `• Поддержка`,
+    { reply_markup: subRequiredKb() }
+  );
 });
-userBot.callbackQuery("open_withdraw", async (ctx) => {
-  const userId = String(ctx.from.id);
-  const bal = await getUserBalanceInfo(userId);
-  if (bal.balance <= 0) {
-    await ctx.answerCallbackQuery({ text: "У вас нет баланса для вывода", show_alert: true });
-    return;
+
+// Callback: reject_policy
+userBot.callbackQuery("reject_policy", (ctx) => {
+  return ctx.editMessageText(
+    `К сожалению, без принятия политики конфиденциальности использование LAENFAER VPN невозможно.\n\n` +
+    `Если передумаете — напишите /start`
+  );
+});
+
+// Callback: check_subscription
+userBot.callbackQuery("check_subscription", async (ctx) => {
+  const isSubscribed = await checkChannelSubscription(ctx.from.id);
+
+  if (isSubscribed) {
+    const name = ctx.from.first_name || "друг";
+    const menu = getMainMenu(name);
+    return ctx.editMessageText(menu.text, { reply_markup: menu.reply_markup, parse_mode: "HTML" });
   }
-  const refBal = bal.refBalance || 0;
-  if (refBal < 1000) {
-    await ctx.answerCallbackQuery({ text: "Минимальная сумма вывода 1000₽. Ваш реферальный баланс: " + refBal + "₽", show_alert: true });
-    return;
-  }
-  setUserState(ctx.from.id, "withdraw_mode_phone");
+
+  return ctx.answerCallbackQuery({
+    text: "Вы ещё не подписались на канал",
+    show_alert: true
+  });
+});
+
+// Callback: get_key
+userBot.callbackQuery("get_key", async (ctx) => {
+  const menu = getKeyMenu();
+  return ctx.editMessageText(menu.text, { reply_markup: menu.reply_markup, parse_mode: "HTML" });
+});
+
+// Callback: profile
+userBot.callbackQuery("profile", async (ctx) => {
   await ctx.answerCallbackQuery();
-  await ctx.reply("<b>\u{1F4B8} Вывод через СБП</b>\n\nРеферальный баланс: <b>" + refBal + "\u20BD</b>\n\nШаг 1/3: Введите номер телефона СБП:", { parse_mode: "HTML", reply_markup: backToMainKb() });
+  return ctx.reply("/profile", { parse_mode: "HTML" });
 });
-userBot.callbackQuery("check_sub_again", async (ctx) => {
-  const userId = ctx.from.id;
-  if (await checkSubscription(userId)) {
-    await ctx.answerCallbackQuery("\u2705 \u041F\u043E\u0434\u043F\u0438\u0441\u043A\u0430 \u043F\u043E\u0434\u0442\u0432\u0435\u0440\u0436\u0434\u0435\u043D\u0430!");
-    await ctx.editMessageText(getWelcomeText(ctx.from.first_name), { reply_markup: mainMenuKb() });
-  } else {
-    await ctx.answerCallbackQuery({ text: "\u274C \u0422\u044B \u0435\u0449\u0451 \u043D\u0435 \u043F\u043E\u0434\u043F\u0438\u0441\u0430\u043B\u0441\u044F!", show_alert: true });
-  }
+
+// Callback: back_to_menu
+userBot.callbackQuery("back_to_menu", async (ctx) => {
+  userStates.delete(ctx.from.id);
+  const name = ctx.from.first_name || "друг";
+  const menu = getMainMenu(name);
+  return ctx.editMessageText(menu.text, { reply_markup: menu.reply_markup, parse_mode: "HTML" });
 });
-userBot.callbackQuery("to_main", async (ctx) => {
-  deleteUserState(ctx.from.id);
-  try { await ctx.editMessageText(getWelcomeText(ctx.from.first_name), { reply_markup: mainMenuKb() }); } catch {}
-  await ctx.answerCallbackQuery();
+
+// Callback: back_to_tariffs
+userBot.callbackQuery("back_to_tariffs", async (ctx) => {
+  const menu = getKeyMenu();
+  return ctx.editMessageText(menu.text, { reply_markup: menu.reply_markup, parse_mode: "HTML" });
 });
-userBot.callbackQuery("open_shop", async (ctx) => {
-  try { await ctx.editMessageText(SHOP_TEXT, { parse_mode: "HTML", reply_markup: shopKb() }); } catch {}
-  await ctx.answerCallbackQuery();
+
+// Callback: tariff_trial
+userBot.callbackQuery("tariff_trial", async (ctx) => {
+  const menu = getPaymentMenu("trial");
+  return ctx.editMessageText(menu.text, { reply_markup: menu.reply_markup, parse_mode: "HTML" });
 });
-userBot.callbackQuery("get_free_key_random", async (ctx) => {
+
+// Callback: tariff_30
+userBot.callbackQuery("tariff_30", async (ctx) => {
+  const menu = getPaymentMenu("30");
+  return ctx.editMessageText(menu.text, { reply_markup: menu.reply_markup, parse_mode: "HTML" });
+});
+
+// Callback: tariff_60
+userBot.callbackQuery("tariff_60", async (ctx) => {
+  const menu = getPaymentMenu("60");
+  return ctx.editMessageText(menu.text, { reply_markup: menu.reply_markup, parse_mode: "HTML" });
+});
+
+// Callback: tariff_90
+userBot.callbackQuery("tariff_90", async (ctx) => {
+  const menu = getPaymentMenu("90");
+  return ctx.editMessageText(menu.text, { reply_markup: menu.reply_markup, parse_mode: "HTML" });
+});
+
+// Callback: tariff_180
+userBot.callbackQuery("tariff_180", async (ctx) => {
+  const menu = getPaymentMenu("180");
+  return ctx.editMessageText(menu.text, { reply_markup: menu.reply_markup, parse_mode: "HTML" });
+});
+
+// Callback: activate_trial
+userBot.callbackQuery("activate_trial", async (ctx) => {
   const userId = ctx.from.id;
   const sub = await getSubscription(String(userId));
+  
   if (sub && daysLeft(sub.expiresAt) > 0) {
-    const left2 = daysLeft(sub.expiresAt);
-    setUserState(userId, `key:${sub.key}`);
-    await ctx.editMessageText(
-      `\u2705 <b>\u041F\u043E\u0434\u043A\u043B\u044E\u0447\u0435\u043D\u0438\u0435 \u0433\u043E\u0442\u043E\u0432\u043E!</b>
-
-\u{1F4C5} \u0414\u0435\u0439\u0441\u0442\u0432\u0443\u0435\u0442 \u0434\u043E: ${formatDate(sub.expiresAt)}
-\u23F3 \u041E\u0441\u0442\u0430\u043B\u043E\u0441\u044C \u0434\u043D\u0435\u0439: ${left2}
-
-\u{1F447} \u0412\u044B\u0431\u0435\u0440\u0438 \u0441\u0432\u043E\u044E \u043F\u043B\u0430\u0442\u0444\u043E\u0440\u043C\u0443:`,
-      { parse_mode: "HTML", reply_markup: connectKb() }
-    );
-    await ctx.answerCallbackQuery();
-    return;
+    return ctx.answerCallbackQuery({ text: "У тебя уже есть активная подписка", show_alert: true });
   }
-  const alreadyHad = await hasHadFreeKey(String(userId));
-  if (alreadyHad) {
-    await ctx.editMessageText(
-      "\u26D4 \u0411\u0435\u0441\u043F\u043B\u0430\u0442\u043D\u044B\u0439 \u043A\u043B\u044E\u0447 \u043C\u043E\u0436\u043D\u043E \u043F\u043E\u043B\u0443\u0447\u0438\u0442\u044C \u0442\u043E\u043B\u044C\u043A\u043E \u043E\u0434\u0438\u043D \u0440\u0430\u0437.\n\n\u0422\u0432\u043E\u0439 \u0431\u0435\u0441\u043F\u043B\u0430\u0442\u043D\u044B\u0439 \u043F\u0435\u0440\u0438\u043E\u0434 \u0443\u0436\u0435 \u0431\u044B\u043B \u0438\u0441\u043F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u043D.\n\n\u{1F4A1} \u041A\u0443\u043F\u0438 \u043F\u043E\u0434\u043F\u0438\u0441\u043A\u0443 \u0432 \u043C\u0430\u0433\u0430\u0437\u0438\u043D\u0435:",
-      { reply_markup: shopKb() }
-    );
-    await ctx.answerCallbackQuery();
-    return;
+
+  await ctx.answerCallbackQuery();
+
+  // Give free 3-day trial
+  const key = await getRandomFreeKey() || await getRandomPremiumKey();
+  if (!key) {
+    return ctx.editMessageText("❌ Нет доступных ключей. Обратись в поддержку.", { parse_mode: "HTML" });
   }
-  const freeKey = await getRandomFreeKey();
-  if (!freeKey) {
-    await ctx.editMessageText("\u274C \u0421\u0432\u043E\u0431\u043E\u0434\u043D\u044B\u0445 \u043A\u043B\u044E\u0447\u0435\u0439 \u043F\u043E\u043A\u0430 \u043D\u0435\u0442. \u041E\u0431\u0440\u0430\u0442\u0438\u0441\u044C \u0432 \u043F\u043E\u0434\u0434\u0435\u0440\u0436\u043A\u0443.", { reply_markup: backToMainKb() });
-    await ctx.answerCallbackQuery();
-    return;
-  }
-  const expiry = await setSubscription(String(userId), "free_3days", FREE_DAYS, freeKey);
-  const left = daysLeft(expiry);
-  setUserState(userId, `key:${freeKey}`);
-  await ctx.editMessageText(
-    `\u2705 <b>\u041F\u043E\u0434\u043A\u043B\u044E\u0447\u0435\u043D\u0438\u0435 \u0433\u043E\u0442\u043E\u0432\u043E!</b>
 
-\u{1F381} \u0411\u0435\u0441\u043F\u043B\u0430\u0442\u043D\u044B\u0439 \u043A\u043B\u044E\u0447 \u043D\u0430 ${FREE_DAYS} \u0434\u043D\u044F
-\u{1F4C5} \u0414\u0435\u0439\u0441\u0442\u0432\u0443\u0435\u0442 \u0434\u043E: ${formatDate(expiry)}
-\u23F3 \u041E\u0441\u0442\u0430\u043B\u043E\u0441\u044C \u0434\u043D\u0435\u0439: ${left}
+  await addDaysToSubscription(String(userId), "free_3days", 3, key);
 
-\u{1F447} \u0412\u044B\u0431\u0435\u0440\u0438 \u0441\u0432\u043E\u044E \u043F\u043B\u0430\u0442\u0444\u043E\u0440\u043C\u0443:`,
-    { parse_mode: "HTML", reply_markup: connectKb() }
-  );
-  await ctx.answerCallbackQuery();
-});
-userBot.callbackQuery("show_key", async (ctx) => {
-  const userId = ctx.from.id;
-  const sub = await getSubscription(String(userId));
-  if (!sub?.key) {
-    await ctx.answerCallbackQuery({ text: "\u274C \u041A\u043B\u044E\u0447 \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D", show_alert: true });
-    await ctx.editMessageText("\u274C \u0423 \u0432\u0430\u0441 \u043F\u043E\u043A\u0430 \u043D\u0435\u0442 \u0430\u043A\u0442\u0438\u0432\u043D\u043E\u0439 \u043F\u043E\u0434\u043F\u0438\u0441\u043A\u0438.\n\u041F\u043E\u043B\u0443\u0447\u0438\u0442\u0435 \u043A\u043B\u044E\u0447 \u0432 \u043C\u0430\u0433\u0430\u0437\u0438\u043D\u0435.", { reply_markup: backToMainKb() });
-    return;
-  }
-  await ctx.answerCallbackQuery();
-  const domain = getSubDomain(); const subLink = domain ? `${domain}/sub/${userId}` : `https://laenfaer-vpn-youtube.duckdns.org/sub/${userId}`;
-  await ctx.reply(
-    `\u{1F511} <b>\u0412\u0430\u0448\u0430 \u043F\u043E\u0434\u043F\u0438\u0441\u043A\u0430</b>
-
-\u{1F517} <b>Subscription link</b> (\u0434\u043B\u044F \u0430\u0432\u0442\u043E\u043E\u0431\u043D\u043E\u0432\u043B\u0435\u043D\u0438\u044F):
-<code>${subLink}</code>
-
-\u2139\uFE0F \u0414\u043E\u0431\u0430\u0432\u044C\u0442\u0435 \u044D\u0442\u0443 \u0441\u0441\u044B\u043B\u043A\u0443 \u0432 \u043F\u0440\u0438\u043B\u043E\u0436\u0435\u043D\u0438\u0435 \u2014 \u043A\u043B\u044E\u0447 \u0431\u0443\u0434\u0435\u0442 \u043E\u0431\u043D\u043E\u0432\u043B\u044F\u0442\u044C\u0441\u044F \u0430\u0432\u0442\u043E\u043C\u0430\u0442\u0438\u0447\u0435\u0441\u043A\u0438 \u0438 \u043E\u0442\u043A\u043B\u044E\u0447\u0438\u0442\u0441\u044F \u043F\u0440\u0438 \u0438\u0441\u0442\u0435\u0447\u0435\u043D\u0438\u0438.`,
-    { parse_mode: "HTML", reply_markup: backToMainKb() }
-  );
-});
-async function getUserKey(userId) {
-  const state = getUserState(userId);
-  if (state?.startsWith("key:")) return state.slice(4);
-  const sub = await getSubscription(String(userId));
-  return sub?.key ?? null;
-}
-userBot.callbackQuery("connect_android", async (ctx) => {
-  const userId = String(ctx.from.id);
-  const domain = getSubDomain() || "https://laenfaer-vpn-youtube.duckdns.org";
-  const subUrl = `${domain}/sub/${userId}`;
-  const connectUrl = `${domain}/api/connect?app=happproxy&key=${encodeURIComponent(subUrl)}`;
-  const kb = new InlineKeyboard2().url("\u{1F916} HappProxy", connectUrl).row().text("\u{1F519} \u041D\u0430\u0437\u0430\u0434", "connect_back");
-  await ctx.answerCallbackQuery();
-  await ctx.editMessageText(
-    "\u{1F916} <b>\u041F\u043E\u0434\u043A\u043B\u044E\u0447\u0435\u043D\u0438\u0435 Android</b>\n\n\u041D\u0430\u0436\u043C\u0438 \u043A\u043D\u043E\u043F\u043A\u0443 \u2014 \u043F\u043E\u0434\u043F\u0438\u0441\u043A\u0430 \u0434\u043E\u0431\u0430\u0432\u0438\u0442\u0441\u044F \u0430\u0432\u0442\u043E\u043C\u0430\u0442\u0438\u0447\u0435\u0441\u043A\u0438 \u0438 \u0431\u0443\u0434\u0435\u0442 \u043E\u0431\u043D\u043E\u0432\u043B\u044F\u0442\u044C\u0441\u044F:",
-    { parse_mode: "HTML", reply_markup: kb }
-  );
-});
-userBot.callbackQuery("connect_iphone", async (ctx) => {
-  const userId = String(ctx.from.id);
-  const domain = getSubDomain() || "https://laenfaer-vpn-youtube.duckdns.org";
-  const subUrl = `${domain}/sub/${userId}`;
-  const connectUrl = `${domain}/api/connect?app=happ_ios&key=${encodeURIComponent(subUrl)}`;
-  const kb = new InlineKeyboard2().url("\u{1F4F1} Happ iOS", connectUrl).row().text("\u{1F519} \u041D\u0430\u0437\u0430\u0434", "connect_back");
-  await ctx.answerCallbackQuery();
-  await ctx.editMessageText(
-    "\u{1F4F1} <b>\u041F\u043E\u0434\u043A\u043B\u044E\u0447\u0435\u043D\u0438\u0435 iPhone</b>\n\n\u041D\u0430\u0436\u043C\u0438 \u043A\u043D\u043E\u043F\u043A\u0443 \u2014 \u043F\u043E\u0434\u043F\u0438\u0441\u043A\u0430 \u0434\u043E\u0431\u0430\u0432\u0438\u0442\u0441\u044F \u0430\u0432\u0442\u043E\u043C\u0430\u0442\u0438\u0447\u0435\u0441\u043A\u0438 \u0438 \u0431\u0443\u0434\u0435\u0442 \u043E\u0431\u043D\u043E\u0432\u043B\u044F\u0442\u044C\u0441\u044F:",
-    { parse_mode: "HTML", reply_markup: kb }
-  );
-});
-userBot.callbackQuery("connect_back", async (ctx) => {
-  const sub = await getSubscription(String(ctx.from.id));
-  const dateStr = sub ? `\u{1F4C5} \u0414\u0435\u0439\u0441\u0442\u0432\u0443\u0435\u0442 \u0434\u043E: ${formatDate(sub.expiresAt)}
-` : "";
-  await ctx.editMessageText(
-    `\u2705 <b>\u041F\u043E\u0434\u043A\u043B\u044E\u0447\u0435\u043D\u0438\u0435 \u0433\u043E\u0442\u043E\u0432\u043E!</b>
-
-${dateStr}
-\u{1F447} \u0412\u044B\u0431\u0435\u0440\u0438 \u0441\u0432\u043E\u044E \u043F\u043B\u0430\u0442\u0444\u043E\u0440\u043C\u0443:`,
-    { parse_mode: "HTML", reply_markup: connectKb() }
-  );
-  await ctx.answerCallbackQuery();
-});
-userBot.callbackQuery("how_to_connect", async (ctx) => {
-  await ctx.reply(
-    "\u{1F4F1} <b>\u041A\u0410\u041A \u041F\u041E\u0414\u041A\u041B\u042E\u0427\u0418\u0422\u042C\u0421\u042F</b>\n\n\u{1F916} Android: HappProxy / v2rayTun\n\u{1F4F1} iPhone: Happ / v2rayTun\n\n1. \u041D\u0430\u0436\u043C\u0438 \u043A\u043D\u043E\u043F\u043A\u0443 \u0441\u0432\u043E\u0435\u0439 \u043F\u043B\u0430\u0442\u0444\u043E\u0440\u043C\u044B\n2. \u0412\u044B\u0431\u0435\u0440\u0438 \u043F\u0440\u0438\u043B\u043E\u0436\u0435\u043D\u0438\u0435 \u2014 \u043A\u043B\u044E\u0447 \u0432\u0441\u0442\u0430\u0432\u0438\u0442\u0441\u044F \u0430\u0432\u0442\u043E\u043C\u0430\u0442\u0438\u0447\u0435\u0441\u043A\u0438!\n3. \u041D\u0430\u0436\u043C\u0438 \u25B6\uFE0F \u0434\u043B\u044F \u043F\u043E\u0434\u043A\u043B\u044E\u0447\u0435\u043D\u0438\u044F\n\n\u0415\u0441\u043B\u0438 \u043F\u0440\u0438\u043B\u043E\u0436\u0435\u043D\u0438\u0435 \u043D\u0435 \u0443\u0441\u0442\u0430\u043D\u043E\u0432\u043B\u0435\u043D\u043E \u2014 \u0441\u043D\u0430\u0447\u0430\u043B\u0430 \u0441\u043A\u0430\u0447\u0430\u0439 \u0438\u0437 \u043C\u0430\u0433\u0430\u0437\u0438\u043D\u0430, \u0437\u0430\u0442\u0435\u043C \u043D\u0430\u0436\u043C\u0438 \u043A\u043D\u043E\u043F\u043A\u0443 \u0441\u043D\u043E\u0432\u0430.\n\n\u0413\u043E\u0442\u043E\u0432\u043E! \u0422\u0432\u043E\u0439 \u0438\u043D\u0442\u0435\u0440\u043D\u0435\u0442 \u0442\u0435\u043F\u0435\u0440\u044C \u0441\u0432\u043E\u0431\u043E\u0434\u0435\u043D! \u{1F680}",
-    { parse_mode: "HTML", reply_markup: backToMainKb() }
-  );
-  await ctx.answerCallbackQuery();
-});
-userBot.callbackQuery(/^tariff_(.+)$/, async (ctx) => {
-  const tariff = ctx.match[1];
-  const cfg = TARIFF_CONFIG[tariff];
-  if (!cfg) {
-    await ctx.answerCallbackQuery();
-    return;
-  }
-  const userId = ctx.from.id;
-  setUserState(userId, `waiting_screenshot_${tariff}`);
-  const payUrl = `${YOOMONEY_URL}/${cfg.price}`;
-  const kb = new InlineKeyboard2().url(`\u{1F4B3} \u041E\u043F\u043B\u0430\u0442\u0438\u0442\u044C ${cfg.price}\u20BD`, payUrl).row().text("\u25C0\uFE0F \u041D\u0430\u0437\u0430\u0434 \u0432 \u043C\u0430\u0433\u0430\u0437\u0438\u043D", "open_shop");
-  await ctx.editMessageText(
-    `\u{1F4B3} <b>\u041E\u041F\u041B\u0410\u0422\u0410 \u041F\u041E\u0414\u041F\u0418\u0421\u041A\u0418</b>
-
-\u0422\u0430\u0440\u0438\u0444: <b>${cfg.title}</b>
-\u0421\u0443\u043C\u043C\u0430: <b>${cfg.price}\u20BD</b>
-
-<b>\u0418\u043D\u0441\u0442\u0440\u0443\u043A\u0446\u0438\u044F:</b>
-1. \u041D\u0430\u0436\u043C\u0438 \u043A\u043D\u043E\u043F\u043A\u0443 \xAB\u041E\u043F\u043B\u0430\u0442\u0438\u0442\u044C\xBB \u043D\u0438\u0436\u0435
-2. \u041F\u0435\u0440\u0435\u0432\u0435\u0434\u0438 \u0440\u043E\u0432\u043D\u043E <b>${cfg.price}\u20BD</b>
-3. \u0421\u0434\u0435\u043B\u0430\u0439 \u0441\u043A\u0440\u0438\u043D\u0448\u043E\u0442 \u043F\u043E\u0434\u0442\u0432\u0435\u0440\u0436\u0434\u0435\u043D\u0438\u044F \u043F\u0435\u0440\u0435\u0432\u043E\u0434\u0430
-4. \u041E\u0442\u043F\u0440\u0430\u0432\u044C \u0441\u043A\u0440\u0438\u043D\u0448\u043E\u0442 \u043F\u0440\u044F\u043C\u043E \u0432 \u044D\u0442\u043E\u0442 \u0447\u0430\u0442
-
-\u23F3 \u041F\u043E\u0441\u043B\u0435 \u043E\u0442\u043F\u0440\u0430\u0432\u043A\u0438 \u0441\u043A\u0440\u0438\u043D\u0448\u043E\u0442\u0430 \u0430\u0434\u043C\u0438\u043D\u0438\u0441\u0442\u0440\u0430\u0442\u043E\u0440 \u043F\u0440\u043E\u0432\u0435\u0440\u0438\u0442 \u043F\u043B\u0430\u0442\u0451\u0436 \u0438 \u0430\u043A\u0442\u0438\u0432\u0438\u0440\u0443\u0435\u0442 \u043F\u043E\u0434\u043F\u0438\u0441\u043A\u0443.`,
-    { parse_mode: "HTML", reply_markup: kb }
-  );
-  await ctx.answerCallbackQuery();
-});
-userBot.callbackQuery("open_profile", async (ctx) => {
-  const userId = ctx.from.id;
-  const status = await getSubscriptionStatus(String(userId));
-  const bal = await getUserBalanceInfo(String(userId));
-  const sub = await getSubscription(String(userId));
-  const isExpired = !sub || daysLeft(sub.expiresAt) <= 0;
-  const kb = profileKb();
-  if (isExpired) {
-    kb.row().text("\u{1F6D2} \u041F\u0440\u043E\u0434\u043B\u0438\u0442\u044C \u043F\u043E\u0434\u043F\u0438\u0441\u043A\u0443", "open_shop");
-  }
-  try {
-  await ctx.editMessageText(
-    `\u{1F464} <b>\u041B\u0418\u0427\u041D\u042B\u0419 \u041A\u0410\u0411\u0418\u041D\u0415\u0422</b>
-
-\u0418\u043C\u044F: ${ctx.from.first_name}
-ID: <code>${userId}</code>
-
-\u{1F4B0} \u041F\u043E\u043F\u043E\u043B\u043D\u0435\u043D\u043E \u0432\u0441\u0435\u0433\u043E: <b>${bal.totalPaid}\u20BD</b>
-
-\u{1F4CB} \u041F\u041E\u0414\u041F\u0418\u0421\u041A\u0410:
-${status}
-
-\u{1F447} \u0414\u043E\u043F\u043E\u043B\u043D\u0438\u0442\u0435\u043B\u044C\u043D\u044B\u0435 \u0440\u0430\u0437\u0434\u0435\u043B\u044B:`,
-    { parse_mode: "HTML", reply_markup: kb }
-  );
-  } catch {}
-  await ctx.answerCallbackQuery();
-});
-userBot.callbackQuery("open_info", async (ctx) => {
-  try { await ctx.editMessageText(
-    "\u{1F4D6} <b>\u0418\u041D\u0421\u0422\u0420\u0423\u041A\u0426\u0418\u042F \u041F\u041E \u041F\u041E\u0414\u041A\u041B\u042E\u0427\u0415\u041D\u0418\u042E</b>\n\n<b>\u041F\u0440\u0438\u043B\u043E\u0436\u0435\u043D\u0438\u044F:</b>\n\u{1F916} Android: HappProxy / v2rayTun\n\u{1F4F1} iPhone: Happ / v2rayTun\n\n<b>\u041A\u0430\u043A \u043F\u043E\u0434\u043A\u043B\u044E\u0447\u0438\u0442\u044C\u0441\u044F:</b>\n1. \u041D\u0430\u0436\u043C\u0438 \xAB\u{1F511} \u041F\u043E\u043A\u0430\u0437\u0430\u0442\u044C \u043A\u043B\u044E\u0447\xBB \u0438 \u0441\u043A\u043E\u043F\u0438\u0440\u0443\u0439 \u0435\u0433\u043E\n2. \u041E\u0442\u043A\u0440\u043E\u0439 \u043F\u0440\u0438\u043B\u043E\u0436\u0435\u043D\u0438\u0435 \u2192 \u043D\u0430\u0436\u043C\u0438 + \u2192 \u0418\u043C\u043F\u043E\u0440\u0442 \u0438\u0437 \u0431\u0443\u0444\u0435\u0440\u0430 \u043E\u0431\u043C\u0435\u043D\u0430\n3. \u041D\u0430\u0436\u043C\u0438 \u25B6\uFE0F \u0434\u043B\u044F \u043F\u043E\u0434\u043A\u043B\u044E\u0447\u0435\u043D\u0438\u044F\n\n<b>\u0410\u0432\u0442\u043E\u043C\u0430\u0442\u0438\u0447\u0435\u0441\u043A\u043E\u0435 \u043F\u043E\u0434\u043A\u043B\u044E\u0447\u0435\u043D\u0438\u0435:</b>\n\u0412 \u0440\u0430\u0437\u0434\u0435\u043B\u0435 \xAB\u041F\u043E\u0434\u043A\u043B\u044E\u0447\u0438\u0442\u044C\u0441\u044F\xBB \u043D\u0430\u0436\u043C\u0438 \u043A\u043D\u043E\u043F\u043A\u0443 \u0441\u0432\u043E\u0435\u0439 \u043F\u043B\u0430\u0442\u0444\u043E\u0440\u043C\u044B \u2192 \u0432\u044B\u0431\u0435\u0440\u0438 \u043F\u0440\u0438\u043B\u043E\u0436\u0435\u043D\u0438\u0435 \u2014 \u043A\u043B\u044E\u0447 \u0432\u0441\u0442\u0430\u0432\u0438\u0442\u0441\u044F \u0441\u0430\u043C!\n\n\u0422\u0432\u043E\u044F \u0431\u0435\u0437\u043E\u043F\u0430\u0441\u043D\u043E\u0441\u0442\u044C \u2014 \u043D\u0430\u0448 \u043F\u0440\u0438\u043E\u0440\u0438\u0442\u0435\u0442! \u{1F512}",
-    { parse_mode: "HTML", reply_markup: profileKb() }
-  ); } catch {}
-  await ctx.answerCallbackQuery();
-});
-userBot.callbackQuery("open_ref", async (ctx) => {
-  const userId = ctx.from.id;
-  const myRefLink = `https://t.me/${BOT_USERNAME}?start=${userId}`;
-  const count = await getReferralCount(String(userId));
-  let notifText = "";
-  const notif = lastRefNotif.get(userId);
-  if (notif && Date.now() - notif.time <= 6e4) {
-    notifText = `\u26A1\uFE0F \u041F\u043E \u0442\u0432\u043E\u0435\u0439 \u0441\u0441\u044B\u043B\u043A\u0435 \u0442\u043E\u043B\u044C\u043A\u043E \u0447\u0442\u043E \u0437\u0430\u043B\u0435\u0442\u0435\u043B \u043D\u043E\u0432\u044B\u0439 \u0440\u0435\u0444\u0435\u0440\u0430\u043B \u2014 ${notif.name}! \u{1F525}
-
-`;
-  } else if (notif) {
-    lastRefNotif.delete(userId);
-  }
-  const shareText = `\u{1F680} LAENFAER VPN \u2014 \u0431\u044B\u0441\u0442\u0440\u044B\u0439 VPN! \u041F\u0435\u0440\u0435\u0445\u043E\u0434\u0438: ${myRefLink}`;
-  const shareUrl = `https://t.me/share/url?url=${encodeURIComponent(shareText)}`;
-  const kb = new InlineKeyboard2().url("\u{1F680} \u041F\u0440\u0438\u0433\u043B\u0430\u0441\u0438\u0442\u044C \u0434\u0440\u0443\u0437\u0435\u0439", shareUrl).row().text("\u{1F519} \u041D\u0430\u0437\u0430\u0434 \u0432 \u043B\u0438\u0447\u043D\u044B\u0439 \u043A\u0430\u0431\u0438\u043D\u0435\u0442", "open_profile");
-  await ctx.editMessageText(
-    `\u{1F381} <b>\u0420\u0415\u0424\u0415\u0420\u0410\u041B\u042C\u041D\u0410\u042F \u041F\u0420\u041E\u0413\u0420\u0410\u041C\u041C\u0410</b>
-
-${notifText}\u{1F4B0} <b>\u041A\u0430\u043A \u044D\u0442\u043E \u0440\u0430\u0431\u043E\u0442\u0430\u0435\u0442:</b>
-\u2022 \u041F\u0440\u0438\u0433\u043B\u0430\u0441\u0438 \u0434\u0440\u0443\u0433\u0430 \u043F\u043E \u0441\u0441\u044B\u043B\u043A\u0435
-\u2022 \u041A\u043E\u0433\u0434\u0430 \u043E\u043D \u043E\u043F\u043B\u0430\u0447\u0438\u0432\u0430\u0435\u0442 \u043F\u043E\u0434\u043F\u0438\u0441\u043A\u0443 \u2014 \u0442\u044B \u043F\u043E\u043B\u0443\u0447\u0430\u0435\u0448\u044C <b>10%</b> \u043D\u0430 \u0440\u0435\u0444\u0435\u0440\u0430\u043B\u044C\u043D\u044B\u0439 \u0431\u0430\u043B\u0430\u043D\u0441
-\u2022 \u0411\u0430\u043B\u0430\u043D\u0441 \u043C\u043E\u0436\u043D\u043E \u0432\u044B\u0432\u0435\u0441\u0442\u0438 \u043D\u0430 \u043A\u0430\u0440\u0442\u0443 \u0447\u0435\u0440\u0435\u0437 \u0421\u0411\u041F \u043E\u0442 1000\u20BD
-
-\u{1F3C6} <b>\u0411\u043E\u043D\u0443\u0441:</b> \u041F\u0440\u0438\u0433\u043B\u0430\u0441\u0438 10 \u0434\u0440\u0443\u0437\u0435\u0439 \u2014 \u043F\u043E\u043B\u0443\u0447\u0438 30 \u0434\u043D\u0435\u0439 \u0431\u0435\u0441\u043F\u043B\u0430\u0442\u043D\u043E!
-
-\u{1F465} \u041F\u0440\u0438\u0433\u043B\u0430\u0448\u0435\u043D\u043E: <b>${count} \u0447\u0435\u043B.</b>
-\u{1F517} \u0422\u0432\u043E\u044F \u0441\u0441\u044B\u043B\u043A\u0430:
-<code>${myRefLink}</code>`,
-    { reply_markup: kb, parse_mode: "HTML" }
-  );
-  await ctx.answerCallbackQuery();
-});
-userBot.callbackQuery("open_support", async (ctx) => {
-  const userId = ctx.from.id;
-  const chat = await getSupportChat(String(userId));
-  if (chat && chat.closed) {
-    await ctx.editMessageText(
-      "\u{1F4AC} \u0427\u0410\u0422 \u041F\u041E\u0414\u0414\u0415\u0420\u0416\u041A\u0418\n\n\u0427\u0430\u0442 \u0431\u044B\u043B \u0437\u0430\u043A\u0440\u044B\u0442. \u041D\u0430\u0436\u043C\u0438 \xAB\u041D\u043E\u0432\u044B\u0439 \u0447\u0430\u0442\xBB, \u0447\u0442\u043E\u0431\u044B \u043D\u0430\u0447\u0430\u0442\u044C \u043D\u043E\u0432\u044B\u0439 \u0434\u0438\u0430\u043B\u043E\u0433.",
-      { reply_markup: closedSupportKb() }
-    );
-  } else {
-    setUserState(userId, "support_mode");
-    await ctx.editMessageText(
-      "\u{1F4AC} \u0427\u0410\u0422 \u041F\u041E\u0414\u0414\u0415\u0420\u0416\u041A\u0418\n\n\u041F\u0440\u043E\u0441\u0442\u043E \u043D\u0430\u043F\u0438\u0448\u0438 \u0441\u0432\u043E\u0439 \u0432\u043E\u043F\u0440\u043E\u0441 \u0432 \u044D\u0442\u043E\u0442 \u0447\u0430\u0442.\n\u0410\u0434\u043C\u0438\u043D\u0438\u0441\u0442\u0440\u0430\u0442\u043E\u0440 \u043E\u0442\u0432\u0435\u0442\u0438\u0442 \u0442\u0435\u0431\u0435.\n\n\u2757 \u0427\u0430\u0442 \u0430\u043A\u0442\u0438\u0432\u0435\u043D \u2014 \u0442\u044B \u043C\u043E\u0436\u0435\u0448\u044C \u043F\u0438\u0441\u0430\u0442\u044C \u0441\u043E\u043E\u0431\u0449\u0435\u043D\u0438\u044F.",
-      { reply_markup: activeSupportKb() }
-    );
-  }
-  await ctx.answerCallbackQuery();
-});
-userBot.callbackQuery("new_support_chat", async (ctx) => {
-  const userId = ctx.from.id;
-  await reopenSupportChat(String(userId));
-  setUserState(userId, "support_mode");
-  await ctx.editMessageText(
-    "\u{1F4AC} \u0427\u0410\u0422 \u041F\u041E\u0414\u0414\u0415\u0420\u0416\u041A\u0418\n\n\u041F\u0440\u043E\u0441\u0442\u043E \u043D\u0430\u043F\u0438\u0448\u0438 \u0441\u0432\u043E\u0439 \u0432\u043E\u043F\u0440\u043E\u0441 \u0432 \u044D\u0442\u043E\u0442 \u0447\u0430\u0442.\n\u0410\u0434\u043C\u0438\u043D\u0438\u0441\u0442\u0440\u0430\u0442\u043E\u0440 \u043E\u0442\u0432\u0435\u0442\u0438\u0442 \u0442\u0435\u0431\u0435.\n\n\u2757 \u0427\u0430\u0442 \u0430\u043A\u0442\u0438\u0432\u0435\u043D \u2014 \u0442\u044B \u043C\u043E\u0436\u0435\u0448\u044C \u043F\u0438\u0441\u0430\u0442\u044C \u0441\u043E\u043E\u0431\u0449\u0435\u043D\u0438\u044F.",
-    { reply_markup: activeSupportKb() }
-  );
-  await ctx.answerCallbackQuery();
-});
-userBot.callbackQuery("back_from_support", async (ctx) => {
-  deleteUserState(ctx.from.id);
-  const userId = ctx.from.id;
-  const status = await getSubscriptionStatus(String(userId));
-  const bal = await getUserBalanceInfo(String(userId));
-  await ctx.editMessageText(
-    `\u{1F464} <b>\u041B\u0418\u0427\u041D\u042B\u0419 \u041A\u0410\u0411\u0418\u041D\u0415\u0422</b>
-
-\u0418\u043C\u044F: ${ctx.from.first_name}
-ID: <code>${userId}</code>
-
-\u{1F4B0} \u041F\u043E\u043F\u043E\u043B\u043D\u0435\u043D\u043E \u0432\u0441\u0435\u0433\u043E: <b>${bal.totalPaid}\u20BD</b>
-
-\u{1F4CB} \u041F\u041E\u0414\u041F\u0418\u0421\u041A\u0410:
-${status}
-
-\u{1F447} \u0414\u043E\u043F\u043E\u043B\u043D\u0438\u0442\u0435\u043B\u044C\u043D\u044B\u0435 \u0440\u0430\u0437\u0434\u0435\u043B\u044B:`,
-    { parse_mode: "HTML", reply_markup: profileKb() }
-  );
-  await ctx.answerCallbackQuery();
-});
-userBot.callbackQuery("close_support_chat", async (ctx) => {
-  deleteUserState(ctx.from.id);
-  await closeSupportChat(String(ctx.from.id));
-  const userId = ctx.from.id;
-  const status = await getSubscriptionStatus(String(userId));
-  const bal = await getUserBalanceInfo(String(userId));
-  await ctx.editMessageText(
-    `\u{1F464} <b>\u041B\u0418\u0427\u041D\u042B\u0419 \u041A\u0410\u0411\u0418\u041D\u0415\u0422</b>
-
-\u0418\u043C\u044F: ${ctx.from.first_name}
-ID: <code>${userId}</code>
-
-\u{1F4B0} \u041F\u043E\u043F\u043E\u043B\u043D\u0435\u043D\u043E \u0432\u0441\u0435\u0433\u043E: <b>${bal.totalPaid}\u20BD</b>
-
-\u{1F4CB} \u041F\u041E\u0414\u041F\u0418\u0421\u041A\u0410:
-${status}
-
-\u{1F447} \u0414\u043E\u043F\u043E\u043B\u043D\u0438\u0442\u0435\u043B\u044C\u043D\u044B\u0435 \u0440\u0430\u0437\u0434\u0435\u043B\u044B:`,
-    { parse_mode: "HTML", reply_markup: profileKb() }
-  );
-  await ctx.answerCallbackQuery();
-});
-userBot.callbackQuery("open_miniapp", async (ctx) => {
   const domain = getSubDomain();
-  const appUrl = domain ? domain + "/app" : "https://laenfaer-vpn-youtube.duckdns.org/app";
-  const { InlineKeyboard: IK } = await import("grammy");
-  const kb = new IK().webApp("\u{1F310} \u041E\u0442\u043A\u0440\u044B\u0442\u044C \u043B\u0438\u0447\u043D\u044B\u0439 \u043A\u0430\u0431\u0438\u043D\u0435\u0442", appUrl).row().text("\u{1F3E0} \u0413\u043B\u0430\u0432\u043D\u043E\u0435 \u043C\u0435\u043D\u044E", "to_main");
-  await ctx.reply("\u{1F310} \u041D\u0430\u0436\u043C\u0438 \u043A\u043D\u043E\u043F\u043A\u0443 \u043D\u0438\u0436\u0435:", {
-    reply_markup: kb
-  });
-  await ctx.answerCallbackQuery();
-});
-userBot.callbackQuery("open_promo", async (ctx) => {
-  setUserState(ctx.from.id, "waiting_promo_code");
-  await ctx.reply("\u{1F3AB} <b>\u0412\u0432\u0435\u0434\u0438\u0442\u0435 \u043F\u0440\u043E\u043C\u043E\u043A\u043E\u0434</b>\n\n\u0412\u0432\u0435\u0434\u0438\u0442\u0435 \u043A\u043E\u0434 \u043F\u0440\u043E\u043C\u043E\u043A\u043E\u0434\u0430, \u043F\u043E\u043B\u0443\u0447\u0435\u043D\u043D\u044B\u0439 \u043E\u0442 \u0430\u0434\u043C\u0438\u043D\u0438\u0441\u0442\u0440\u0430\u0442\u043E\u0440\u0430 \u0438\u043B\u0438 \u0438\u0437 \u0440\u0435\u043A\u043B\u0430\u043C\u043D\u043E\u0439 \u043A\u0430\u043C\u043F\u0430\u043D\u0438\u0438:", { parse_mode: "HTML", reply_markup: backToMainKb() });
-  await ctx.answerCallbackQuery();
-});
-userBot.on("message:photo", async (ctx) => {
-  const userId = ctx.from.id;
-  const state = getUserState(userId);
-  if (!state?.startsWith("waiting_screenshot_")) return;
-  const tariff = state.replace("waiting_screenshot_", "");
-  const cfg = TARIFF_CONFIG[tariff];
-  if (!cfg) return;
-  const fileId = ctx.message.photo.at(-1).file_id;
-  const payId = await createPaymentRequest(String(userId), tariff, cfg.price, fileId);
-  const kb = new InlineKeyboard2().text("\u2705 \u041F\u043E\u0434\u0442\u0432\u0435\u0440\u0434\u0438\u0442\u044C", `confirm_pay_${payId}`).row().text("\u274C \u041E\u0442\u043A\u043B\u043E\u043D\u0438\u0442\u044C", `reject_pay_${payId}`);
-  try {
-    const fileInfo = await userBot.api.getFile(fileId);
-    const fileUrl = `https://api.telegram.org/file/bot${BOT_TOKEN}/${fileInfo.file_path}`;
-    const fileRes = await fetch(fileUrl);
-    const fileBuf = Buffer.from(await fileRes.arrayBuffer());
-    await adminNotifier.api.sendPhoto(ADMIN_ID, new InputFile(fileBuf, "screenshot.jpg"), {
-      caption: `\u{1F4F8} <b>\u0421\u041A\u0420\u0418\u041D\u0428\u041E\u0422 \u041E\u041F\u041B\u0410\u0422\u042B</b>
+  const subLink = domain ? `${domain}/sub/${userId}` : `https://laenfaer-vpn-youtube.duckdns.org/sub/${userId}`;
+  const connectUrl = `${domain}/api/connect?app=happ_ios&key=${encodeURIComponent(subLink)}`;
 
-\u{1F464} ${ctx.from.first_name}
-\u{1F194} ID: <code>${userId}</code>
-\u{1F3F7} \u0422\u0430\u0440\u0438\u0444: ${cfg.title}
-\u{1F4B0} \u0421\u0443\u043C\u043C\u0430: ${cfg.price}\u20BD`,
+  return ctx.editMessageText(
+    `🎉 <b>Всё готово! Подписка активна.</b>\n\n` +
+    `⏰ Действует: 3 дн.\n\n` +
+    `Нажми кнопку — Happ откроется и предложит добавить подписку.\n` +
+    `Остаётся только нажать "Добавить" и "Подключить".\n\n` +
+    `Если Happ не установлен — скачай по ссылке ниже.`,
+    {
       parse_mode: "HTML",
-      reply_markup: kb
-    });
-  } catch (e) {
-    console.error("[SCREENSHOT] sendPhoto to admin failed. ADMIN_ID=" + ADMIN_ID + " error=" + (e?.message || e));
-  }
-  deleteUserState(userId);
-  await ctx.reply(
-    "\u2705 <b>\u0421\u043A\u0440\u0438\u043D\u0448\u043E\u0442 \u043E\u0442\u043F\u0440\u0430\u0432\u043B\u0435\u043D \u0430\u0434\u043C\u0438\u043D\u0438\u0441\u0442\u0440\u0430\u0442\u043E\u0440\u0443!</b>\n\n\u041E\u0436\u0438\u0434\u0430\u0439 \u043F\u043E\u0434\u0442\u0432\u0435\u0440\u0436\u0434\u0435\u043D\u0438\u044F \u2014 \u043A\u0430\u043A \u0442\u043E\u043B\u044C\u043A\u043E \u043E\u043F\u043B\u0430\u0442\u0430 \u0431\u0443\u0434\u0435\u0442 \u043F\u0440\u043E\u0432\u0435\u0440\u0435\u043D\u0430, \u043F\u043E\u0434\u043F\u0438\u0441\u043A\u0430 \u0430\u043A\u0442\u0438\u0432\u0438\u0440\u0443\u0435\u0442\u0441\u044F \u0430\u0432\u0442\u043E\u043C\u0430\u0442\u0438\u0447\u0435\u0441\u043A\u0438.",
-    { parse_mode: "HTML", reply_markup: backToMainKb() }
+      reply_markup: new InlineKeyboard()
+        .url("📱 Открыть в Happ", connectUrl)
+        .row()
+        .text("◀️ Назад", "back_to_tariffs")
+    }
   );
 });
-userBot.on("message:text", async (ctx) => {
-  const userId = ctx.from.id;
-  const text2 = ctx.message.text;
-  if (text2.startsWith("/")) return;
-  if (!await checkSubscription(userId)) {
-    await ctx.reply("\u26A0\uFE0F \u0414\u043E\u0441\u0442\u0443\u043F \u0437\u0430\u0431\u043B\u043E\u043A\u0438\u0440\u043E\u0432\u0430\u043D!\n\n\u041F\u043E\u0434\u043F\u0438\u0448\u0438\u0441\u044C \u043D\u0430 \u043A\u0430\u043D\u0430\u043B, \u0447\u0442\u043E\u0431\u044B \u0434\u0430\u043B\u044C\u0448\u0435 \u043E\u0441\u0442\u0430\u0432\u0430\u0442\u044C\u0441\u044F \u043D\u0430 \u0441\u0432\u044F\u0437\u0438! \u{1F525}", { reply_markup: subRequiredKb() });
-    return;
-  }
-  const state = getUserState(userId);
-  if (state === "withdraw_mode_phone") {
-    const phone = text2.trim();
-    if (!/^\+?[78]\d{10}$/.test(phone.replace(/\s/g,""))) {
-      await ctx.reply("Неверный формат номера. Пример: +79991234567\nПопробуй ещё раз:", { reply_markup: backToMainKb() });
-      return;
-    }
-    setUserState(userId, "withdraw_mode_name");
-    withdrawData.set(userId, { phone });
-    await ctx.reply("Введите ваши ФИО (Фамилия Имя Отчество):", { reply_markup: backToMainKb() });
-    return;
-  }
-  if (state === "withdraw_mode_name") {
-    const name = text2.trim();
-    if (name.split(" ").length < 2) {
-      await ctx.reply("Введите полные ФИО. Пример: Иванов Иван Иванович\nПопробуй ещё раз:", { reply_markup: backToMainKb() });
-      return;
-    }
-    const data = withdrawData.get(userId) || {};
-    data.name = name;
-    withdrawData.set(userId, data);
-    setUserState(userId, "withdraw_mode_bank");
-    await ctx.reply("Введите название банка (например: Сбербанк, Тинькофф, ВТБ):", { reply_markup: backToMainKb() });
-    return;
-  }
-  if (state === "withdraw_mode_bank") {
-    deleteUserState(userId);
-    const bank = text2.trim();
-    const data = withdrawData.get(userId) || {};
-    withdrawData.delete(userId);
-    const b = await getUserBalanceInfo(String(userId));
-    const refBal = b.refBalance || 0;
-    if (refBal < 1000) { await ctx.reply("Реферальный баланс исчерпан или меньше 1000₽.", { reply_markup: backToMainKb() }); return; }
-    await db.update(usersTable).set({ refBalance: 0 }).where(eq(usersTable.telegramId, String(userId)));
-    try { await adminNotifier.api.sendMessage(Number(ADMIN_ID), "<b>\u{1F4B8} \u0417\u0410\u042F\u0412\u041A\u0410 \u041D\u0410 \u0412\u042B\u0412\u041E\u0414</b>\nID: <code>" + userId + "</code>\n\u0421\u0443\u043C\u043C\u0430: <b>" + refBal + "\u20BD</b>\n\u0421\u0411\u041F: <b>" + data.phone + "</b>\n\u0424\u0418\u041E: <b>" + data.name + "</b>\n\u0411\u0430\u043D\u043A: <b>" + bank + "</b>", { parse_mode: "HTML", reply_markup: adminBackKb() }); } catch {}
-    await ctx.reply("\u2705 Заявка принята!\n\nСумма: <b>" + refBal + "\u20BD</b>\nНомер СБП: " + data.phone + "\nФИО: " + data.name + "\nБанк: " + bank + "\n\nАдминистратор переведёт средства в ближайшее время.", { parse_mode: "HTML", reply_markup: backToMainKb() });
-    return;
-  }
-  if (state?.startsWith("waiting_screenshot_")) {
-    await ctx.reply("\u{1F4F8} \u041E\u0442\u043F\u0440\u0430\u0432\u044C <b>\u0441\u043A\u0440\u0438\u043D\u0448\u043E\u0442</b> (\u0444\u043E\u0442\u043E) \u043F\u043E\u0434\u0442\u0432\u0435\u0440\u0436\u0434\u0435\u043D\u0438\u044F \u043E\u043F\u043B\u0430\u0442\u044B, \u0430 \u043D\u0435 \u0442\u0435\u043A\u0441\u0442.", { parse_mode: "HTML", reply_markup: backToMainKb() });
-    return;
-  }
-  if (state === "support_mode") {
-    const chat = await getSupportChat(String(userId));
-    if (chat?.closed) {
-      await ctx.reply("\u274C \u0427\u0430\u0442 \u043F\u043E\u0434\u0434\u0435\u0440\u0436\u043A\u0438 \u0437\u0430\u043A\u0440\u044B\u0442. \u041E\u0442\u043A\u0440\u043E\u0439 \u043D\u043E\u0432\u044B\u0439 \u0434\u0438\u0430\u043B\u043E\u0433 \u0447\u0435\u0440\u0435\u0437 \xAB\u041F\u043E\u0434\u0434\u0435\u0440\u0436\u043A\u0430\xBB.", { reply_markup: backToMainKb() });
-      deleteUserState(userId);
-      return;
-    }
-    await addSupportMessage(String(userId), { text: text2, time: Date.now() / 1e3, fromUser: true });
-    const kb = new InlineKeyboard2().text("\u{1F4E4} \u041E\u0442\u0432\u0435\u0442\u0438\u0442\u044C", `reply_support_${userId}`);
-    try {
-      await adminNotifier.api.sendMessage(
-        ADMIN_ID,
-        `\u{1F4E5} <b>\u0412\u041E\u041F\u0420\u041E\u0421 \u0412 \u041F\u041E\u0414\u0414\u0415\u0420\u0416\u041A\u0423</b>
 
-\u{1F464} ${ctx.from.first_name}
-\u{1F194} ID: <code>${userId}</code>
-
-\u{1F4AC} \u0421\u043E\u043E\u0431\u0449\u0435\u043D\u0438\u0435:
-${text2}`,
-        { parse_mode: "HTML", reply_markup: kb }
-      );
-    } catch (e) {
-      console.error("[SUPPORT] sendMessage to admin failed. ADMIN_ID=" + ADMIN_ID + " error=" + (e?.message || e));
-    }
-    await ctx.reply("\u2705 \u0421\u043E\u043E\u0431\u0449\u0435\u043D\u0438\u0435 \u043E\u0442\u043F\u0440\u0430\u0432\u043B\u0435\u043D\u043E \u0430\u0434\u043C\u0438\u043D\u0438\u0441\u0442\u0440\u0430\u0442\u043E\u0440\u0443. \u041E\u0436\u0438\u0434\u0430\u0439 \u043E\u0442\u0432\u0435\u0442\u0430...", { reply_markup: activeSupportKb() });
-    return;
-  }
-  if (state === "waiting_promo_code") {
-    const code = text2.trim().toUpperCase();
-    deleteUserState(userId);
-    const promo = await activatePromoCode(code);
-    if (!promo) {
-      await ctx.reply("\u274C \u041F\u0440\u043E\u043C\u043E\u043A\u043E\u0434 \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D \u0438\u043B\u0438 \u0443\u0436\u0435 \u0438\u0441\u043F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u043D.", { reply_markup: mainMenuKb() });
-      return;
-    }
-    const days = promo.days || 30;
-    const existingSubBot = await getSubscription(String(userId));
-    const hasActiveSubBot = existingSubBot && new Date(existingSubBot.expiresAt) > new Date();
-    let tariff;
-    let key;
-    if (!promo.tariff || promo.tariff === "auto") {
-      // Общий промокод — сохраняем текущий тариф для активных, бесплатный для остальных
-      if (hasActiveSubBot) {
-        tariff = existingSubBot.tariff;
-        key = existingSubBot.key || await getRandomFreeKey() || await getRandomPremiumKey();
-      } else {
-        tariff = "free_" + days + "days";
-        key = await getRandomFreeKey() || await getRandomPremiumKey();
-      }
-    } else {
-      const isFreeTariff = promo.tariff.includes("free") || /^free/i.test(promo.tariff) || promo.tariff === "3days" || promo.tariff === "7days";
-      // Пользователь считается "бесплатным" если нет подписки, истекла, или на free-тарифе
-      const userIsFreeBot = !hasActiveSubBot || existingSubBot.tariff.includes("free") || existingSubBot.tariff.includes("3days") || existingSubBot.tariff.includes("7days");
-      if (userIsFreeBot && !isFreeTariff) {
-        // Не повышать до premium бесплатных/истёкших пользователей
-        tariff = (hasActiveSubBot && existingSubBot) ? existingSubBot.tariff : "free_" + days + "days";
-        key = await getRandomFreeKey() || await getRandomPremiumKey();
-      } else {
-        tariff = promo.tariff;
-        key = isFreeTariff ? (await getRandomFreeKey() || await getRandomPremiumKey()) : (await getRandomPremiumKey() || await getRandomFreeKey());
-      }
-    }
-    if (!key) {
-      await ctx.reply("\u274C \u041D\u0435\u0442 \u0441\u0432\u043E\u0431\u043E\u0434\u043D\u044B\u0445 \u043A\u043B\u044E\u0447\u0435\u0439. \u041E\u0431\u0440\u0430\u0442\u0438\u0442\u0435\u0441\u044C \u0432 \u043F\u043E\u0434\u0434\u0435\u0440\u0436\u043A\u0443.", { reply_markup: mainMenuKb() });
-      return;
-    }
-    const expiresAt = await addDaysToSubscription(String(userId), tariff, days, key);
-    try { await adminNotifier.api.sendMessage(ADMIN_ID, `\u{1F3AB} <b>\u041F\u0420\u041E\u041C\u041E\u041A\u041E\u0414 \u0410\u041A\u0422\u0418\u0412\u0418\u0420\u041E\u0412\u0410\u041D</b>\n\n\u{1F511} \u041A\u043E\u0434: <code>${code}</code>\n\u{1F464} \u041F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u0435\u043B\u044C: <code>${userId}</code> (${ctx.from.first_name})\n\u{1F4CB} \u0422\u0430\u0440\u0438\u0444: ${tariff}\n\u{1F4C5} \u0414\u043E\u0431\u0430\u0432\u043B\u0435\u043D\u043E: ${days} \u0434\u043D.\n\u{1F4C5} \u0414\u043E: ${formatDate(expiresAt)}`, { parse_mode: "HTML", reply_markup: adminBackKb() }); } catch {}
-    setUserState(userId, `key:${key}`);
-    await ctx.reply(
-      `\u2705 <b>\u041F\u0440\u043E\u043C\u043E\u043A\u043E\u0434 \u043F\u0440\u0438\u043C\u0435\u043D\u0451\u043D!</b>\n\n\u{1F389} \u041F\u043E\u0434\u043F\u0438\u0441\u043A\u0430 \u0430\u043A\u0442\u0438\u0432\u0438\u0440\u043E\u0432\u0430\u043D\u0430 \u043D\u0430 ${days} \u0434\u043D\u0435\u0439.\n\u{1F4C5} \u0414\u043E: ${formatDate(expiresAt)}\n\n\u{1F447} \u0412\u044B\u0431\u0435\u0440\u0438 \u0441\u0432\u043E\u044E \u043F\u043B\u0430\u0442\u0444\u043E\u0440\u043C\u0443:`,
-      { parse_mode: "HTML", reply_markup: connectKb() }
-    );
-    return;
-  }
-  try {
-    await ctx.deleteMessage();
-  } catch {
-  }
-  await ctx.reply("\u26A0\uFE0F \u0411\u043E\u0442 \u043D\u0435 \u0440\u0430\u0441\u043F\u043E\u0437\u043D\u0430\u043B \u0441\u043E\u043E\u0431\u0449\u0435\u043D\u0438\u0435.\n\u0415\u0441\u043B\u0438 \u0443 \u0442\u0435\u0431\u044F \u0432\u043E\u043F\u0440\u043E\u0441 \u2014 \u0437\u0430\u0439\u0434\u0438 \u0432 \u0440\u0430\u0437\u0434\u0435\u043B \xAB\u041F\u043E\u0434\u0434\u0435\u0440\u0436\u043A\u0430\xBB \u0432 \u043B\u0438\u0447\u043D\u043E\u043C \u043A\u0430\u0431\u0438\u043D\u0435\u0442\u0435.", {
-    reply_markup: backToMainKb()
-  });
-});
+// Error handler
 userBot.catch((err) => {
   logger.error({ err }, "User bot error");
 });
