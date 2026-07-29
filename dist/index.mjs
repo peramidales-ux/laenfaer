@@ -57836,11 +57836,94 @@ if (!ADMIN_BOT_TOKEN) throw new Error("ADMIN_BOT_TOKEN is required");
 var adminNotifier = new Bot(ADMIN_BOT_TOKEN);
 var ADMIN_ID = Number(process.env.ADMIN_ID);
 
-// User state management
+// Get channel from settings or use default
+async function getChannelId() {
+  try {
+    const channelSetting = await db.select().from(settingsTable).where(eq(settingsTable.key, "channel_id")).limit(1);
+    if (channelSetting.length > 0 && channelSetting[0].value) {
+      return Number(channelSetting[0].value);
+    }
+  } catch {}
+  return null;
+}
+
+var CHANNEL_URL = process.env.CHANNEL_URL ?? "https://t.me/laenfaer_vpn";
+const CHANNEL = "@laenfaer_vpn";
+const CHANNEL_ID = -1003575696048;
+const SUB_DOMAIN = process.env.SUB_DOMAIN || getSubDomain();
+const SUBS_FILE = "./subscriptions.json";
+const KEYS_FILE = "./keys.json";
+
+// Load keys
+let keys = [];
+try {
+  keys = JSON.parse(fs.readFileSync(KEYS_FILE, "utf-8"));
+  console.log(`Loaded ${keys.length} keys`);
+} catch {
+  console.log("No keys file found, will fetch on startup");
+}
+
+function loadSubscriptions() {
+  try {
+    return JSON.parse(fs.readFileSync(SUBS_FILE, "utf-8"));
+  } catch {
+    return {};
+  }
+}
+
+function loadUsedPromos() {
+  try {
+    return JSON.parse(fs.readFileSync("./used-promos.json", "utf-8"));
+  } catch {
+    return {};
+  }
+}
+
+function saveSubscription(userId, days) {
+  const subs = loadSubscriptions();
+  const existing = subs[userId];
+
+  if (existing && new Date(existing.expiresAt) > new Date()) {
+    const expires = new Date(existing.expiresAt);
+    expires.setDate(expires.getDate() + days);
+    subs[userId] = { expiresAt: expires.toISOString(), days: existing.days + days };
+  } else {
+    const expiresAt = new Date();
+    expiresAt.setDate(expiresAt.getDate() + days);
+    subs[userId] = { expiresAt: expiresAt.toISOString(), days };
+  }
+
+  fs.writeFileSync(SUBS_FILE, JSON.stringify(subs, null, 2));
+}
+
+function getDaysLeft(userId) {
+  const subs = loadSubscriptions();
+  const sub = subs[userId];
+  if (!sub) return 0;
+  const expires = new Date(sub.expiresAt);
+  const now = new Date();
+  return Math.max(0, Math.ceil((expires - now) / (1000 * 60 * 60 * 24)));
+}
+
+function isSubscriptionActive(userId) {
+  return getDaysLeft(userId) > 0;
+}
+
+function getExpiryMessage(userId) {
+  const daysLeft = getDaysLeft(userId);
+  const subs = loadSubscriptions();
+  const sub = subs[userId];
+  if (!sub) return "У вас нет активной подписки";
+  const expires = new Date(sub.expiresAt);
+  const dateStr = expires.toLocaleDateString("ru-RU");
+  if (daysLeft === 0) return `Подписка истекла ${dateStr}`;
+  if (daysLeft <= 3) return `⚠️ Подписка истекает ${dateStr} (осталось ${daysLeft} дн.)`;
+  return `Подписка активна до ${dateStr} (осталось ${daysLeft} дн.)`;
+}
+
 const ACCEPTED_USERS = new Set();
 const userStates = new Map();
 
-// Policy text
 const POLICIES = `📜 Политика конфиденциальности LAENFAER VPN
 
 1. Сбор данных
@@ -57894,28 +57977,22 @@ const POLICIES = `📜 Политика конфиденциальности LAE
 7. Контакты
 Для запроса возврата: /support`;
 
-// Tariffs
-const TARIFFS = {
-  trial: { name: "Пробная подписка", days: 3, price: "Бесплатно", discount: "" },
-  30: { name: "30 дней", days: 30, price: "299 ₽", discount: "" },
-  60: { name: "60 дней", days: 60, price: "539 ₽", discount: "Выгода 10%" },
-  90: { name: "90 дней", days: 90, price: "764 ₽", discount: "Выгода 15%" },
-  180: { name: "180 дней", days: 180, price: "1349 ₽", discount: "Выгода 25%" }
-};
-
-// Check channel subscription
 async function checkChannelSubscription(userId) {
-  const channelId = await getChannelId();
-  if (!channelId) return true;
   try {
-    const member = await userBot.api.getChatMember(channelId, userId);
+    const member = await userBot.api.getChatMember(CHANNEL_ID, userId);
     return ["member", "administrator", "creator"].includes(member.status);
   } catch {
-    return true;
+    return false;
   }
 }
 
-// Main menu
+function getChannelKeyboard() {
+  return new InlineKeyboard()
+    .url("📢 Подписаться", `https://t.me/${CHANNEL.replace("@", "")}`)
+    .row()
+    .text("✅ Я подписался", "check_subscription");
+}
+
 function getMainMenu(name) {
   const keyboard = new InlineKeyboard()
     .text("🔑 Получить ключ", "get_key")
@@ -57937,7 +58014,7 @@ function getMainMenu(name) {
       `Ваш провайдер видит только защищённый сайт.\n` +
       `Он не может отличить ваш VPN-трафик от обычного просмотра.\n\n` +
       `Выбери действие 👇`,
-    reply_markup: keyboard
+    reply_markup: keyboard,
   };
 }
 
@@ -57949,7 +58026,56 @@ function getUnsubscribedMessage() {
       `• Новости и обновления\n` +
       `• Инструкции по подключению\n` +
       `• Поддержка`,
-    reply_markup: subRequiredKb()
+    reply_markup: getChannelKeyboard(),
+  };
+}
+
+const TARIFFS = {
+  trial: { name: "Пробная подписка", days: 3, price: "Бесплатно", discount: "" },
+  30: { name: "30 дней", days: 30, price: "299 ₽", discount: "" },
+  60: { name: "60 дней", days: 60, price: "539 ₽", discount: "Выгода 10%" },
+  90: { name: "90 дней", days: 90, price: "764 ₽", discount: "Выгода 15%" },
+  180: { name: "180 дней", days: 180, price: "1349 ₽", discount: "Выгода 25%" },
+};
+
+function getPaymentMenu(tariffId) {
+  const tariff = TARIFFS[tariffId];
+
+  if (tariffId === "trial") {
+    const keyboard = new InlineKeyboard()
+      .text("🎁 Активировать бесплатно", "activate_trial")
+      .row()
+      .text("◀️ Назад к тарифам", "back_to_tariffs");
+
+    return {
+      text:
+        `🎁 <b>Попробуй бесплатно 3 дня</b>\n\n` +
+        `YouTube загружается вечность?\n` +
+        `Instagram не открывается?\n` +
+        `Telegram периодически отваливается?\n\n` +
+        `Мы знаем как это исправить.\n\n` +
+        `3 дня — бесплатно, без привязки карты.\n` +
+        `После — от 299₽/мес.`,
+      reply_markup: keyboard,
+    };
+  }
+
+  const keyboard = new InlineKeyboard()
+    .text("💳 Оплатить", `pay_${tariffId}`)
+    .row()
+    .text("◀️ Назад к тарифам", "back_to_tariffs");
+
+  return {
+    text:
+      `💳 <b>${tariff.name}</b>\n\n` +
+      `YouTube загружается вечность?\n` +
+      `Instagram не открывается?\n` +
+      `Telegram периодически отваливается?\n\n` +
+      `Мы знаем как это исправить.\n\n` +
+      `💰 ${tariff.price}` +
+      (tariff.discount ? `  ${tariff.discount}` : "") +
+      `\n\nПолный доступ ко всем серверам.`,
+    reply_markup: keyboard,
   };
 }
 
@@ -57985,65 +58111,16 @@ function getKeyMenu() {
       `• Подключение за 2 минуты\n` +
       `• Поддержка 24/7\n\n` +
       `Выбери тариф 👇`,
-    reply_markup: keyboard
+    reply_markup: keyboard,
   };
 }
 
-function getPaymentMenu(tariffId) {
-  const tariff = TARIFFS[tariffId];
-
-  if (tariffId === "trial") {
-    const keyboard = new InlineKeyboard()
-      .text("🎁 Активировать бесплатно", "activate_trial")
-      .row()
-      .text("◀️ Назад к тарифам", "back_to_tariffs");
-
-    return {
-      text:
-        `🎁 <b>Попробуй бесплатно 3 дня</b>\n\n` +
-        `YouTube загружается вечность?\n` +
-        `Instagram не открывается?\n` +
-        `Telegram периодически отваливается?\n\n` +
-        `Мы знаем как это исправить.\n\n` +
-        `3 дня — бесплатно, без привязки карты.\n` +
-        `После — от 299₽/мес.`,
-      reply_markup: keyboard
-    };
-  }
-
-  const keyboard = new InlineKeyboard()
-    .text("💳 Оплатить", `pay_${tariffId}`)
-    .row()
-    .text("◀️ Назад к тарифам", "back_to_tariffs");
-
-  return {
-    text:
-      `💳 <b>${tariff.name}</b>\n\n` +
-      `YouTube загружается вечность?\n` +
-      `Instagram не открывается?\n` +
-      `Telegram периодически отваливается?\n\n` +
-      `Мы знаем как это исправить.\n\n` +
-      `💰 ${tariff.price}` +
-      (tariff.discount ? `  ${tariff.discount}` : "") +
-      `\n\nПолный доступ ко всем серверам.`,
-    reply_markup: keyboard
-  };
-}
-
-// Middleware - check subscription
+// Middleware - check ban and subscription
 userBot.use(async (ctx, next) => {
   const userId = ctx.from?.id;
   if (userId) {
-    const user = await getUser(String(userId));
-    if (user?.banned) {
-      if (ctx.callbackQuery) {
-        await ctx.answerCallbackQuery({ text: "🚫 Твой аккаунт заблокирован. Обратись в поддержку.", show_alert: true }).catch(() => {});
-      } else {
-        await ctx.reply("🚫 Твой аккаунт заблокирован администратором.\n\nЕсли считаешь это ошибкой — обратись в поддержку.").catch(() => {});
-      }
-      return;
-    }
-
+    // Skip ban check - using JSON files only
+    
     const msgText = ctx.message?.text || "";
     const cbData = ctx.callbackQuery?.data || "";
     if (cbData !== "check_subscription" && !msgText.startsWith("/start")) {
@@ -58061,14 +58138,12 @@ userBot.use(async (ctx, next) => {
   await next();
 });
 
-// /start command
+// Commands
 userBot.command("start", async (ctx) => {
   const name = ctx.from.first_name || "друг";
-  const userId = ctx.from.id;
 
-  // Check if user already accepted policy and is subscribed
-  if (ACCEPTED_USERS.has(userId)) {
-    const isSubscribed = await checkChannelSubscription(userId);
+  if (ACCEPTED_USERS.has(ctx.from.id)) {
+    const isSubscribed = await checkChannelSubscription(ctx.from.id);
     if (isSubscribed) {
       const menu = getMainMenu(name);
       return ctx.reply(menu.text, { reply_markup: menu.reply_markup, parse_mode: "HTML" });
@@ -58078,7 +58153,6 @@ userBot.command("start", async (ctx) => {
     }
   }
 
-  // New user - show policy
   const keyboard = new InlineKeyboard()
     .text("✅ Принимаю", "accept_policy")
     .text("❌ Отклоняю", "reject_policy");
@@ -58091,57 +58165,49 @@ userBot.command("start", async (ctx) => {
   );
 });
 
-// /menu command
 userBot.command("menu", async (ctx) => {
+  const isSubscribed = await checkChannelSubscription(ctx.from.id);
+  if (!isSubscribed) {
+    const msg = getUnsubscribedMessage();
+    return ctx.reply(msg.text, { reply_markup: msg.reply_markup });
+  }
+
+  if (!ACCEPTED_USERS.has(ctx.from.id)) {
+    const keyboard = new InlineKeyboard()
+      .text("✅ Принимаю", "accept_policy")
+      .text("❌ Отклоняю", "reject_policy");
+    return ctx.reply(
+      `Для использования LAENFAER VPN необходимо принять политику.\n\n` + POLICIES,
+      { reply_markup: keyboard }
+    );
+  }
+
   const name = ctx.from.first_name || "друг";
   const menu = getMainMenu(name);
   return ctx.reply(menu.text, { reply_markup: menu.reply_markup, parse_mode: "HTML" });
 });
 
-// /key command
 userBot.command("key", async (ctx) => {
-  const userId = ctx.from.id;
-  const sub = await getSubscription(String(userId));
-  
-  if (!sub?.key) {
-    await ctx.reply("❌ У тебя нет активного ключа.\n\nПолучи бесплатный ключ или купи подписку:", { reply_markup: mainMenuKb() });
-    return;
-  }
-
-  const left = daysLeft(sub.expiresAt);
-  const alive = left > 0;
-  
-  await ctx.reply(
-    `✅ <b>Подключение готово!</b>\n\n` +
-    `📅 До: ${formatDate(sub.expiresAt)}\n` +
-    `⏳ Осталось: ${alive ? left + " дн." : "❌ истёк"}\n\n` +
-    `👇 Выбери свою платформу:`,
-    { parse_mode: "HTML", reply_markup: connectKb() }
-  );
+  const menu = getKeyMenu();
+  return ctx.reply(menu.text, { reply_markup: menu.reply_markup, parse_mode: "HTML" });
 });
 
-// /profile command  
 userBot.command("profile", async (ctx) => {
-  const userId = ctx.from.id;
   const name = ctx.from.first_name || "друг";
-  const sub = await getSubscription(String(userId));
-  const bal = await getUserBalanceInfo(String(userId));
-  const user = await getUser(String(userId));
-  
-  const left = sub ? daysLeft(sub.expiresAt) : 0;
-  const isActive = left > 0;
-  
-  const domain = getSubDomain();
-  const subLink = domain ? `${domain}/sub/${userId}` : `https://laenfaer-vpn-youtube.duckdns.org/sub/${userId}`;
-  const connectUrl = `${subLink}`;
+  const userId = ctx.from.id;
+  const daysLeft = getDaysLeft(userId);
+  const isActive = isSubscriptionActive(userId);
+  const subs = loadSubscriptions();
+  const sub = subs[userId];
+  const subLink = `${SUB_DOMAIN}/sub/${userId}`;
+  const connectUrl = `${SUB_DOMAIN}/api/connect?app=happ_ios&key=${encodeURIComponent(subLink)}`;
 
   if (isActive && sub) {
-    const dateStr = formatDate(sub.expiresAt);
-    const isFree = sub.tariff && (sub.tariff.includes("free") || sub.tariff === "3days" || sub.tariff === "7days");
-    const tariffName = isFree ? "Бесплатный" : "Premium";
+    const expires = new Date(sub.expiresAt);
+    const dateStr = expires.toLocaleDateString("ru-RU", { day: "numeric", month: "long", year: "numeric" });
 
     const keyboard = new InlineKeyboard()
-      .url("📱 Открыть в Happ", `${domain}/api/connect?app=happ_ios&key=${encodeURIComponent(subLink)}`)
+      .url("📱 Открыть в Happ", connectUrl)
       .row()
       .text("🔄 Продлить подписку", "get_key")
       .row()
@@ -58152,15 +58218,16 @@ userBot.command("profile", async (ctx) => {
       `━━━━━━━━━━━━━━━━━━━━\n` +
       `👤  <b>Л И Ч Н Ы Й  К А Б И Н Е Т</b>\n` +
       `━━━━━━━━━━━━━━━━━━━━\n\n` +
-      `👋 ${name}\n` +
+      `👋 Имя: ${name}\n` +
       `🆔 ID: ${userId}\n\n` +
+      `💰 Пополнено всего: 0₽\n\n` +
       `━━━━━━━━━━━━━━━━━━━━\n` +
-      `📡 <b>П О Д П И С К А</b>\n` +
+      `📋 <b>П О Д П И С К А</b>\n` +
       `━━━━━━━━━━━━━━━━━━━━\n\n` +
       `✅ Статус: Активна\n` +
-      `📋 Тариф: ${tariffName}\n` +
-      `📅 Истекает: ${dateStr}\n` +
-      `🕐 Осталось: ${left} дн.\n\n` +
+      `📋 Тариф: ${sub.days} дн.\n` +
+      `📅 До: ${dateStr}\n` +
+      `🕐 Осталось: ${daysLeft} дн.\n\n` +
       `━━━━━━━━━━━━━━━━━━━━\n` +
       `🔗 <b>П О Д К Л Ю Ч Е Н И Е</b>\n` +
       `━━━━━━━━━━━━━━━━━━━━\n\n` +
@@ -58180,10 +58247,11 @@ userBot.command("profile", async (ctx) => {
       `━━━━━━━━━━━━━━━━━━━━\n` +
       `👤  <b>Л И Ч Н Ы Й  К А Б И Н Е Т</b>\n` +
       `━━━━━━━━━━━━━━━━━━━━\n\n` +
-      `👋 ${name}\n` +
+      `👋 Имя: ${name}\n` +
       `🆔 ID: ${userId}\n\n` +
+      `💰 Пополнено всего: 0₽\n\n` +
       `━━━━━━━━━━━━━━━━━━━━\n` +
-      `📡 <b>П О Д П И С К А</b>\n` +
+      `📋 <b>П О Д П И С К А</b>\n` +
       `━━━━━━━━━━━━━━━━━━━━\n\n` +
       `❌ Статус: Не активна\n\n` +
       `Продли подписку чтобы получить\n` +
@@ -58193,13 +58261,6 @@ userBot.command("profile", async (ctx) => {
   }
 });
 
-// /shop command
-userBot.command("shop", async (ctx) => {
-  const menu = getKeyMenu();
-  return ctx.reply(menu.text, { reply_markup: menu.reply_markup, parse_mode: "HTML" });
-});
-
-// /help command
 userBot.command("help", async (ctx) => {
   const keyboard = new InlineKeyboard()
     .url("💬 Написать в поддержку", "https://t.me/LF_VPN_BOT")
@@ -58222,21 +58283,6 @@ userBot.command("help", async (ctx) => {
   );
 });
 
-// /support command
-userBot.command("support", async (ctx) => {
-  const userId = ctx.from.id;
-  userStates.set(userId, "support_mode");
-  
-  await ctx.reply(
-    `💬 <b>ЧАТ ПОДДЕРЖКИ</b>\n\n` +
-    `Просто напиши свой вопрос в этот чат.\n` +
-    `Администратор ответит тебе.\n\n` +
-    `❗ Чат активен — ты можешь писать сообщения.`,
-    { parse_mode: "HTML", reply_markup: activeSupportKb() }
-  );
-});
-
-// /promo command
 userBot.command("promo", async (ctx) => {
   userStates.set(ctx.from.id, "promo");
   const keyboard = new InlineKeyboard()
@@ -58250,7 +58296,7 @@ userBot.command("promo", async (ctx) => {
   );
 });
 
-// Callback: accept_policy
+// Callbacks
 userBot.callbackQuery("accept_policy", async (ctx) => {
   ACCEPTED_USERS.add(ctx.from.id);
 
@@ -58268,11 +58314,10 @@ userBot.callbackQuery("accept_policy", async (ctx) => {
     `• Новости и обновления\n` +
     `• Инструкции по подключению\n` +
     `• Поддержка`,
-    { reply_markup: subRequiredKb() }
+    { reply_markup: getChannelKeyboard() }
   );
 });
 
-// Callback: reject_policy
 userBot.callbackQuery("reject_policy", (ctx) => {
   return ctx.editMessageText(
     `К сожалению, без принятия политики конфиденциальности использование LAENFAER VPN невозможно.\n\n` +
@@ -58280,7 +58325,6 @@ userBot.callbackQuery("reject_policy", (ctx) => {
   );
 });
 
-// Callback: check_subscription
 userBot.callbackQuery("check_subscription", async (ctx) => {
   const isSubscribed = await checkChannelSubscription(ctx.from.id);
 
@@ -58292,23 +58336,22 @@ userBot.callbackQuery("check_subscription", async (ctx) => {
 
   return ctx.answerCallbackQuery({
     text: "Вы ещё не подписались на канал",
-    show_alert: true
+    show_alert: true,
   });
 });
 
-// Callback: get_key
 userBot.callbackQuery("get_key", async (ctx) => {
   const menu = getKeyMenu();
   return ctx.editMessageText(menu.text, { reply_markup: menu.reply_markup, parse_mode: "HTML" });
 });
 
-// Callback: profile
 userBot.callbackQuery("profile", async (ctx) => {
   await ctx.answerCallbackQuery();
-  return ctx.reply("/profile", { parse_mode: "HTML" });
+  // Trigger /profile command
+  ctx.message = { text: "/profile" };
+  return userBot.handleUpdate(ctx);
 });
 
-// Callback: back_to_menu
 userBot.callbackQuery("back_to_menu", async (ctx) => {
   userStates.delete(ctx.from.id);
   const name = ctx.from.first_name || "друг";
@@ -58316,68 +58359,57 @@ userBot.callbackQuery("back_to_menu", async (ctx) => {
   return ctx.editMessageText(menu.text, { reply_markup: menu.reply_markup, parse_mode: "HTML" });
 });
 
-// Callback: back_to_tariffs
 userBot.callbackQuery("back_to_tariffs", async (ctx) => {
   const menu = getKeyMenu();
   return ctx.editMessageText(menu.text, { reply_markup: menu.reply_markup, parse_mode: "HTML" });
 });
 
-// Callback: tariff_trial
 userBot.callbackQuery("tariff_trial", async (ctx) => {
   const menu = getPaymentMenu("trial");
   return ctx.editMessageText(menu.text, { reply_markup: menu.reply_markup, parse_mode: "HTML" });
 });
 
-// Callback: tariff_30
 userBot.callbackQuery("tariff_30", async (ctx) => {
   const menu = getPaymentMenu("30");
   return ctx.editMessageText(menu.text, { reply_markup: menu.reply_markup, parse_mode: "HTML" });
 });
 
-// Callback: tariff_60
 userBot.callbackQuery("tariff_60", async (ctx) => {
   const menu = getPaymentMenu("60");
   return ctx.editMessageText(menu.text, { reply_markup: menu.reply_markup, parse_mode: "HTML" });
 });
 
-// Callback: tariff_90
 userBot.callbackQuery("tariff_90", async (ctx) => {
   const menu = getPaymentMenu("90");
   return ctx.editMessageText(menu.text, { reply_markup: menu.reply_markup, parse_mode: "HTML" });
 });
 
-// Callback: tariff_180
 userBot.callbackQuery("tariff_180", async (ctx) => {
   const menu = getPaymentMenu("180");
   return ctx.editMessageText(menu.text, { reply_markup: menu.reply_markup, parse_mode: "HTML" });
 });
 
-// Callback: activate_trial
 userBot.callbackQuery("activate_trial", async (ctx) => {
-  const userId = ctx.from.id;
-  const sub = await getSubscription(String(userId));
-  
-  if (sub && daysLeft(sub.expiresAt) > 0) {
+  if (keys.length === 0) {
+    return ctx.answerCallbackQuery({ text: "Нет доступных ключей", show_alert: true });
+  }
+
+  if (isSubscriptionActive(ctx.from.id)) {
     return ctx.answerCallbackQuery({ text: "У тебя уже есть активная подписка", show_alert: true });
   }
 
   await ctx.answerCallbackQuery();
 
-  // Give free 3-day trial
-  const key = await getRandomFreeKey() || await getRandomPremiumKey();
-  if (!key) {
-    return ctx.editMessageText("❌ Нет доступных ключей. Обратись в поддержку.", { parse_mode: "HTML" });
-  }
+  saveSubscription(ctx.from.id, 3);
 
-  await addDaysToSubscription(String(userId), "free_3days", 3, key);
-
-  const domain = getSubDomain();
-  const subLink = domain ? `${domain}/sub/${userId}` : `https://laenfaer-vpn-youtube.duckdns.org/sub/${userId}`;
-  const connectUrl = `${domain}/api/connect?app=happ_ios&key=${encodeURIComponent(subLink)}`;
+  const subLink = `${SUB_DOMAIN}/sub/${ctx.from.id}`;
+  const daysLeft = getDaysLeft(ctx.from.id);
+  const connectUrl = `${SUB_DOMAIN}/api/connect?app=happ_ios&key=${encodeURIComponent(subLink)}`;
 
   return ctx.editMessageText(
     `🎉 <b>Всё готово! Подписка активна.</b>\n\n` +
-    `⏰ Действует: 3 дн.\n\n` +
+    `⏰ Действует: ${daysLeft} дн.\n` +
+    `🔑 Серверов: ${keys.length}\n\n` +
     `Нажми кнопку — Happ откроется и предложит добавить подписку.\n` +
     `Остаётся только нажать "Добавить" и "Подключить".\n\n` +
     `Если Happ не установлен — скачай по ссылке ниже.`,
@@ -58388,186 +58420,6 @@ userBot.callbackQuery("activate_trial", async (ctx) => {
         .row()
         .text("◀️ Назад", "back_to_tariffs")
     }
-  );
-});
-
-// Additional callbacks for old keyboard functions
-userBot.callbackQuery("open_profile", async (ctx) => {
-  const userId = ctx.from.id;
-  const name = ctx.from.first_name || "друг";
-  const sub = await getSubscription(String(userId));
-  const bal = await getUserBalanceInfo(String(userId));
-  
-  const left = sub ? daysLeft(sub.expiresAt) : 0;
-  const isActive = left > 0;
-  
-  const domain = getSubDomain();
-  const subLink = domain ? `${domain}/sub/${userId}` : `https://laenfaer-vpn-youtube.duckdns.org/sub/${userId}`;
-
-  if (isActive && sub) {
-    const dateStr = formatDate(sub.expiresAt);
-    const isFree = sub.tariff && (sub.tariff.includes("free") || sub.tariff === "3days" || sub.tariff === "7days");
-    const tariffName = isFree ? "Бесплатный" : "Premium";
-
-    const keyboard = new InlineKeyboard()
-      .url("📱 Открыть в Happ", `${domain}/api/connect?app=happ_ios&key=${encodeURIComponent(subLink)}`)
-      .row()
-      .text("🔄 Продлить подписку", "get_key")
-      .row()
-      .text("❓ Помощь", "help")
-      .text("◀️ Назад", "back_to_menu");
-
-    return ctx.editMessageText(
-      `━━━━━━━━━━━━━━━━━━━━\n` +
-      `👤  <b>Л И Ч Н Ы Й  К А Б И Н Е Т</b>\n` +
-      `━━━━━━━━━━━━━━━━━━━━\n\n` +
-      `👋 Имя: ${name}\n` +
-      `🆔 ID: ${userId}\n\n` +
-      `💰 Пополнено всего: ${bal.totalPaid}₽\n\n` +
-      `━━━━━━━━━━━━━━━━━━━━\n` +
-      `📋 <b>П О Д П И С К А</b>\n` +
-      `━━━━━━━━━━━━━━━━━━━━\n\n` +
-      `✅ Статус: Активна\n` +
-      `📋 Тариф: ${tariffName}\n` +
-      `📅 До: ${dateStr}\n` +
-      `🕐 Осталось: ${left} дн.\n\n` +
-      `━━━━━━━━━━━━━━━━━━━━\n` +
-      `🔗 <b>П О Д К Л Ю Ч Е Н И Е</b>\n` +
-      `━━━━━━━━━━━━━━━━━━━━\n\n` +
-      `📋 Ссылка-подписка:\n` +
-      `<code>${subLink}</code>\n\n` +
-      `⚠️ Ссылка только для личного использования.`,
-      { parse_mode: "HTML", reply_markup: keyboard }
-    );
-  } else {
-    const keyboard = new InlineKeyboard()
-      .text("🔑 Продлить подписку", "get_key")
-      .row()
-      .text("❓ Помощь", "help")
-      .text("◀️ Назад", "back_to_menu");
-
-    return ctx.editMessageText(
-      `━━━━━━━━━━━━━━━━━━━━\n` +
-      `👤  <b>Л И Ч Н Ы Й  К А Б И Н Е Т</b>\n` +
-      `━━━━━━━━━━━━━━━━━━━━\n\n` +
-      `👋 Имя: ${name}\n` +
-      `🆔 ID: ${userId}\n\n` +
-      `💰 Пополнено всего: ${bal.totalPaid}₽\n\n` +
-      `━━━━━━━━━━━━━━━━━━━━\n` +
-      `📋 <b>П О Д П И С К А</b>\n` +
-      `━━━━━━━━━━━━━━━━━━━━\n\n` +
-      `❌ Статус: Не активна\n\n` +
-      `Продли подписку чтобы получить\n` +
-      `доступ к VPN.`,
-      { parse_mode: "HTML", reply_markup: keyboard }
-    );
-  }
-});
-
-userBot.callbackQuery("get_free_key_random", async (ctx) => {
-  const userId = ctx.from.id;
-  const sub = await getSubscription(String(userId));
-  
-  if (!sub?.key) {
-    await ctx.answerCallbackQuery({ text: "У тебя нет активного ключа. Получи бесплатный или купи подписку!", show_alert: true });
-    const menu = getKeyMenu();
-    return ctx.editMessageText(menu.text, { reply_markup: menu.reply_markup, parse_mode: "HTML" });
-  }
-
-  const left = daysLeft(sub.expiresAt);
-  const alive = left > 0;
-  
-  await ctx.editMessageText(
-    `✅ <b>Подключение готово!</b>\n\n` +
-    `📅 До: ${formatDate(sub.expiresAt)}\n` +
-    `⏳ Осталось: ${alive ? left + " дн." : "❌ истёк"}\n\n` +
-    `👇 Выбери свою платформу:`,
-    { parse_mode: "HTML", reply_markup: connectKb() }
-  );
-});
-
-userBot.callbackQuery("open_shop", async (ctx) => {
-  const menu = getKeyMenu();
-  return ctx.editMessageText(menu.text, { reply_markup: menu.reply_markup, parse_mode: "HTML" });
-});
-
-userBot.callbackQuery("to_main", async (ctx) => {
-  userStates.delete(ctx.from.id);
-  const name = ctx.from.first_name || "друг";
-  const menu = getMainMenu(name);
-  return ctx.editMessageText(menu.text, { reply_markup: menu.reply_markup, parse_mode: "HTML" });
-});
-
-userBot.callbackQuery("show_key", async (ctx) => {
-  const userId = ctx.from.id;
-  const sub = await getSubscription(String(userId));
-  
-  if (!sub?.key) {
-    return ctx.answerCallbackQuery({ text: "❌ У тебя нет активного ключа", show_alert: true });
-  }
-
-  const left = daysLeft(sub.expiresAt);
-  const alive = left > 0;
-  
-  await ctx.answerCallbackQuery();
-  await ctx.reply(
-    `🔑 <b>Твой ключ:</b>\n\n` +
-    `<code>${sub.key}</code>\n\n` +
-    `📅 До: ${formatDate(sub.expiresAt)}\n` +
-    `⏳ Осталось: ${alive ? left + " дн." : "❌ истёк"}`,
-    { parse_mode: "HTML", reply_markup: backToMainKb() }
-  );
-});
-
-userBot.callbackQuery("connect_android", async (ctx) => {
-  const userId = ctx.from.id;
-  const sub = await getSubscription(String(userId));
-  
-  if (!sub?.key) {
-    return ctx.answerCallbackQuery({ text: "❌ У тебя нет активного ключа", show_alert: true });
-  }
-
-  await ctx.editMessageText(
-    `🤖 <b>Android — HappProxy</b>\n\n` +
-    `Нажми кнопку ниже — приложение откроется автоматически.\n` +
-    `Если HappProxy не установлен, скачай его из Google Play.`,
-    { parse_mode: "HTML", reply_markup: connectAndroidKb(sub.key) }
-  );
-});
-
-userBot.callbackQuery("connect_iphone", async (ctx) => {
-  const userId = ctx.from.id;
-  const sub = await getSubscription(String(userId));
-  
-  if (!sub?.key) {
-    return ctx.answerCallbackQuery({ text: "❌ У тебя нет активного ключа", show_alert: true });
-  }
-
-  await ctx.editMessageText(
-    `📱 <b>iPhone — Happ</b>\n\n` +
-    `Нажми кнопку ниже — приложение откроется автоматически.\n` +
-    `Если Happ не установлен, скачай его из App Store.`,
-    { parse_mode: "HTML", reply_markup: connectIphoneKb(sub.key) }
-  );
-});
-
-userBot.callbackQuery("connect_back", async (ctx) => {
-  const userId = ctx.from.id;
-  const sub = await getSubscription(String(userId));
-  
-  if (!sub?.key) {
-    return ctx.answerCallbackQuery({ text: "❌ У тебя нет активного ключа", show_alert: true });
-  }
-
-  const left = daysLeft(sub.expiresAt);
-  const alive = left > 0;
-  
-  await ctx.editMessageText(
-    `✅ <b>Подключение готово!</b>\n\n` +
-    `📅 До: ${formatDate(sub.expiresAt)}\n` +
-    `⏳ Осталось: ${alive ? left + " дн." : "❌ истёк"}\n\n` +
-    `👇 Выбери свою платформу:`,
-    { parse_mode: "HTML", reply_markup: connectKb() }
   );
 });
 
