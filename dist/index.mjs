@@ -59081,11 +59081,6 @@ adminBot.callbackQuery(/.*/, async (ctx) => {
     await showSubscriptionsList(ctx, page, filter);
     return;
   }
-  if (data.startsWith("users_page_")) {
-    const page = Number(data.replace("users_page_", ""));
-    await showUsersList(ctx, page);
-    return;
-  }
   if (data === "admin_clean_blocked") {
     await ctx.editMessageText("\u{1F9F9} \u041E\u0447\u0438\u0449\u0430\u044E \u0431\u0430\u0437\u0443 \u043E\u0442 \u0437\u0430\u0431\u043B\u043E\u043A\u0438\u0440\u043E\u0432\u0430\u043D\u043D\u044B\u0445...", { reply_markup: adminBackKb() });
     const removed = await cleanBlockedUsers();
