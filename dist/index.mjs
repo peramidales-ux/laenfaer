@@ -37647,11 +37647,11 @@ app.get("/sub/:userId", async (req, res) => {
     res.setHeader("Content-Type", "text/plain; charset=utf-8");
     res.setHeader("profile-title", "base64:" + Buffer.from("\u26A1 LAENFAER VPN \u26A1").toString("base64"));
     res.setHeader("subscription-userinfo", "upload=0; download=0; total=0; expire=" + expireHeader);
-    res.setHeader("profile-update-interval", "12");
+    res.setHeader("profile-update-interval", "1");
     res.setHeader("support-url", "https://t.me/laenfaer_vpn_bot");
     res.setHeader("profile-web-page-url", "https://t.me/laenfaer_vpn_bot");
     res.setHeader("content-disposition", "attachment; filename=LAENFAER_VPN");
-    res.setHeader("announce", "base64:" + Buffer.from("\u26A1 LAENFAER VPN \u2014 \u0431\u044B\u0441\u0442\u0440\u043E, \u043D\u0430\u0434\u0451\u0436\u043D\u043E, \u0431\u0435\u0437 \u043E\u0433\u0440\u0430\u043D\u0438\u0447\u0435\u043D\u0438\u0439\n\u{1F504} \u041D\u0430\u0436\u043C\u0438 \u2139\uFE0F \u0434\u043B\u044F \u0438\u043D\u0444\u043E\u0440\u043C\u0430\u0446\u0438\u0438 \u043E \u043F\u043E\u0434\u043F\u0438\u0441\u043A\u0435\n\u{1F310} \u0410\u0432\u0442\u043E\u0432\u044B\u0431\u043E\u0440 \u0441\u0435\u0440\u0432\u0435\u0440\u0430 \u0440\u0430\u0431\u043E\u0442\u0430\u0435\u0442 \u0430\u0432\u0442\u043E\u043C\u0430\u0442\u0438\u0447\u0435\u0441\u043A\u0438\n\u{1F198} \u041F\u043E\u0434\u0434\u0435\u0440\u0436\u043A\u0430: @laenfaer_vpn_bot").toString("base64"));
+    res.setHeader("announce", "base64:" + Buffer.from("\u26A1 LAENFAER VPN \u2014 \u0431\u044B\u0441\u0442\u0440\u043E, \u043D\u0430\u0434\u0451\u0436\u043D\u043E, \u0431\u0435\u0437 \u043E\u0433\u0440\u0430\u043D\u0438\u0447\u0435\u043D\u0438\u0439\n\u{1F504} \u041D\u0430\u0436\u043C\u0438 \u2139\uFE0F \u0434\u043B\u044F \u0438\u043D\u0444\u043E\u0440\u043C\u0430\u0446\u0438\u0438 \u043E \u043F\u043E\u0434\u043F\u0438\u0441\u043A\u0435\n\u{1F198} \u041F\u043E\u0434\u0434\u0435\u0440\u0436\u043A\u0430: @laenfaer_vpn_bot").toString("base64"));
     if (!sub.length || !sub[0].key || new Date(sub[0].expiresAt) < new Date()) {
       return res.send("");
     }
@@ -57971,10 +57971,6 @@ function getPaymentMenu(tariffId) {
     return {
       text:
         `🎁 <b>Попробуй бесплатно 3 дня</b>\n\n` +
-        `YouTube загружается вечность?\n` +
-        `Instagram не открывается?\n` +
-        `Telegram периодически отваливается?\n\n` +
-        `Мы знаем как это исправить.\n\n` +
         `3 дня — бесплатно, без привязки карты.\n` +
         `После — от 299₽/мес.`,
       reply_markup: keyboard,
@@ -57989,10 +57985,6 @@ function getPaymentMenu(tariffId) {
   return {
     text:
       `💳 <b>${tariff.name}</b>\n\n` +
-      `YouTube загружается вечность?\n` +
-      `Instagram не открывается?\n` +
-      `Telegram периодически отваливается?\n\n` +
-      `Мы знаем как это исправить.\n\n` +
       `💰 ${tariff.price}` +
       (tariff.discount ? `  ${tariff.discount}` : "") +
       `\n\nПолный доступ ко всем серверам.`,
@@ -58565,6 +58557,8 @@ userBot.callbackQuery(/^pay_/, async (ctx) => {
   };
   const info = tariffInfo[tariff] || { name: tariff, price: "?", days: 0 };
 
+  userStates.set(ctx.from.id, `waiting_screenshot_${info.days}`);
+
   const keyboard = new InlineKeyboard()
     .url("💳 Оплатить", "https://finance.ozon.ru/apps/sbp/ozonbankpay/019e9d78-dd6e-793b-a78e-2df0533d996a")
     .row()
@@ -58573,9 +58567,47 @@ userBot.callbackQuery(/^pay_/, async (ctx) => {
   return ctx.editMessageText(
     `💳 <b>Оплата — ${info.name}</b>\n\n` +
     `💰 Сумма: ${info.price}\n\n` +
-    `Нажми "Оплатить" чтобы перейти к оплате.\n` +
+    `Нажми «Оплатить», чтобы перейти к оплате.\n` +
     `После оплаты пришли скриншот чека сюда 👇`,
     { parse_mode: "HTML", reply_markup: keyboard }
+  );
+});
+
+// Handle screenshot receipts
+userBot.on("message:photo", async (ctx) => {
+  const state = userStates.get(ctx.from.id);
+  if (!state || !state.startsWith("waiting_screenshot_")) return;
+
+  const days = state.replace("waiting_screenshot_", "");
+  userStates.delete(ctx.from.id);
+
+  const photo = ctx.message.photo[ctx.message.photo.length - 1];
+  const tariffNames = { "30": "30 дней (299₽)", "60": "60 дней (539₽)", "90": "90 дней (764₽)", "180": "180 дней (1349₽)" };
+  const tariffName = tariffNames[days] || `${days} дней`;
+
+  try {
+    const adminKb = new InlineKeyboard()
+      .text("✅ Подтвердить", `confirm_pay_${ctx.from.id}_${days}`)
+      .text("❌ Отклонить", `reject_pay_${ctx.from.id}`);
+
+    await adminNotifier.api.sendPhoto(ADMIN_ID, photo.file_id, {
+      caption:
+        `💰 <b>Заявка на оплату</b>\n\n` +
+        `👤 Пользователь: <code>${ctx.from.id}</code>\n` +
+        `📛 ${ctx.from.first_name}\n` +
+        `📋 Тариф: ${tariffName}\n` +
+        `💰 Сумма: ${tariffName.split("(")[1]?.replace(")", "") || "?"}`,
+      parse_mode: "HTML",
+      reply_markup: adminKb
+    });
+  } catch (e) {
+    console.error("Send payment error:", e.message);
+  }
+
+  return ctx.reply(
+    `📸 Скриншот получен!\n\n` +
+    `Админ рассмотрит заявку и подтвердит оплату.\n` +
+    `Ты получишь уведомление.`
   );
 });
 
