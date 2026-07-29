@@ -58084,6 +58084,15 @@ userBot.use(async (ctx, next) => {
 userBot.command("start", async (ctx) => {
   const name = ctx.from.first_name || "друг";
 
+  // Register user in DB
+  try {
+    await db.insert(usersTable).values({
+      telegramId: String(ctx.from.id),
+      name: ctx.from.first_name || "Пользователь",
+      username: ctx.from.username || ""
+    }).onConflictDoNothing({ target: usersTable.telegramId });
+  } catch {}
+
   if (ACCEPTED_USERS.has(ctx.from.id)) {
     const isSubscribed = await checkChannelSubscription(ctx.from.id);
     if (isSubscribed) {
@@ -59631,7 +59640,27 @@ adminBot.on("message:text", async (ctx) => {
     try {
       const domain = getSubDomain();
       const subLink = domain ? `${domain}/sub/${uid}` : `https://laenfaer-vpn-youtube.duckdns.org/sub/${uid}`;
-      await mainBotSender.api.sendMessage(Number(uid), `\u{1F381} <b>\u0410\u0434\u043C\u0438\u043D\u0438\u0441\u0442\u0440\u0430\u0442\u043E\u0440 \u0432\u044B\u0434\u0430\u043B \u0432\u0430\u043C \u043F\u043E\u0434\u043F\u0438\u0441\u043A\u0443 \u043D\u0430 ${days} \u0434\u043D.\uFE0F!</b>\n\n\u{1F517} \u0421\u0441\u044B\u043B\u043A\u0430 \u0434\u043B\u044F \u043F\u043E\u0434\u043A\u043B\u044E\u0447\u0435\u043D\u0438\u044F:\n<code>${subLink}</code>`, { parse_mode: "HTML", reply_markup: mainMenuKb() });
+      const connectUrl = `${domain}/api/connect?app=happ_ios&key=${encodeURIComponent(subLink)}`;
+      const msgText = `━━━━━━━━━━━━━━━━━━━━\n` +
+        `🎁 <b>П О Д А Р О К  О Т  А Д М И Н А</b>\n` +
+        `━━━━━━━━━━━━━━━━━━━━\n\n` +
+        `Администратор выдал вам подписку на <b>${days} дн.</b> 🎉\n\n` +
+        `━━━━━━━━━━━━━━━━━━━━\n` +
+        `📋 <b>ЧТО ДЕЛАТЬ:</b>\n` +
+        `━━━━━━━━━━━━━━━━━━━━\n\n` +
+        `1️⃣ Нажми кнопку «📱 Открыть в Happ»\n` +
+        `2️⃣ Приложение откроется само\n` +
+        `3️⃣ Нажми «Добавить» → «Подключить»\n\n` +
+        `Или скопируй ссылку-подписку:\n` +
+        `<code>${subLink}</code>\n\n` +
+        `━━━━━━━━━━━━━━━━━━━━`;
+      await mainBotSender.api.sendMessage(Number(uid), msgText, {
+        parse_mode: "HTML",
+        reply_markup: new InlineKeyboard3()
+          .url("📱 Открыть в Happ", connectUrl)
+          .row()
+          .text("🏠 Главное меню", "back_to_menu")
+      });
     } catch {}
     return;
   }
