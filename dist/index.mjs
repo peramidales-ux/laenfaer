@@ -57971,7 +57971,9 @@ function getPaymentMenu(tariffId) {
     return {
       text:
         `🎁 <b>Попробуй бесплатно 3 дня</b>\n\n` +
-        `3 дня — бесплатно, без привязки карты.\n` +
+        `Никаких скрытых платежей и привязки карт.\n` +
+        `YouTube, Instagram, Telegram — всё летает.\n\n` +
+        `🔥 3 дня полного доступа — бесплатно.\n` +
         `После — от 299₽/мес.`,
       reply_markup: keyboard,
     };
@@ -57985,9 +57987,15 @@ function getPaymentMenu(tariffId) {
   return {
     text:
       `💳 <b>${tariff.name}</b>\n\n` +
-      `💰 ${tariff.price}` +
+      `🚀 YouTube 4K без буферизации\n` +
+      `📱 Instagram, Telegram — без ограничений\n` +
+      `🔒 VLESS Reality — твой трафик невидим\n` +
+      `🌍 50+ серверов по всему миру\n\n` +
+      `💰 <b>${tariff.price}</b>` +
       (tariff.discount ? `  ${tariff.discount}` : "") +
-      `\n\nПолный доступ ко всем серверам.`,
+      `\n\n✅ Полный доступ ко всем серверам\n` +
+      `✅ Безлимитный трафик\n` +
+      `✅ Поддержка 24/7`,
     reply_markup: keyboard,
   };
 }
@@ -58559,16 +58567,22 @@ userBot.callbackQuery(/^pay_/, async (ctx) => {
 
   userStates.set(ctx.from.id, `waiting_screenshot_${info.days}`);
 
+  const payLink = "https://finance.ozon.ru/apps/sbp/ozonbankpay/019e9d78-dd6e-793b-a78e-2df0533d996a";
+
   const keyboard = new InlineKeyboard()
-    .url("💳 Оплатить", "https://finance.ozon.ru/apps/sbp/ozonbankpay/019e9d78-dd6e-793b-a78e-2df0533d996a")
+    .url("💳 Оплатить", payLink)
     .row()
     .text("◀️ Назад", "back_to_tariffs");
 
   return ctx.editMessageText(
-    `💳 <b>Оплата — ${info.name}</b>\n\n` +
-    `💰 Сумма: ${info.price}\n\n` +
-    `Нажми «Оплатить», чтобы перейти к оплате.\n` +
-    `После оплаты пришли скриншот чека сюда 👇`,
+    `💳 <b>${info.name}</b>\n\n` +
+    `💰 <b>Сумма к оплате: ${info.price}</b>\n\n` +
+    `🚀 YouTube 4K, Instagram, Telegram — всё работает\n` +
+    `🔒 Твои данные под защитой VLESS Reality\n` +
+    `🌍 50+ серверов, безлимитный трафик\n\n` +
+    `👇 Нажми «💳 Оплатить» для перехода\n` +
+    `📸 После оплаты отправь скриншот чека сюда\n\n` +
+    `❗ Скриншот нужен для подтверждения платежа`,
     { parse_mode: "HTML", reply_markup: keyboard }
   );
 });
@@ -58586,11 +58600,13 @@ userBot.on("message:photo", async (ctx) => {
   const tariffName = tariffNames[days] || `${days} дней`;
 
   try {
+    const adminBotToken = process.env.ADMIN_BOT_TOKEN;
+    const adminBot = new Bot(adminBotToken);
     const adminKb = new InlineKeyboard()
       .text("✅ Подтвердить", `confirm_pay_${ctx.from.id}_${days}`)
       .text("❌ Отклонить", `reject_pay_${ctx.from.id}`);
 
-    await adminNotifier.api.sendPhoto(ADMIN_ID, photo.file_id, {
+    await adminBot.api.sendPhoto(Number(process.env.ADMIN_ID), photo.file_id, {
       caption:
         `💰 <b>Заявка на оплату</b>\n\n` +
         `👤 Пользователь: <code>${ctx.from.id}</code>\n` +
