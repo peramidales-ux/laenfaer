@@ -57462,7 +57462,7 @@ function isValidKey(key) {
 }
 
 async function getFreeKeys() {
-  return db.select().from(freeKeysTable).orderBy(freeKeysTable.id);
+  return db.select().from(premiumKeysTable).orderBy(premiumKeysTable.id);
 }
 async function addFreeKey(key) {
   if (!isValidKey(key)) return false;
