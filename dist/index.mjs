@@ -37666,8 +37666,10 @@ app.get("/sub/:userId", async (req, res) => {
       ...freeKeys.map(k => k.key),
       ...premiumKeys.map(k => k.key)
     ];
-    if (!allKeys.includes(userKey)) allKeys.unshift(userKey);
-    const combined = allKeys.join("\n");
+    // Deduplicate keys
+    const uniqueKeys = [...new Set(allKeys)];
+    if (!uniqueKeys.includes(userKey)) uniqueKeys.unshift(userKey);
+    const combined = uniqueKeys.join("\n");
     res.send(Buffer.from(combined).toString("base64"));
   } catch(e) {
     console.error(e);
