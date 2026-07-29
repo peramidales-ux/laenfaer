@@ -58136,16 +58136,12 @@ userBot.command("profile", async (ctx) => {
   const subLink = domain ? `${domain}/sub/${userId}` : `https://laenfaer-vpn-youtube.duckdns.org/sub/${userId}`;
   const connectUrl = `${domain}/api/connect?app=happ_ios&key=${encodeURIComponent(subLink)}`;
   const freeKeys = await getFreeKeys();
-  const premKeys = await getPremiumKeys();
-  const totalKeys = freeKeys.length + premKeys.length;
 
   const left = sub ? daysLeft(sub.expiresAt) : 0;
   const isActive = left > 0;
 
   if (isActive && sub) {
     const dateStr = formatDate(sub.expiresAt);
-    const isFree = sub.tariff && (sub.tariff.includes("free") || sub.tariff === "3days" || sub.tariff === "7days");
-    const tariffLabel = isFree ? `${left} дн.` : `${left} дн.`;
 
     const keyboard = new InlineKeyboard()
       .url("📱 Открыть в Happ", connectUrl)
@@ -58165,10 +58161,10 @@ userBot.command("profile", async (ctx) => {
       `📡 <b>П О Д П И С К А</b>\n` +
       `━━━━━━━━━━━━━━━━━━━━\n\n` +
       `✅ Статус: Активна\n` +
-      `📅 Тариф: ${isFree ? "Бесплатный" : "Premium"}\n` +
+      `📅 Тариф: ${left} дн.\n` +
       `⏳ Истекает: ${dateStr}\n` +
       `🕐 Осталось: ${left} дн.\n` +
-      `🔑 Серверов доступно: ${totalKeys}\n\n` +
+      `🔑 Серверов доступно: ${freeKeys.length}\n\n` +
       `━━━━━━━━━━━━━━━━━━━━\n` +
       `🔗 <b>П О Д К Л Ю Ч Е Н И Е</b>\n` +
       `━━━━━━━━━━━━━━━━━━━━\n\n` +
@@ -58373,15 +58369,12 @@ userBot.callbackQuery("profile", async (ctx) => {
   const subLink = domain ? `${domain}/sub/${userId}` : `https://laenfaer-vpn-youtube.duckdns.org/sub/${userId}`;
   const connectUrl = `${domain}/api/connect?app=happ_ios&key=${encodeURIComponent(subLink)}`;
   const freeKeys = await getFreeKeys();
-  const premKeys = await getPremiumKeys();
-  const totalKeys = freeKeys.length + premKeys.length;
 
   const left = sub ? daysLeft(sub.expiresAt) : 0;
   const isActive = left > 0;
 
   if (isActive && sub) {
     const dateStr = formatDate(sub.expiresAt);
-    const isFree = sub.tariff && (sub.tariff.includes("free") || sub.tariff === "3days" || sub.tariff === "7days");
 
     const keyboard = new InlineKeyboard()
       .url("📱 Открыть в Happ", connectUrl)
@@ -58401,10 +58394,10 @@ userBot.callbackQuery("profile", async (ctx) => {
       `📡 <b>П О Д П И С К А</b>\n` +
       `━━━━━━━━━━━━━━━━━━━━\n\n` +
       `✅ Статус: Активна\n` +
-      `📅 Тариф: ${isFree ? "Бесплатный" : "Premium"}\n` +
+      `📅 Тариф: ${left} дн.\n` +
       `⏳ Истекает: ${dateStr}\n` +
       `🕐 Осталось: ${left} дн.\n` +
-      `🔑 Серверов доступно: ${totalKeys}\n\n` +
+      `🔑 Серверов доступно: ${freeKeys.length}\n\n` +
       `━━━━━━━━━━━━━━━━━━━━\n` +
       `🔗 <b>П О Д К Л Ю Ч Е Н И Е</b>\n` +
       `━━━━━━━━━━━━━━━━━━━━\n\n` +
