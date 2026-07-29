@@ -58161,7 +58161,6 @@ userBot.command("profile", async (ctx) => {
       `📡 <b>П О Д П И С К А</b>\n` +
       `━━━━━━━━━━━━━━━━━━━━\n\n` +
       `✅ Статус: Активна\n` +
-      `📅 ${left} дн.\n` +
       `⏳ Истекает: ${dateStr}\n` +
       `🕐 Осталось: ${left} дн.\n` +
       `🔑 Серверов доступно: ${freeKeys.length}\n\n` +
@@ -58204,7 +58203,7 @@ userBot.command("profile", async (ctx) => {
 
 userBot.command("help", async (ctx) => {
   const keyboard = new InlineKeyboard()
-    .url("💬 Написать в поддержку", "https://t.me/LF_VPN_BOT")
+    .text("💬 Написать в поддержку", "open_support")
     .row()
     .text("◀️ Назад", "back_to_menu");
 
@@ -58394,7 +58393,6 @@ userBot.callbackQuery("profile", async (ctx) => {
       `📡 <b>П О Д П И С К А</b>\n` +
       `━━━━━━━━━━━━━━━━━━━━\n\n` +
       `✅ Статус: Активна\n` +
-      `📅 ${left} дн.\n` +
       `⏳ Истекает: ${dateStr}\n` +
       `🕐 Осталось: ${left} дн.\n` +
       `🔑 Серверов доступно: ${freeKeys.length}\n\n` +
@@ -58449,7 +58447,7 @@ userBot.callbackQuery("promo", async (ctx) => {
 
 userBot.callbackQuery("help", async (ctx) => {
   const keyboard = new InlineKeyboard()
-    .url("💬 Написать в поддержку", "https://t.me/LF_VPN_BOT")
+    .text("💬 Написать в поддержку", "open_support")
     .row()
     .text("◀️ Назад", "back_to_menu");
 
@@ -58467,6 +58465,28 @@ userBot.callbackQuery("help", async (ctx) => {
     `• Android: Google Play → HappProxy`,
     { parse_mode: "HTML", reply_markup: keyboard }
   );
+});
+
+userBot.callbackQuery("open_support", async (ctx) => {
+  userStates.set(ctx.from.id, "support_mode");
+  const keyboard = new InlineKeyboard()
+    .text("❌ Закрыть чат", "close_support_chat")
+    .text("◀️ Назад", "back_to_menu");
+
+  return ctx.editMessageText(
+    `💬 <b>ЧАТ ПОДДЕРЖКИ</b>\n\n` +
+    `Просто напиши свой вопрос в этот чат.\n` +
+    `Администратор ответит тебе.\n\n` +
+    `❗ Чат активен — ты можешь писать сообщения.`,
+    { parse_mode: "HTML", reply_markup: keyboard }
+  );
+});
+
+userBot.callbackQuery("close_support_chat", async (ctx) => {
+  userStates.delete(ctx.from.id);
+  const name = ctx.from.first_name || "друг";
+  const menu = getMainMenu(name);
+  return ctx.editMessageText(menu.text, { reply_markup: menu.reply_markup, parse_mode: "HTML" });
 });
 
 userBot.callbackQuery(/^pay_/, async (ctx) => {
@@ -58491,6 +58511,36 @@ userBot.callbackQuery(/^pay_/, async (ctx) => {
     `После оплаты пришли скриншот чека сюда 👇`,
     { parse_mode: "HTML", reply_markup: keyboard }
   );
+});
+
+// Message handler for support chat and promo codes
+userBot.on("message:text", async (ctx) => {
+  const text = ctx.message.text.trim();
+  if (text.startsWith("/")) return;
+
+  const state = userStates.get(ctx.from.id);
+  if (!state) return;
+
+  if (state === "support_mode") {
+    try {
+      const kb = new InlineKeyboard()
+        .text("📤 Ответить", `reply_support_${ctx.from.id}`);
+
+      await userBot.api.sendMessage(
+        ADMIN_ID,
+        `📩 <b>ВОПРОС В ПОДДЕРЖКУ</b>\n\n` +
+        `👤 ${ctx.from.first_name}\n` +
+        `🆔 ID: <code>${ctx.from.id}</code>\n\n` +
+        `💬 Сообщение:\n${ctx.message.text}`,
+        { parse_mode: "HTML", reply_markup: kb }
+      );
+
+      await ctx.reply("✅ Сообщение отправлено администратору. Ожидай ответа...");
+    } catch (e) {
+      await ctx.reply("❌ Не удалось отправить. Попробуй позже.");
+    }
+    return;
+  }
 });
 
 // Error handler
