@@ -58600,13 +58600,11 @@ userBot.on("message:photo", async (ctx) => {
   const tariffName = tariffNames[days] || `${days} дней`;
 
   try {
-    const adminBotToken = process.env.ADMIN_BOT_TOKEN;
-    const adminBot = new Bot(adminBotToken);
     const adminKb = new InlineKeyboard()
       .text("✅ Подтвердить", `confirm_pay_${ctx.from.id}_${days}`)
       .text("❌ Отклонить", `reject_pay_${ctx.from.id}`);
 
-    await adminBot.api.sendPhoto(Number(process.env.ADMIN_ID), photo.file_id, {
+    await adminNotifier.api.sendPhoto(ADMIN_ID, photo.file_id, {
       caption:
         `💰 <b>Заявка на оплату</b>\n\n` +
         `👤 Пользователь: <code>${ctx.from.id}</code>\n` +
@@ -58620,10 +58618,14 @@ userBot.on("message:photo", async (ctx) => {
     console.error("Send payment error:", e.message);
   }
 
+  const keyboard = new InlineKeyboard()
+    .text("◀️ Назад", "back_to_menu");
+
   return ctx.reply(
     `📸 Скриншот получен!\n\n` +
     `Админ рассмотрит заявку и подтвердит оплату.\n` +
-    `Ты получишь уведомление.`
+    `Ты получишь уведомление.`,
+    { reply_markup: keyboard }
   );
 });
 
