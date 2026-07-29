@@ -57836,6 +57836,7 @@ if (!ADMIN_BOT_TOKEN) throw new Error("ADMIN_BOT_TOKEN is required");
 var adminNotifier = new Bot(ADMIN_BOT_TOKEN);
 var ADMIN_ID = Number(process.env.ADMIN_ID);
 
+// Get channel from settings or use default
 var CHANNEL_URL = process.env.CHANNEL_URL ?? "https://t.me/laenfaer_vpn";
 const CHANNEL = "@laenfaer_vpn";
 const CHANNEL_ID = -1003575696048;
