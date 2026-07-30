@@ -58588,56 +58588,32 @@ userBot.callbackQuery(/^pay_/, async (ctx) => {
 });
 
 // Handle screenshot receipts
+
 userBot.on("message:photo", async (ctx) => {
-  const state = userStates.get(ctx.from.id);
+  const userId = ctx.from.id;
+  const state = userStates.get(userId);
   if (!state || !state.startsWith("waiting_screenshot_")) return;
-
-  const days = state.replace("waiting_screenshot_", "");
-  userStates.delete(ctx.from.id);
-
-  const photo = ctx.message.photo[ctx.message.photo.length - 1];
-  const tariffNames = { "30": "30 дней (299₽)", "60": "60 дней (539₽)", "90": "90 дней (764₽)", "180": "180 дней (1349₽)" };
-  const tariffName = tariffNames[days] || `${days} дней`;
-
+  const tariff = state.replace("waiting_screenshot_", "");
+  deleteUserState(userId);
+  const cfg = { "30": { price: 299, days: 30, title: "30 \u0434\u043D\u0435\u0439" }, "60": { price: 539, days: 60, title: "60 \u0434\u043D\u0435\u0439" }, "90": { price: 764, days: 90, title: "90 \u0434\u043D\u0435\u0439" }, "180": { price: 1349, days: 180, title: "180 \u0434\u043D\u0435\u0439" } }[tariff];
+  if (!cfg) return;
+  const fileId = ctx.message.photo.at(-1).file_id;
+  const payId = await createPaymentRequest(String(userId), tariff + "days", cfg.price, fileId);
+  const kb = new InlineKeyboard().text("\u2705 \u041F\u043E\u0434\u0442\u0432\u0435\u0440\u0434\u0438\u0442\u044C", "confirm_pay_" + payId).row().text("\u274C \u041E\u0442\u043A\u043B\u043E\u043D\u0438\u0442\u044C", "reject_pay_" + payId);
   try {
-    console.log("[PAYMENT] Sending photo to admin bot...");
-
-    // Re-upload photo via admin bot (file_id is bot-specific)
-    const fileInfo = await userBot.api.getFile(photo.file_id);
-    const fileUrl = `https://api.telegram.org/file/bot${BOT_TOKEN}/${fileInfo.file_path}`;
-    const resp = await fetch(fileUrl);
-    const buf = Buffer.from(await resp.arrayBuffer());
+    const fileInfo = await userBot.api.getFile(fileId);
+    const fileUrl = "https://api.telegram.org/file/bot" + BOT_TOKEN + "/" + fileInfo.file_path;
+    const fileRes = await fetch(fileUrl);
+    const fileBuf = Buffer.from(await fileRes.arrayBuffer());
     const { InputFile } = await import("grammy");
-
-    const adminKb = new InlineKeyboard()
-      .text("✅ Подтвердить", `confirm_pay_${ctx.from.id}_${days}`)
-      .text("❌ Отклонить", `reject_pay_${ctx.from.id}`);
-
-    await userBot.api.sendPhoto(ADMIN_ID, new InputFile(buf, "receipt.jpg"), {
-      caption:
-        `💰 <b>Заявка на оплату</b>\n\n` +
-        `👤 Пользователь: <code>${ctx.from.id}</code>\n` +
-        `📛 ${ctx.from.first_name}\n` +
-        `📋 Тариф: ${tariffName}\n` +
-        `💰 Сумма: ${tariffName.split("(")[1]?.replace(")", "") || "?"}`,
-      parse_mode: "HTML",
-      reply_markup: adminKb
-    });
-    console.log("[PAYMENT] Photo sent successfully");
+    const caption = "\u{1F4F8} <b>\u0421\u041A\u0420\u0418\u041D\u0428\u041E\u0422 \u041E\u041F\u041B\u0410\u0422\u042B</b>\n\n\u{1F464} " + ctx.from.first_name + "\n\u{1F194} ID: <code>" + userId + "</code>\n\u{1F3F7} \u0422\u0430\u0440\u0438\u0444: " + cfg.title + "\n\u{1F4B0} \u0421\u0443\u043C\u043C\u0430: " + cfg.price + "\u20BD";
+    await adminNotifier.api.sendPhoto(ADMIN_ID, new InputFile(fileBuf, "screenshot.jpg"), { caption, parse_mode: "HTML", reply_markup: kb });
   } catch (e) {
-    console.error("[PAYMENT] Error:", e.message, e.code, e.description);
+    console.error("[SCREENSHOT] sendPhoto error:", e?.message || e);
   }
-
-  const keyboard = new InlineKeyboard()
-    .text("◀️ Назад", "back_to_menu");
-
-  return ctx.reply(
-    `📸 Скриншот получен!\n\n` +
-    `Админ рассмотрит заявку и подтвердит оплату.\n` +
-    `Ты получишь уведомление.`,
-    { reply_markup: keyboard }
-  );
+  await ctx.reply("\u2705 <b>\u0421\u043A\u0440\u0438\u043D\u0448\u043E\u0442 \u043E\u0442\u043F\u0440\u0430\u0432\u043B\u0435\u043D \u0430\u0434\u043C\u0438\u043D\u0438\u0441\u0442\u0440\u0430\u0442\u043E\u0440\u0443!</b>\n\n\u041E\u0436\u0438\u0434\u0430\u0439 \u043F\u043E\u0434\u0442\u0432\u0435\u0440\u0436\u0434\u0435\u043D\u0438\u044F.", { parse_mode: "HTML", reply_markup: backToMainKb() });
 });
+);
 
 // Message handler for support chat
 userBot.on("message:text", async (ctx) => {
@@ -58698,22 +58674,9 @@ userBot.on("message:text", async (ctx) => {
 });
 
 // Payment confirm/reject handlers
-userBot.callbackQuery(/^confirm_pay_/, async (ctx) => {
-  const rest = ctx.callbackQuery.data.replace("confirm_pay_", "");
-  const lastUnderscore = rest.lastIndexOf("_");
-  const uid = rest.substring(0, lastUnderscore);
-  const days = parseInt(rest.substring(lastUnderscore + 1), 10);
-  const key = await getRandomPremiumKey() || await getRandomFreeKey() || "vless://NO_KEY";
-  await addDaysToSubscription(uid, days + "days", days, key);
-  await ctx.editMessageCaption({ caption: "✅ <b>Платёж подтверждён</b>\n\nПользователю <code>" + uid + "</code> выдано <b>" + days + "</b> дн.", parse_mode: "HTML" });
-  try { await userBot.api.sendMessage(Number(uid), "✅ <b>Оплата подтверждена!</b>\n\nПодписка на <b>" + days + " дн.</b> активна.\nИспользуй /key для подключения.", { parse_mode: "HTML", reply_markup: mainMenuKb() }); } catch {}
-});
+);
 
-userBot.callbackQuery(/^reject_pay_/, async (ctx) => {
-  const uid = ctx.callbackQuery.data.replace("reject_pay_", "");
-  await ctx.editMessageCaption({ caption: "❌ <b>Платёж отклонён</b>\n\nПользователь <code>" + uid + "</code>", parse_mode: "HTML" });
-  try { await userBot.api.sendMessage(Number(uid), "❌ <b>Платёж отклонён</b>\n\nСвяжитесь с поддержкой для уточнения.", { parse_mode: "HTML", reply_markup: mainMenuKb() }); } catch {}
-});
+);
 
 // Error handler
 userBot.catch((err) => {
@@ -59177,24 +59140,44 @@ adminBot.callbackQuery(/.*/, async (ctx) => {
     await ctx.editMessageText("\u{1F50D} \u041E\u0442\u043F\u0440\u0430\u0432\u044C\u0442\u0435 \u0418\u0414 \u043F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u0435\u043B\u044F \u0438\u043B\u0438 \u0435\u0433\u043E \u0438\u043C\u044F / \u0443\u0437\u043D\u0438\u043A:", { reply_markup: adminBackKb() });
     return;
   }
+
   if (data.startsWith("confirm_pay_")) {
-    const rest = data.replace("confirm_pay_", "");
-    const lastUnderscore = rest.lastIndexOf("_");
-    const uid = rest.substring(0, lastUnderscore);
-    const days = parseInt(rest.substring(lastUnderscore + 1), 10);
-    const key = await getRandomPremiumKey() || await getRandomFreeKey() || "vless://NO_KEY";
-    await addDaysToSubscription(uid, days + "days", days, key);
-    await ctx.editMessageText("\u2705 <b>\u041F\u043B\u0430\u0442\u0451\u0436 \u043F\u043E\u0434\u0442\u0432\u0435\u0440\u0436\u0434\u0451\u043D</b>\n\n\u041F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u0435\u043B\u044E <code>" + uid + "</code> \u0432\u044B\u0434\u0430\u043D\u043E <b>" + days + "</b> \u0434\u043D.", { parse_mode: "HTML", reply_markup: adminBackKb() });
-    try { await mainBotSender.api.sendMessage(Number(uid), "\u2705 <b>\u041E\u043F\u043B\u0430\u0442\u0430 \u043F\u043E\u0434\u0442\u0432\u0435\u0440\u0436\u0434\u0435\u043D\u0430!</b>\n\n\u041F\u043E\u0434\u043F\u0438\u0441\u043A\u0430 \u043D\u0430 <b>" + days + " \u0434\u043D.</b> \u0430\u043A\u0442\u0438\u0432\u043D\u0430.\n\u0418\u0441\u043F\u043E\u043B\u044C\u0437\u0443\u0439 /key \u0434\u043B\u044F \u043F\u043E\u0434\u043A\u043B\u044E\u0447\u0435\u043D\u0438\u044F.", { parse_mode: "HTML", reply_markup: mainMenuKb() }); } catch {}
+    const payId = data.replace("confirm_pay_", "");
+    const req = await getPaymentRequest(payId);
+    if (!req) {
+      await ctx.answerCallbackQuery({ text: "\u274C \u0417\u0430\u044F\u0432\u043A\u0430 \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D\u0430 \u0438\u043B\u0438 \u0443\u0436\u0435 \u043E\u0431\u0440\u0430\u0431\u043E\u0442\u0430\u043D\u0430", show_alert: true });
+      return;
+    }
+    const cfg = {
+      "1day": { price: 10, days: 1, title: "1 \u0434\u0435\u043D\u044C" },
+      "30days": { price: 299, days: 30, title: "30 \u0434\u043D\u0435\u0439" },
+      "60days": { price: 539, days: 60, title: "60 \u0434\u043D\u0435\u0439" },
+      "90days": { price: 764, days: 90, title: "90 \u0434\u043D\u0435\u0439" },
+      "180days": { price: 1349, days: 180, title: "180 \u0434\u043D\u0435\u0439" }
+    }[req.tariff];
+    if (!cfg) {
+      await ctx.answerCallbackQuery({ text: "\u274C \u041D\u0435\u0438\u0437\u0432\u0435\u0441\u0442\u043D\u044B\u0439 \u0442\u0430\u0440\u0438\u0444", show_alert: true });
+      return;
+    }
+    let key = await getRandomPremiumKey() || await getRandomFreeKey() || "vless://NO_KEY";
+    await addDaysToSubscription(req.telegramId, req.tariff, cfg.days, key);
+    await deletePaymentRequest(payId);
+    await ctx.editMessageCaption({ caption: "\u2705 <b>\u041F\u043B\u0430\u0442\u0451\u0436 \u043F\u043E\u0434\u0442\u0432\u0435\u0440\u0436\u0434\u0451\u043D</b>\n\n\u041F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u0435\u043B\u044E <code>" + req.telegramId + "</code> \u0432\u044B\u0434\u0430\u043D\u043E <b>" + cfg.days + "</b> \u0434\u043D.", { parse_mode: "HTML" });
+    try { await mainBotSender.api.sendMessage(Number(req.telegramId), "\u2705 <b>\u041E\u043F\u043B\u0430\u0442\u0430 \u043F\u043E\u0434\u0442\u0432\u0435\u0440\u0436\u0434\u0435\u043D\u0430!</b>\n\n\u041F\u043E\u0434\u043F\u0438\u0441\u043A\u0430 \u043D\u0430 <b>" + cfg.days + " \u0434\u043D.</b> \u0430\u043A\u0442\u0438\u0432\u043D\u0430.\n\u0418\u0441\u043F\u043E\u043B\u044C\u0437\u0443\u0439 /key \u0434\u043B\u044F \u043F\u043E\u0434\u043A\u043B\u044E\u0447\u0435\u043D\u0438\u044F.", { parse_mode: "HTML", reply_markup: mainMenuKb() }); } catch {}
     return;
   }
   if (data.startsWith("reject_pay_")) {
-    const uid = data.replace("reject_pay_", "");
-    await ctx.editMessageText("\u274C <b>\u041F\u043B\u0430\u0442\u0451\u0436 \u043E\u0442\u043A\u043B\u043E\u043D\u0451\u043D</b>\n\n\u041F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u0435\u043B\u044C <code>" + uid + "</code>", { parse_mode: "HTML", reply_markup: adminBackKb() });
-    try { await mainBotSender.api.sendMessage(Number(uid), "\u274C <b>\u041F\u043B\u0430\u0442\u0451\u0436 \u043E\u0442\u043A\u043B\u043E\u043D\u0451\u043D</b>\n\n\u0421\u0432\u044F\u0436\u0438\u0442\u0435\u0441\u044C \u0441 \u043F\u043E\u0434\u0434\u0435\u0440\u0436\u043A\u043E\u0439 \u0434\u043B\u044F \u0443\u0442\u043E\u0447\u043D\u0435\u043D\u0438\u044F.", { parse_mode: "HTML", reply_markup: mainMenuKb() }); } catch {}
+    const payId = data.replace("reject_pay_", "");
+    const req = await getPaymentRequest(payId);
+    if (!req) {
+      await ctx.answerCallbackQuery({ text: "\u274C \u0417\u0430\u044F\u0432\u043A\u0430 \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D\u0430 \u0438\u043B\u0438 \u0443\u0436\u0435 \u043E\u0431\u0440\u0430\u0431\u043E\u0442\u0430\u043D\u0430", show_alert: true });
+      return;
+    }
+    await deletePaymentRequest(payId);
+    try { await mainBotSender.api.sendMessage(Number(req.telegramId), "\u274C <b>\u041E\u043F\u043B\u0430\u0442\u0430 \u043E\u0442\u043A\u043B\u043E\u043D\u0435\u043D\u0430.</b>\n\n\u0410\u0434\u043C\u0438\u043D\u0438\u0441\u0442\u0440\u0430\u0442\u043E\u0440 \u043D\u0435 \u0441\u043C\u043E\u0433 \u043F\u043E\u0434\u0442\u0432\u0435\u0440\u0434\u0438\u0442\u044C \u043F\u043B\u0430\u0442\u0451\u0436.\n\n\u0415\u0441\u043B\u0438 \u044D\u0442\u043E \u043E\u0448\u0438\u0431\u043A\u0430 \u2014 \u043E\u0431\u0440\u0430\u0442\u0438\u0441\u044C \u0432 \u043F\u043E\u0434\u0434\u0435\u0440\u0436\u043A\u0443.", { parse_mode: "HTML", reply_markup: mainMenuKb() }); } catch {}
+    await ctx.editMessageCaption({ caption: "\u274C <b>\u041F\u043B\u0430\u0442\u0451\u0436 \u043E\u0442\u043A\u043B\u043E\u043D\u0451\u043D</b>\n\nID: <code>" + req.telegramId + "</code>", parse_mode: "HTML" });
     return;
   }
-
   if (data.startsWith("manage_user_")) {
     const uid = data.replace("manage_user_", "");
     await showUserProfile(ctx, uid);
