@@ -58613,7 +58613,6 @@ userBot.on("message:photo", async (ctx) => {
   }
   await ctx.reply("\u2705 <b>\u0421\u043A\u0440\u0438\u043D\u0448\u043E\u0442 \u043E\u0442\u043F\u0440\u0430\u0432\u043B\u0435\u043D \u0430\u0434\u043C\u0438\u043D\u0438\u0441\u0442\u0440\u0430\u0442\u043E\u0440\u0443!</b>\n\n\u041E\u0436\u0438\u0434\u0430\u0439 \u043F\u043E\u0434\u0442\u0432\u0435\u0440\u0436\u0434\u0435\u043D\u0438\u044F.", { parse_mode: "HTML", reply_markup: backToMainKb() });
 });
-);
 
 // Message handler for support chat
 userBot.on("message:text", async (ctx) => {
@@ -58672,11 +58671,6 @@ userBot.on("message:text", async (ctx) => {
     return;
   }
 });
-
-// Payment confirm/reject handlers
-);
-
-);
 
 // Error handler
 userBot.catch((err) => {
@@ -59162,7 +59156,7 @@ adminBot.callbackQuery(/.*/, async (ctx) => {
     let key = await getRandomPremiumKey() || await getRandomFreeKey() || "vless://NO_KEY";
     await addDaysToSubscription(req.telegramId, req.tariff, cfg.days, key);
     await deletePaymentRequest(payId);
-    await ctx.editMessageCaption({ caption: "\u2705 <b>\u041F\u043B\u0430\u0442\u0451\u0436 \u043F\u043E\u0434\u0442\u0432\u0435\u0440\u0436\u0434\u0451\u043D</b>\n\n\u041F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u0435\u043B\u044E <code>" + req.telegramId + "</code> \u0432\u044B\u0434\u0430\u043D\u043E <b>" + cfg.days + "</b> \u0434\u043D.", { parse_mode: "HTML" });
+    await ctx.editMessageCaption({ caption: "\u2705 <b>\u041F\u043B\u0430\u0442\u0451\u0436 \u043F\u043E\u0434\u0442\u0432\u0435\u0440\u0436\u0434\u0451\u043D</b>\n\n\u041F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u0435\u043B\u044E <code>" + req.telegramId + "</code> \u0432\u044B\u0434\u0430\u043D\u043E <b>" + cfg.days + "</b> \u0434\u043D.", parse_mode: "HTML" });
     try { await mainBotSender.api.sendMessage(Number(req.telegramId), "\u2705 <b>\u041E\u043F\u043B\u0430\u0442\u0430 \u043F\u043E\u0434\u0442\u0432\u0435\u0440\u0436\u0434\u0435\u043D\u0430!</b>\n\n\u041F\u043E\u0434\u043F\u0438\u0441\u043A\u0430 \u043D\u0430 <b>" + cfg.days + " \u0434\u043D.</b> \u0430\u043A\u0442\u0438\u0432\u043D\u0430.\n\u0418\u0441\u043F\u043E\u043B\u044C\u0437\u0443\u0439 /key \u0434\u043B\u044F \u043F\u043E\u0434\u043A\u043B\u044E\u0447\u0435\u043D\u0438\u044F.", { parse_mode: "HTML", reply_markup: mainMenuKb() }); } catch {}
     return;
   }
