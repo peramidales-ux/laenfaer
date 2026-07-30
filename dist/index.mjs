@@ -45889,13 +45889,9 @@ function drizzle(...params) {
 // ../../lib/db/src/schema/index.ts
 var schema_exports = {};
 __export(schema_exports, {
-  freeKeysTable: () => freeKeysTable,
-  insertFreeKeySchema: () => insertFreeKeySchema,
-  insertKeySchema: () => insertKeySchema,
   insertSubscriptionSchema: () => insertSubscriptionSchema,
   insertUserSchema: () => insertUserSchema,
-  keysTable: () => keysTable,
-  referralCountsTable: () => referralCountsTable,
+    referralCountsTable: () => referralCountsTable,
   referralsTable: () => referralsTable,
   settingsTable: () => settingsTable,
   subscriptionsTable: () => subscriptionsTable,
@@ -57316,11 +57312,7 @@ var subscriptionsTable = pgTable("subscriptions", {
   reminderSent: boolean("reminder_sent").notNull().default(false),
   updatedAt: timestamp("updated_at").defaultNow().notNull()
 });
-var freeKeysTable = pgTable("free_keys", {
-  id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
-  key: text("key").notNull(),
-  createdAt: timestamp("created_at").defaultNow().notNull()
-});
+
 var keysTable = pgTable("keys", {
   id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
   key: text("key").notNull(),
@@ -57348,8 +57340,6 @@ var supportChatsTable = pgTable("support_chats", {
 });
 var insertUserSchema = createInsertSchema(usersTable);
 var insertSubscriptionSchema = createInsertSchema(subscriptionsTable);
-var insertFreeKeySchema = createInsertSchema(freeKeysTable);
-var insertKeySchema = createInsertSchema(keysTable);
 
 // ../../lib/db/src/index.ts
 var { Pool: Pool3 } = esm_default;
@@ -57460,16 +57450,6 @@ function isValidKey(key) {
 async function getFreeKeys() {
   return db.select().from(keysTable).orderBy(keysTable.id);
 }
-async function addFreeKey(key) {
-  if (!isValidKey(key)) return false;
-  await db.insert(freeKeysTable).values({ key });
-  return true;
-}
-async function updateFreeKey(id, key) {
-  if (!isValidKey(key)) return false;
-  await db.update(freeKeysTable).set({ key }).where(eq(freeKeysTable.id, id));
-  return true;
-}
 async function getKeys() {
   return db.select().from(keysTable).orderBy(keysTable.id);
 }
@@ -57484,13 +57464,6 @@ async function updateKey(id, key) {
 async function clearKeys() {
   await db.delete(keysTable);
   await db.execute(`ALTER SEQUENCE keys_id_seq RESTART WITH 1`);
-}
-async function clearFreeKeys() {
-  await db.delete(freeKeysTable);
-  await db.execute(`ALTER SEQUENCE free_keys_id_seq RESTART WITH 1`);
-}
-async function deleteFreeKey(id) {
-  await db.delete(freeKeysTable).where(eq(freeKeysTable.id, id));
 }
 async function deleteKey(id) {
   await db.delete(keysTable).where(eq(keysTable.id, id));
@@ -57564,9 +57537,6 @@ async function cleanBlockedUsers() {
     }
   }
   return removed;
-}
-async function getTestKey() {
-  return await getSetting("test_key") ?? "";
 }
 async function setTestKey(key) {
   await setSetting("test_key", key);
@@ -57686,10 +57656,10 @@ var CHANNEL_URL = process.env.CHANNEL_URL ?? "https://t.me/laenfaer_vpn";
 var BOT_USERNAME = process.env.BOT_USERNAME ?? "laenfaer_vpn_bot";
 var YOOMONEY_URL = "https://yoomoney.ru/to/4100118805863911";
 function mainMenuKb() {
-  return new InlineKeyboard().text("🔑 Получить ключ", "get_key").text("👤 Профиль", "profile").row().text("🎫 Промокод", "promo").text("❓ Помощь", "help");
+  return new InlineKeyboard().text("📋 Получить подписку", "get_key").text("👤 Профиль", "profile").row().text("🎫 Промокод", "promo").text("❓ Помощь", "help");
 }
 function profileKb() {
-  return new InlineKeyboard().text("🔑 Мой ключ", "show_key").row().text("❓ Помощь", "help").row().text("◀️ Назад", "back_to_menu");
+  return new InlineKeyboard().text("📋 Моя подписка", "show_key").row().text("❓ Помощь", "help").row().text("◀️ Назад", "back_to_menu");
 }
 function shopKb() {
   return new InlineKeyboard().text("🎁 Пробная — 3 дня", "tariff_trial").row().text("📅 30 дней", "tariff_30").text("📅 60 дней", "tariff_60").row().text("📅 90 дней", "tariff_90").text("📅 180 дней", "tariff_180").row().text("◀️ Назад", "back_to_menu");
@@ -57733,18 +57703,6 @@ function broadcastChoiceKb() {
     .text("\u{1F512} \u0422\u0440\u0435\u0431\u043E\u0432\u0430\u0442\u044C \u043F\u043E\u0434\u043F\u0438\u0441\u043A\u0443 (\u0432\u0441\u0435\u043C)", "admin_broadcast_sub").row()
     .text("\u{1F4DD} \u0421\u0432\u043E\u0451 \u0441\u043E\u043E\u0431\u0449\u0435\u043D\u0438\u0435", "admin_broadcast_custom").row()
     .text("\u{1F519} \u041D\u0430\u0437\u0430\u0434", "to_admin_menu");
-}
-function adminKeysMainKb() {
-  return new InlineKeyboard().text("\u{1F381} \u0411\u0435\u0441\u043F\u043B\u0430\u0442\u043D\u044B\u0435 \u043A\u043B\u044E\u0447\u0438", "free_keys_mngr").row().text("\u2B50 Premium \u043A\u043B\u044E\u0447\u0438", "premium_keys_mngr").row().text("\u{1F50D} \u041F\u0440\u043E\u0432\u0435\u0440\u0438\u0442\u044C \u0432\u0441\u0435 \u043A\u043B\u044E\u0447\u0438", "check_all_keys").row().text("\u{1F504} \u0417\u0430\u043C\u0435\u043D\u0438\u0442\u044C \u0432\u0441\u0435 \u043A\u043B\u044E\u0447\u0438", "replace_all_keys_start").row().text("\u{1F519} \u041D\u0430\u0437\u0430\u0434", "to_admin_menu");
-}
-function freeKeysKb(keys) {
-  const kb = new InlineKeyboard();
-  for (const k of keys) {
-    const short = k.key.length > 30 ? k.key.slice(0, 30) + "\u2026" : k.key;
-    kb.text(`\u{1F4DD} \u2116${k.id}`, `edit_free_key_${k.id}`).text(`\u{1F5D1} \u2116${k.id}`, `delete_free_key_${k.id}`).row();
-  }
-  kb.text("\u2795 \u0414\u043E\u0431\u0430\u0432\u0438\u0442\u044C", "add_free_key").row().text("\u{1F504} \u041E\u0431\u043D\u043E\u0432\u0438\u0442\u044C \u0432\u0441\u0435", "update_all_free_keys_start").row().text("\u{1F5D1} \u041E\u0447\u0438\u0441\u0442\u0438\u0442\u044C \u0432\u0441\u0435", "clear_all_free_keys").row().text("\u{1F519} \u041D\u0430\u0437\u0430\u0434", "to_admin_menu");
-  return kb;
 }
 function keysKb(keys) {
   const kb = new InlineKeyboard();
@@ -57916,7 +57874,7 @@ function getChannelKeyboard() {
 
 function getMainMenu(name) {
   const keyboard = new InlineKeyboard()
-    .text("🔑 Получить ключ", "get_key")
+    .text("📋 Получить подписку", "get_key")
     .text("👤 Профиль", "profile")
     .row()
     .text("🎫 Промокод", "promo")
@@ -58176,7 +58134,7 @@ userBot.command("profile", async (ctx) => {
       `✅ Статус: Активна\n` +
       `⏳ Истекает: ${dateStr}\n` +
       `🕐 Осталось: ${left} дн.\n` +
-      `🔑 Серверов доступно: ${freeKeys.length}\n\n` +
+      `📡 Серверов доступно: ${freeKeys.length}\n\n` +
       `━━━━━━━━━━━━━━━━━━━━\n` +
       `🔗 <b>П О Д К Л Ю Ч Е Н И Е</b>\n` +
       `━━━━━━━━━━━━━━━━━━━━\n\n` +
@@ -58223,7 +58181,7 @@ userBot.command("help", async (ctx) => {
   return ctx.reply(
     `❓ <b>Помощь</b>\n\n` +
     `📱 <b>Как подключиться:</b>\n` +
-    `1. Получи ключ → "Получить ключ"\n` +
+    `1. Получи подписку → "Получить подписку"\n` +
     `2. Скопируй ссылку-подписку\n` +
     `3. Открой Happ/HappProxy\n` +
     `4. Нажми "+" → "Ссылка-подписка"\n` +
@@ -58345,7 +58303,7 @@ userBot.callbackQuery("activate_trial", async (ctx) => {
 
   const key = await getRandomFreeKey() || await getRandomKey();
   if (!key) {
-    return ctx.answerCallbackQuery({ text: "Нет доступных ключей. Обратись в поддержку.", show_alert: true });
+    return ctx.answerCallbackQuery({ text: "Нет доступных подписок. Обратись в поддержку.", show_alert: true });
   }
 
   await ctx.answerCallbackQuery();
@@ -58408,7 +58366,7 @@ userBot.callbackQuery("profile", async (ctx) => {
       `✅ Статус: Активна\n` +
       `⏳ Истекает: ${dateStr}\n` +
       `🕐 Осталось: ${left} дн.\n` +
-      `🔑 Серверов доступно: ${freeKeys.length}\n\n` +
+      `📡 Серверов доступно: ${freeKeys.length}\n\n` +
       `━━━━━━━━━━━━━━━━━━━━\n` +
       `🔗 <b>П О Д К Л Ю Ч Е Н И Е</b>\n` +
       `━━━━━━━━━━━━━━━━━━━━\n\n` +
@@ -58467,7 +58425,7 @@ userBot.callbackQuery("help", async (ctx) => {
   return ctx.editMessageText(
     `❓ <b>Помощь</b>\n\n` +
     `📱 <b>Как подключиться:</b>\n` +
-    `1. Получи ключ → "Получить ключ"\n` +
+    `1. Получи подписку → "Получить подписку"\n` +
     `2. Скопируй ссылку-подписку\n` +
     `3. Открой Happ/HappProxy\n` +
     `4. Нажми "+" → "Ссылка-подписка"\n` +
@@ -58694,7 +58652,7 @@ userBot.callbackQuery("check_sub_again", async (ctx) => {
   return ctx.answerCallbackQuery({ text: "Вы ещё не подписались на канал", show_alert: true });
 });
 userBot.callbackQuery("show_key", async (ctx) => {
-  return ctx.answerCallbackQuery({ text: "🔑 Используй /key чтобы получить ключ", show_alert: true });
+  return ctx.answerCallbackQuery({ text: "📋 Используй /key для подписки", show_alert: true });
 });
 userBot.callbackQuery("connect_android", async (ctx) => {
   return ctx.answerCallbackQuery({ text: "📱 Используй /key для подключения", show_alert: true });
@@ -58904,7 +58862,7 @@ ${date6}
 \u{1F465} \u041F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u0435\u043B\u0435\u0439: ${users.length}
 \u2705 \u041F\u043E\u0434\u043F\u0438\u0441\u043E\u043A: ${subs.length}
 \u{1F381} \u0411\u0435\u0441\u043F\u043B\u0430\u0442\u043D\u044B\u0445 \u043A\u043B\u044E\u0447\u0435\u0439: ${freeKeys.length}
-\u2B50 Premium \u043A\u043B\u044E\u0447\u0435\u0439: ${premKeys.length}`
+\u{1F511} \u041A\u043B\u044E\u0447\u0435\u0439: ${premKeys.length}`
     );
     logger.info("Daily backup sent to admin");
   } catch (err) {
@@ -59000,7 +58958,7 @@ adminBot.command("stats", async (ctx) => {
   const users = await getAllUsers();
   const activeKeys = await getActiveSubscriptionsCount();
   const freeKeys = await getFreeKeys();
-  const premiumKeys = await getKeys();
+  const allKeys = await getKeys();
   const banned = users.filter((u) => u.banned).length;
   const serverStatus = getServerStatus();
   let serverText = "";
@@ -59017,7 +58975,7 @@ adminBot.command("stats", async (ctx) => {
 \u{1F6AB} \u0417\u0430\u0431\u0430\u043D\u0435\u043D\u043E: <b>${banned}</b>
 \u{1F511} \u0410\u043A\u0442\u0438\u0432\u043D\u044B\u0445 \u043A\u043B\u044E\u0447\u0435\u0439: <b>${activeKeys}</b>
 \u{1F381} \u0411\u0435\u0441\u043F\u043B\u0430\u0442\u043D\u044B\u0445 \u043A\u043B\u044E\u0447\u0435\u0439: <b>${freeKeys.length}</b>
-\u2B50 Premium \u043A\u043B\u044E\u0447\u0435\u0439: <b>${premiumKeys.length}</b>
+\u{1F511} \u041A\u043B\u044E\u0447\u0435\u0439: <b>${allKeys.length}</b>
 
 \u{1F4E1} <b>\u0421\u0435\u0440\u0432\u0435\u0440\u044B:</b>
 ${serverText}`,
@@ -59074,34 +59032,6 @@ adminBot.callbackQuery(/.*/, async (ctx) => {
   }
   if (data === "admin_list_promos") {
     await showPromoList(ctx);
-    return;
-  }
-  if (data === "promo_set_free") {
-    const state = adminStates.get(ADMIN_ID2);
-    if (state && state.startsWith("promo_tariff_")) {
-      const rest = state.replace("promo_tariff_", "");
-      const lastUnderscore = rest.lastIndexOf("_");
-      const code = rest.substring(0, lastUnderscore);
-      const days = rest.substring(lastUnderscore + 1);
-      adminStates.set(ADMIN_ID2, `promo_fin|${code}|${days}|free`);
-      await ctx.editMessageText(`\u2705 \u0422\u0438\u043F: \u0411\u0435\u0441\u043F\u043B\u0430\u0442\u043D\u0430\u044F\n\n\u0412\u0432\u0435\u0434\u0438\u0442\u0435 \u043B\u0438\u043C\u0438\u0442 \u0438\u0441\u043F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u043D\u0438\u0439 (\u043F\u043E \u0443\u043C\u043E\u043B\u0447\u0430\u043D\u0438\u044E: 999):`, { reply_markup: adminBackKb() });
-      return;
-    }
-    await ctx.answerCallbackQuery({ text: "\u274C \u0421\u043E\u0441\u0442\u043E\u044F\u043D\u0438\u0435 \u043F\u043E\u0442\u0435\u0440\u044F\u043D\u043E", show_alert: true });
-    return;
-  }
-  if (data === "promo_set_prem") {
-    const state = adminStates.get(ADMIN_ID2);
-    if (state && state.startsWith("promo_tariff_")) {
-      const rest = state.replace("promo_tariff_", "");
-      const lastUnderscore = rest.lastIndexOf("_");
-      const code = rest.substring(0, lastUnderscore);
-      const days = rest.substring(lastUnderscore + 1);
-      adminStates.set(ADMIN_ID2, `promo_fin|${code}|${days}|premium`);
-      await ctx.editMessageText(`\u2705 \u0422\u0438\u043F: Premium\n\n\u0412\u0432\u0435\u0434\u0438\u0442\u0435 \u043B\u0438\u043C\u0438\u0442 \u0438\u0441\u043F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u043D\u0438\u0439 (\u043F\u043E \u0443\u043C\u043E\u043B\u0447\u0430\u043D\u0438\u044E: 999):`, { reply_markup: adminBackKb() });
-      return;
-    }
-    await ctx.answerCallbackQuery({ text: "\u274C \u0421\u043E\u0441\u0442\u043E\u044F\u043D\u0438\u0435 \u043F\u043E\u0442\u0435\u0440\u044F\u043D\u043E", show_alert: true });
     return;
   }
   if (data.startsWith("delete_promo_")) {
@@ -59188,25 +59118,6 @@ adminBot.callbackQuery(/.*/, async (ctx) => {
     await showStats(ctx);
     return;
   }
-  if (data === "admin_keys_mngr") {
-    await ctx.editMessageText("\u{1F511} <b>\u0423\u041F\u0420\u0410\u0412\u041B\u0415\u041D\u0418\u0415 \u041A\u041B\u042E\u0427\u0410\u041C\u0418</b>\n\n\u0412\u044B\u0431\u0435\u0440\u0438 \u0440\u0430\u0437\u0434\u0435\u043B:", {
-      parse_mode: "HTML",
-      reply_markup: adminKeysMainKb()
-    });
-    return;
-  }
-  if (data === "free_keys_mngr") {
-    await showFreeKeys(ctx);
-    return;
-  }
-  if (data === "premium_keys_mngr") {
-    await showPremiumKeys(ctx);
-    return;
-  }
-  if (data === "check_all_keys") {
-    await checkAllKeys(ctx);
-    return;
-  }
   if (data === "admin_support_chats") {
     await showSupportChats(ctx);
     return;
@@ -59290,180 +59201,10 @@ adminBot.callbackQuery(/.*/, async (ctx) => {
     await ctx.answerCallbackQuery({ text: `\u0421\u0442\u0430\u0442\u0443\u0441 \u043A\u043B\u044E\u0447\u0430: ${statusText}`, show_alert: true });
     return;
   }
-  if (data.startsWith("select_free_key_")) {
-    const uid = data.replace("select_free_key_", "");
-    await selectFreeKeyForUser(ctx, uid);
-    return;
-  }
-  if (data.startsWith("select_prem_key_")) {
-    const uid = data.replace("select_prem_key_", "");
-    await selectPremKeyForUser(ctx, uid);
-    return;
-  }
-  if (data.startsWith("select_test_key_")) {
-    const uid = data.replace("select_test_key_", "");
-    await selectTestKeyForUser(ctx, uid);
-    return;
-  }
-  if (data.startsWith("give_free_key_")) {
-    const rest = data.replace("give_free_key_", "");
-    const lastUnderscore = rest.lastIndexOf("_");
-    const uid = rest.substring(0, lastUnderscore);
-    const keyId = Number(rest.substring(lastUnderscore + 1));
-    const keys = await getFreeKeys();
-    const keyObj = keys.find((k) => k.id === keyId);
-    if (keyObj) {
-      try {
-        await mainBotSender.api.sendMessage(
-          Number(uid),
-          `\u{1F381} <b>\u0410\u0434\u043C\u0438\u043D\u0438\u0441\u0442\u0440\u0430\u0442\u043E\u0440 \u0432\u044B\u0434\u0430\u043B \u0432\u0430\u043C \u0411\u0435\u0441\u043F\u043B\u0430\u0442\u043D\u044B\u0439 \u043A\u043B\u044E\u0447!</b>
-
-<code>${escapeHtml(keyObj.key)}</code>`,
-          { parse_mode: "HTML", reply_markup: connectKb() }
-        );
-        await setSubscription(uid, "free_7days", 7, keyObj.key);
-        await ctx.editMessageText("\u2705 \u0411\u0435\u0441\u043F\u043B\u0430\u0442\u043D\u044B\u0439 \u043A\u043B\u044E\u0447 \u043E\u0442\u043F\u0440\u0430\u0432\u043B\u0435\u043D \u043F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u0435\u043B\u044E", {
-          parse_mode: "HTML",
-          reply_markup: adminBackKb()
-        });
-      } catch (e) {
-        await ctx.editMessageText(`\u274C \u041E\u0448\u0438\u0431\u043A\u0430: ${escapeHtml(String(e))}`, {
-          parse_mode: "HTML",
-          reply_markup: adminBackKb()
-        });
-      }
-    }
-    return;
-  }
-  if (data.startsWith("give_prem_key_")) {
-    const rest = data.replace("give_prem_key_", "");
-    const lastUnderscore = rest.lastIndexOf("_");
-    const uid = rest.substring(0, lastUnderscore);
-    const keyId = Number(rest.substring(lastUnderscore + 1));
-    const keys = await getKeys();
-    const keyObj = keys.find((k) => k.id === keyId);
-    if (keyObj) {
-      try {
-        await mainBotSender.api.sendMessage(
-          Number(uid),
-          `\u2B50 <b>\u0410\u0434\u043C\u0438\u043D\u0438\u0441\u0442\u0440\u0430\u0442\u043E\u0440 \u0432\u044B\u0434\u0430\u043B \u0432\u0430\u043C Premium \u043A\u043B\u044E\u0447!</b>
-
-<code>${escapeHtml(keyObj.key)}</code>`,
-          { parse_mode: "HTML", reply_markup: connectKb() }
-        );
-        await setSubscription(uid, "30days", 30, keyObj.key);
-        await ctx.editMessageText("\u2705 Premium \u043A\u043B\u044E\u0447 \u043E\u0442\u043F\u0440\u0430\u0432\u043B\u0435\u043D \u043F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u0435\u043B\u044E", {
-          parse_mode: "HTML",
-          reply_markup: adminBackKb()
-        });
-      } catch (e) {
-        await ctx.editMessageText(`\u274C \u041E\u0448\u0438\u0431\u043A\u0430: ${escapeHtml(String(e))}`, {
-          parse_mode: "HTML",
-          reply_markup: adminBackKb()
-        });
-      }
-    }
-    return;
-  }
-  if (data.startsWith("give_test_key_")) {
-    const uid = data.replace("give_test_key_", "");
-    const testKey = await getTestKey();
-    if (testKey) {
-      try {
-        await mainBotSender.api.sendMessage(
-          Number(uid),
-          `\u2699\uFE0F <b>\u0410\u0434\u043C\u0438\u043D\u0438\u0441\u0442\u0440\u0430\u0442\u043E\u0440 \u0432\u044B\u0434\u0430\u043B \u0432\u0430\u043C \u0422\u0435\u0441\u0442\u043E\u0432\u044B\u0439 \u043A\u043B\u044E\u0447!</b>
-
-<code>${escapeHtml(testKey)}</code>`,
-          { parse_mode: "HTML", reply_markup: connectKb() }
-        );
-        await setSubscription(uid, "3days", 3, testKey);
-        await ctx.editMessageText("\u2705 \u0422\u0435\u0441\u0442\u043E\u0432\u044B\u0439 \u043A\u043B\u044E\u0447 \u043E\u0442\u043F\u0440\u0430\u0432\u043B\u0435\u043D \u043F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u0435\u043B\u044E", {
-          parse_mode: "HTML",
-          reply_markup: adminBackKb()
-        });
-      } catch (e) {
-        await ctx.editMessageText(`\u274C \u041E\u0448\u0438\u0431\u043A\u0430: ${escapeHtml(String(e))}`, {
-          parse_mode: "HTML",
-          reply_markup: adminBackKb()
-        });
-      }
-    } else {
-      await ctx.editMessageText("\u26A0\uFE0F \u041D\u0435\u0442 \u0442\u0435\u0441\u0442\u043E\u0432\u043E\u0433\u043E \u043A\u043B\u044E\u0447\u0430!", { parse_mode: "HTML", reply_markup: adminBackKb() });
-    }
-    return;
-  }
-  if (data.startsWith("manual_edit_key_")) {
-    const uid = data.replace("manual_edit_key_", "");
-    adminStates.set(ADMIN_ID2, `manual_edit_key_${uid}`);
-    await ctx.editMessageText(
-      `\u270D\uFE0F <b>\u0420\u0443\u0447\u043D\u043E\u0435 \u0438\u0437\u043C\u0435\u043D\u0435\u043D\u0438\u0435 \u043A\u043B\u044E\u0447\u0430</b>
-
-\u041F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u0435\u043B\u044C ID: ${uid}
-
-\u041E\u0442\u043F\u0440\u0430\u0432\u044C \u043D\u043E\u0432\u044B\u0439 \u043A\u043B\u044E\u0447 \u0432 \u043B\u044E\u0431\u043E\u043C \u0444\u043E\u0440\u043C\u0430\u0442\u0435:
-\u2022 vless://...
-\u2022 vmess://...
-\u2022 trojan://...
-\u2022 shadowsocks://...`,
-      { parse_mode: "HTML", reply_markup: adminBackKb() }
-    );
-    return;
-  }
   if (data.startsWith("reply_to_")) {
     const uid = data.replace("reply_to_", "");
     adminReplyMode.set(ADMIN_ID2, uid);
     await adminBot.api.sendMessage(ADMIN_ID2, `\u270D\uFE0F \u0412\u0432\u0435\u0434\u0438 \u043E\u0442\u0432\u0435\u0442 \u0434\u043B\u044F \u043F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u0435\u043B\u044F ${uid}:`, { reply_markup: adminBackKb() });
-    return;
-  }
-  if (data === "edit_test_key") {
-    adminStates.set(ADMIN_ID2, "editing_test_key");
-    await ctx.editMessageText("\u270D\uFE0F \u041E\u0442\u043F\u0440\u0430\u0432\u044C \u043D\u043E\u0432\u044B\u0439 \u0442\u0435\u0441\u0442\u043E\u0432\u044B\u0439 \u043A\u043B\u044E\u0447:", { parse_mode: "HTML", reply_markup: adminBackKb() });
-    return;
-  }
-  if (data === "add_free_key") {
-    adminStates.set(ADMIN_ID2, "adding_free_key");
-    await ctx.editMessageText("\u270D\uFE0F \u041E\u0442\u043F\u0440\u0430\u0432\u044C \u043D\u043E\u0432\u044B\u0439 \u0431\u0435\u0441\u043F\u043B\u0430\u0442\u043D\u044B\u0439 \u043A\u043B\u044E\u0447:", { parse_mode: "HTML", reply_markup: adminBackKb() });
-    return;
-  }
-  if (data.startsWith("edit_free_key_")) {
-    const keyId = data.replace("edit_free_key_", "");
-    adminStates.set(ADMIN_ID2, `editing_free_key_${keyId}`);
-    await ctx.editMessageText(`\u270D\uFE0F \u041E\u0442\u043F\u0440\u0430\u0432\u044C \u043D\u043E\u0432\u044B\u0439 \u043A\u043B\u044E\u0447 \u0434\u043B\u044F \u0437\u0430\u043C\u0435\u043D\u044B \u0431\u0435\u0441\u043F\u043B\u0430\u0442\u043D\u043E\u0433\u043E (ID ${keyId}):`, {
-      parse_mode: "HTML",
-      reply_markup: adminBackKb()
-    });
-    return;
-  }
-  if (data === "add_prem_key") {
-    adminStates.set(ADMIN_ID2, "adding_prem_key");
-    await ctx.editMessageText("\u270D\uFE0F \u041E\u0442\u043F\u0440\u0430\u0432\u044C \u043D\u043E\u0432\u044B\u0439 Premium \u043A\u043B\u044E\u0447:", { parse_mode: "HTML", reply_markup: adminBackKb() });
-    return;
-  }
-  if (data.startsWith("edit_prem_key_")) {
-    const keyId = data.replace("edit_prem_key_", "");
-    adminStates.set(ADMIN_ID2, `editing_prem_key_${keyId}`);
-    await ctx.editMessageText(`\u270D\uFE0F \u041E\u0442\u043F\u0440\u0430\u0432\u044C \u043D\u043E\u0432\u044B\u0439 \u043A\u043B\u044E\u0447 \u0434\u043B\u044F Premium (ID ${keyId}):`, {
-      parse_mode: "HTML",
-      reply_markup: adminBackKb()
-    });
-    return;
-  }
-  if (data.startsWith("delete_free_key_")) {
-    const keyId = Number(data.replace("delete_free_key_", ""));
-    await deleteFreeKey(keyId);
-    await showFreeKeys(ctx);
-    return;
-  }
-  if (data.startsWith("delete_prem_key_")) {
-    const keyId = Number(data.replace("delete_prem_key_", ""));
-    await deleteKey(keyId);
-    await showPremiumKeys(ctx);
-    return;
-  }
-  if (data === "clear_prem_keys") {
-    await clearKeys();
-    await ctx.editMessageText("\u{1F9F9} Premium \u043A\u043B\u044E\u0447\u0438 \u043E\u0447\u0438\u0449\u0435\u043D\u044B!", { parse_mode: "HTML", reply_markup: adminBackKb() });
     return;
   }
   if (data === "test_key_mngr") {
@@ -59498,14 +59239,6 @@ adminBot.callbackQuery(/.*/, async (ctx) => {
     adminStates.set(ADMIN_ID2, "waiting_new_prem_keys");
     await ctx.editMessageText(
       "\u{1F504} <b>\u041E\u0431\u043D\u043E\u0432\u043B\u0435\u043D\u0438\u0435 Premium \u043A\u043B\u044E\u0447\u0435\u0439</b>\n\n\u041E\u0442\u043F\u0440\u0430\u0432\u044C \u043D\u043E\u0432\u044B\u0435 \u043A\u043B\u044E\u0447\u0438 \u2014 \u043F\u043E \u043E\u0434\u043D\u043E\u043C\u0443 \u043D\u0430 \u0441\u0442\u0440\u043E\u043A\u0443 \u0432 \u043E\u0434\u043D\u043E\u043C \u0441\u043E\u043E\u0431\u0449\u0435\u043D\u0438\u0438:\n\n<code>vless://...\nvless://...</code>\n\n\u0421\u0442\u0430\u0440\u044B\u0435 \u043A\u043B\u044E\u0447\u0438 \u0431\u0443\u0434\u0443\u0442 \u0443\u0434\u0430\u043B\u0435\u043D\u044B, \u043D\u043E\u0432\u044B\u0435 \u0434\u043E\u0431\u0430\u0432\u043B\u0435\u043D\u044B, \u0438 \u0432\u0441\u0435 Premium \u043F\u043E\u0434\u043F\u0438\u0441\u0447\u0438\u043A\u0438 \u043F\u043E\u043B\u0443\u0447\u0430\u0442 \u043D\u043E\u0432\u044B\u0439 \u043A\u043B\u044E\u0447 (\u0431\u0435\u0437 \u0443\u0432\u0435\u0434\u043E\u043C\u043B\u0435\u043D\u0438\u044F).",
-      { parse_mode: "HTML", reply_markup: adminBackKb() }
-    );
-    return;
-  }
-  if (data === "update_test_key_silent_start") {
-    adminStates.set(ADMIN_ID2, "waiting_new_test_key_silent");
-    await ctx.editMessageText(
-      "\u{1F504} <b>\u041E\u0431\u043D\u043E\u0432\u043B\u0435\u043D\u0438\u0435 \u0442\u0435\u0441\u0442\u043E\u0432\u043E\u0433\u043E \u043A\u043B\u044E\u0447\u0430</b>\n\n\u041E\u0442\u043F\u0440\u0430\u0432\u044C \u043D\u043E\u0432\u044B\u0439 \u0442\u0435\u0441\u0442\u043E\u0432\u044B\u0439 \u043A\u043B\u044E\u0447.\n\n\u041A\u043B\u044E\u0447 \u0431\u0443\u0434\u0435\u0442 \u043E\u0431\u043D\u043E\u0432\u043B\u0451\u043D, \u0438 \u0432\u0441\u0435 \u043F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u0435\u043B\u0438 \u0441 \u0442\u0435\u0441\u0442\u043E\u0432\u043E\u0439 \u043F\u043E\u0434\u043F\u0438\u0441\u043A\u043E\u0439 (3 \u0434\u043D\u044F) \u043F\u043E\u043B\u0443\u0447\u0430\u0442 \u043D\u043E\u0432\u044B\u0439 \u043A\u043B\u044E\u0447 \u0431\u0435\u0437 \u0443\u0432\u0435\u0434\u043E\u043C\u043B\u0435\u043D\u0438\u044F.",
       { parse_mode: "HTML", reply_markup: adminBackKb() }
     );
     return;
@@ -59560,14 +59293,6 @@ adminBot.callbackQuery(/.*/, async (ctx) => {
       parse_mode: "HTML",
       reply_markup: adminBackKb()
     });
-    return;
-  }
-  if (data === "replace_all_keys_start") {
-    adminStates.set(ADMIN_ID2, "waiting_replace_all_keys");
-    await ctx.editMessageText(
-      "\u{1F504} <b>\u0417\u0430\u043C\u0435\u043D\u0430 \u0432\u0441\u0435\u0445 \u043A\u043B\u044E\u0447\u0435\u0439</b>\n\n\u041E\u0442\u043F\u0440\u0430\u0432\u044C \u0432\u0441\u0435 \u043D\u043E\u0432\u044B\u0435 \u043A\u043B\u044E\u0447\u0438 \u2014 \u043F\u043E \u043E\u0434\u043D\u043E\u043C\u0443 \u043D\u0430 \u0441\u0442\u0440\u043E\u043A\u0443:\n\n<code>vless://...\nvless://...\nvless://...</code>\n\n\u0421\u0442\u0430\u0440\u044B\u0435 \u043F\u0443\u043B\u044B \u0431\u0435\u0441\u043F\u043B\u0430\u0442\u043D\u044B\u0445 \u0438 premium \u043A\u043B\u044E\u0447\u0435\u0439 \u0431\u0443\u0434\u0443\u0442 \u043E\u0447\u0438\u0449\u0435\u043D\u044B, \u0432\u0441\u0435 \u043D\u043E\u0432\u044B\u0435 \u043A\u043B\u044E\u0447\u0438 \u043F\u043E\u043F\u0430\u0434\u0443\u0442 \u0432 \u0431\u0435\u0441\u043F\u043B\u0430\u0442\u043D\u044B\u0439 \u043F\u0443\u043B, \u0432\u0441\u0435 \u0430\u043A\u0442\u0438\u0432\u043D\u044B\u0435 \u043F\u043E\u0434\u043F\u0438\u0441\u0447\u0438\u043A\u0438 \u043F\u043E\u043B\u0443\u0447\u0430\u0442 \u043D\u043E\u0432\u044B\u0439 \u043A\u043B\u044E\u0447 \u0441 \u0443\u0432\u0435\u0434\u043E\u043C\u043B\u0435\u043D\u0438\u0435\u043C.",
-      { parse_mode: "HTML", reply_markup: adminBackKb() }
-    );
     return;
   }
   if (data === "admin_start_broadcast") {
@@ -60156,7 +59881,7 @@ async function showStats(ctx) {
   const totalReferred = refCounts.reduce((s, r) => s + r.count, 0);
   const topRefs = await getTopReferrers(5);
   const freeKeys = await getFreeKeys();
-  const premiumKeys = await getKeys();
+  const allKeys = await getKeys();
   const banned = users.filter((u) => u.banned).length;
   const serverStatus = getServerStatus();
   let serverText = "";
@@ -60185,7 +59910,7 @@ async function showStats(ctx) {
 \u{1F91D} \u041F\u0440\u0438\u0433\u043B\u0430\u0448\u0435\u043D\u043E \u0447\u0435\u0440\u0435\u0437 \u0440\u0435\u0444\u043A\u0443: <b>${totalReferred}</b>
 
 \u{1F381} \u0411\u0435\u0441\u043F\u043B\u0430\u0442\u043D\u044B\u0445 \u043A\u043B\u044E\u0447\u0435\u0439 \u0432 \u043F\u0443\u043B\u0435: <b>${freeKeys.length}</b> \u0448\u0442.
-\u2B50 Premium \u043A\u043B\u044E\u0447\u0435\u0439 \u0432 \u043F\u0443\u043B\u0435: <b>${premiumKeys.length}</b> \u0448\u0442.
+\u2B50 Premium \u043A\u043B\u044E\u0447\u0435\u0439 \u0432 \u043F\u0443\u043B\u0435: <b>${allKeys.length}</b> \u0448\u0442.
 
 \u{1F4E1} <b>\u0421\u0442\u0430\u0442\u0443\u0441 \u0441\u0435\u0440\u0432\u0435\u0440\u043E\u0432:</b>
 ${serverText}
@@ -60193,74 +59918,6 @@ ${serverText}
 ${topText}`,
     { parse_mode: "HTML", reply_markup: adminBackKb() }
   );
-}
-async function showFreeKeys(ctx) {
-  const keys = await getFreeKeys();
-  let text2 = `\u{1F381} <b>\u0411\u0415\u0421\u041F\u041B\u0410\u0422\u041D\u042B\u0415 \u041A\u041B\u042E\u0427\u0418</b>
-
-\u0412\u0441\u0435\u0433\u043E \u0432 \u043F\u0443\u043B\u0435: <b>${keys.length}</b> \u0448\u0442.
-
-`;
-  keys.forEach((k, idx) => {
-    const short = k.key.length > 60 ? k.key.slice(0, 60) + "..." : k.key;
-    text2 += `${idx + 1}. <code>${escapeHtml(short)}</code>
-`;
-  });
-  if (!keys.length) text2 += "\u26A0\uFE0F \u041F\u0443\u043B \u0431\u0435\u0441\u043F\u043B\u0430\u0442\u043D\u044B\u0445 \u043A\u043B\u044E\u0447\u0435\u0439 \u043F\u0443\u0441\u0442!\n";
-  await ctx.editMessageText(text2, { parse_mode: "HTML", reply_markup: freeKeysKb(keys) });
-}
-async function showPremiumKeys(ctx) {
-  const keys = await getKeys();
-  let text2 = `\u2B50 <b>PREMIUM \u041A\u041B\u042E\u0427\u0418</b>
-
-\u0412\u0441\u0435\u0433\u043E \u0432 \u043F\u0443\u043B\u0435: <b>${keys.length}</b> \u0448\u0442.
-`;
-  if (keys.length) {
-    text2 += "\n<b>\u0421\u043F\u0438\u0441\u043E\u043A:</b>\n";
-    keys.forEach((k, idx) => {
-      const short = k.key.length > 60 ? k.key.slice(0, 60) + "..." : k.key;
-      text2 += `${idx + 1}. <code>${escapeHtml(short)}</code>
-`;
-    });
-  } else {
-    text2 += "\n\u26A0\uFE0F \u041F\u0443\u043B Premium \u043A\u043B\u044E\u0447\u0435\u0439 \u043F\u0443\u0441\u0442!\n";
-  }
-  await ctx.editMessageText(text2, { parse_mode: "HTML", reply_markup: keysKb(keys) });
-}
-async function checkAllKeys(ctx) {
-  await ctx.editMessageText("\u{1F50D} <b>\u041F\u0420\u041E\u0412\u0415\u0420\u041A\u0410 \u041A\u041B\u042E\u0427\u0415\u0419</b>\n\n\u23F3 \u0412\u044B\u043F\u043E\u043B\u043D\u044F\u0435\u0442\u0441\u044F \u043F\u0440\u043E\u0432\u0435\u0440\u043A\u0430...\n\u042D\u0442\u043E \u043C\u043E\u0436\u0435\u0442 \u0437\u0430\u043D\u044F\u0442\u044C \u0434\u043E 30 \u0441\u0435\u043A\u0443\u043D\u0434.", {
-    parse_mode: "HTML",
-    reply_markup: adminBackKb()
-  });
-  const freeKeys = await getFreeKeys();
-  const premiumKeys = await getKeys();
-  const [freeStatuses, premStatuses] = await Promise.all([
-    Promise.all(freeKeys.map((k) => checkKeyStatus(k.key))),
-    Promise.all(premiumKeys.map((k) => checkKeyStatus(k.key)))
-  ]);
-  let text2 = "\u{1F50D} <b>\u0420\u0415\u0417\u0423\u041B\u042C\u0422\u0410\u0422\u042B \u041F\u0420\u041E\u0412\u0415\u0420\u041A\u0418 \u041A\u041B\u042E\u0427\u0415\u0419</b>\n\n";
-  text2 += "\u{1F381} <b>\u0411\u0415\u0421\u041F\u041B\u0410\u0422\u041D\u042B\u0415 \u041A\u041B\u042E\u0427\u0418:</b>\n";
-  if (freeKeys.length) {
-    freeStatuses.forEach((s, i) => {
-      if (s.online) {
-        text2 += `${i + 1}. \u26A1 #${i + 1}  \u{1F7E2} ${s.ping}\u043C\u0441\n`;
-      } else {
-        text2 += `${i + 1}. \u26A1 #${i + 1}  \u{1F534} offline\n`;
-      }
-    });
-  } else text2 += "\u26A0\uFE0F \u041D\u0435\u0442 \u0431\u0435\u0441\u043F\u043B\u0430\u0442\u043D\u044B\u0445 \u043A\u043B\u044E\u0447\u0435\u0439\n";
-  text2 += "\n\u2B50 <b>PREMIUM \u041A\u041B\u042E\u0427\u0418:</b>\n";
-  if (premiumKeys.length) {
-    premStatuses.forEach((s, i) => {
-      if (s.online) {
-        text2 += `${i + 1}. \u26A1 #${i + 1}  \u{1F7E2} ${s.ping}\u043C\u0441\n`;
-      } else {
-        text2 += `${i + 1}. \u26A1 #${i + 1}  \u{1F534} offline\n`;
-      }
-    });
-  } else text2 += "\u26A0\uFE0F \u041D\u0435\u0442 Premium \u043A\u043B\u044E\u0447\u0435\u0439\n";
-  const msgText = text2.slice(0, 4e3);
-  await ctx.editMessageText(msgText, { parse_mode: "HTML", reply_markup: adminKeysMainKb() });
 }
 async function showSupportChats(ctx) {
   const chats = await getOpenSupportChats();
@@ -60317,46 +59974,11 @@ async function openSupportChat(ctx, userId) {
   }
   await ctx.editMessageText(text2, { parse_mode: "HTML", reply_markup: supportChatKb(userId) });
 }
-async function selectFreeKeyForUser(ctx, userId) {
-  adminStates.set(ADMIN_ID2, `give_free_days_${userId}`);
-  const kb = new InlineKeyboard3().text("\u{1F519} \u041D\u0430\u0437\u0430\u0434", `manage_user_${userId}`);
-  await ctx.editMessageText(
-    `\u{1F381} <b>\u0412\u044B\u0434\u0430\u0442\u044C \u0431\u0435\u0441\u043F\u043B\u0430\u0442\u043D\u0443\u044E \u043F\u043E\u0434\u043F\u0438\u0441\u043A\u0443</b> \u0434\u043B\u044F ID: ${userId}
-
-\u0412\u0432\u0435\u0434\u0438\u0442\u0435 \u043A\u043E\u043B\u0438\u0447\u0435\u0441\u0442\u0432\u043E \u0434\u043D\u0435\u0439 (\u0447\u0438\u0441\u043B\u043E\u043C):`,
-    { parse_mode: "HTML", reply_markup: kb }
-  );
-}
-async function selectPremKeyForUser(ctx, userId) {
-  adminStates.set(ADMIN_ID2, `give_prem_days_${userId}`);
-  const kb = new InlineKeyboard3().text("\u{1F519} \u041D\u0430\u0437\u0430\u0434", `manage_user_${userId}`);
-  await ctx.editMessageText(
-    `\u2B50 <b>\u0412\u044B\u0434\u0430\u0442\u044C Premium \u043F\u043E\u0434\u043F\u0438\u0441\u043A\u0443</b> \u0434\u043B\u044F ID: ${userId}
-
-\u0412\u0432\u0435\u0434\u0438\u0442\u0435 \u043A\u043E\u043B\u0438\u0447\u0435\u0441\u0442\u0432\u043E \u0434\u043D\u0435\u0439 (\u0447\u0438\u0441\u043B\u043E\u043C):`,
-    { parse_mode: "HTML", reply_markup: kb }
-  );
-}
-async function selectTestKeyForUser(ctx, userId) {
-  const testKey = await getTestKey();
-  if (!testKey) {
-    await ctx.editMessageText("\u26A0\uFE0F \u041D\u0435\u0442 \u0442\u0435\u0441\u0442\u043E\u0432\u043E\u0433\u043E \u043A\u043B\u044E\u0447\u0430!", { parse_mode: "HTML", reply_markup: adminBackKb() });
-    return;
-  }
-  const short = testKey.length > 50 ? testKey.slice(0, 50) + "..." : testKey;
-  const kb = new InlineKeyboard3().text("\u2699\uFE0F \u0412\u044B\u0434\u0430\u0442\u044C", `give_test_key_${userId}`).row().text("\u{1F519} \u041D\u0430\u0437\u0430\u0434", `manage_user_${userId}`);
-  await ctx.editMessageText(
-    `\u2699\uFE0F <b>\u0422\u0435\u0441\u0442\u043E\u0432\u044B\u0439 \u043A\u043B\u044E\u0447</b> \u0434\u043B\u044F ID: ${userId}
-
-<code>${escapeHtml(short)}</code>`,
-    { parse_mode: "HTML", reply_markup: kb }
-  );
-}
 async function sendBackup() {
   const dbUrl = process.env.DATABASE_URL;
   const users = await getAllUsers();
   const freeKeys = await getFreeKeys();
-  const premiumKeys = await getKeys();
+  const allKeys = await getKeys();
   const testKey = await getTestKey();
   const date6 = (/* @__PURE__ */ new Date()).toLocaleString("ru-RU");
   if (dbUrl) {
@@ -60373,7 +59995,7 @@ async function sendBackup() {
       const caption = `\u{1F4E6} <b>\u0411\u044D\u043A\u0430\u043F \u0411\u0414</b> \u2014 ${date6}
 
 \u{1F465} \u041F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u0435\u043B\u0435\u0439: ${users.length}
-\u{1F511} \u041A\u043B\u044E\u0447\u0435\u0439 \u0432 \u043F\u0443\u043B\u0435: ${freeKeys.length + premiumKeys.length}`;
+\u{1F511} \u041A\u043B\u044E\u0447\u0435\u0439 \u0432 \u043F\u0443\u043B\u0435: ${freeKeys.length + allKeys.length}`;
       await adminBot.api.sendDocument(
         ADMIN_ID2,
         new InputFile2(filePath, `backup_${(/* @__PURE__ */ new Date()).toISOString().split("T")[0]}.sql`),
@@ -60388,7 +60010,7 @@ async function sendBackup() {
 \u0414\u0430\u043D\u043D\u044B\u0435 (${date6}):
 \u041F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u0435\u043B\u0435\u0439: ${users.length}
 \u0411\u0435\u0441\u043F\u043B\u0430\u0442\u043D\u044B\u0445 \u043A\u043B\u044E\u0447\u0435\u0439: ${freeKeys.length}
-Premium \u043A\u043B\u044E\u0447\u0435\u0439: ${premiumKeys.length}`,
+\u041A\u043B\u044E\u0447\u0435\u0439: ${allKeys.length}`,
         { reply_markup: adminBackKb() }
       );
     } finally {
@@ -60401,7 +60023,7 @@ Premium \u043A\u043B\u044E\u0447\u0435\u0439: ${premiumKeys.length}`,
 
 \u041F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u0435\u043B\u0435\u0439: ${users.length}
 \u0411\u0435\u0441\u043F\u043B\u0430\u0442\u043D\u044B\u0445 \u043A\u043B\u044E\u0447\u0435\u0439: ${freeKeys.length}
-Premium \u043A\u043B\u044E\u0447\u0435\u0439: ${premiumKeys.length}
+\u041A\u043B\u044E\u0447\u0435\u0439: ${allKeys.length}
 \u0422\u0435\u0441\u0442\u043E\u0432\u044B\u0439 \u043A\u043B\u044E\u0447: ${testKey ? "\u0435\u0441\u0442\u044C" : "\u043D\u0435\u0442"}`,
       { reply_markup: adminBackKb() }
     );
@@ -60472,7 +60094,7 @@ var ADMIN_ID3 = Number(process.env.ADMIN_ID);
 async function registerCommands() {
   await userBot.api.setMyCommands([
     { command: "start", description: "🏠 Главное меню" },
-    { command: "key", description: "🔑 Получить ключ" },
+    { command: "key", description: "📋 Получить подписку" },
     { command: "profile", description: "👤 Личный кабинет" },
     { command: "promo", description: "🎫 Промокод" },
     { command: "help", description: "❓ Помощь" },
