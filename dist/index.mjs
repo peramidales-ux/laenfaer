@@ -58613,7 +58613,7 @@ userBot.on("message:photo", async (ctx) => {
       .text("✅ Подтвердить", `confirm_pay_${ctx.from.id}_${days}`)
       .text("❌ Отклонить", `reject_pay_${ctx.from.id}`);
 
-    await adminBot.api.sendPhoto(ADMIN_ID2, new InputFile(buf, "receipt.jpg"), {
+    await userBot.api.sendPhoto(ADMIN_ID, new InputFile(buf, "receipt.jpg"), {
       caption:
         `💰 <b>Заявка на оплату</b>\n\n` +
         `👤 Пользователь: <code>${ctx.from.id}</code>\n` +
@@ -58695,6 +58695,24 @@ userBot.on("message:text", async (ctx) => {
     }
     return;
   }
+});
+
+// Payment confirm/reject handlers
+userBot.callbackQuery(/^confirm_pay_/, async (ctx) => {
+  const rest = ctx.callbackQuery.data.replace("confirm_pay_", "");
+  const lastUnderscore = rest.lastIndexOf("_");
+  const uid = rest.substring(0, lastUnderscore);
+  const days = parseInt(rest.substring(lastUnderscore + 1), 10);
+  const key = await getRandomPremiumKey() || await getRandomFreeKey() || "vless://NO_KEY";
+  await addDaysToSubscription(uid, days + "days", days, key);
+  await ctx.editMessageCaption({ caption: "✅ <b>Платёж подтверждён</b>\n\nПользователю <code>" + uid + "</code> выдано <b>" + days + "</b> дн.", parse_mode: "HTML" });
+  try { await userBot.api.sendMessage(Number(uid), "✅ <b>Оплата подтверждена!</b>\n\nПодписка на <b>" + days + " дн.</b> активна.\nИспользуй /key для подключения.", { parse_mode: "HTML", reply_markup: mainMenuKb() }); } catch {}
+});
+
+userBot.callbackQuery(/^reject_pay_/, async (ctx) => {
+  const uid = ctx.callbackQuery.data.replace("reject_pay_", "");
+  await ctx.editMessageCaption({ caption: "❌ <b>Платёж отклонён</b>\n\nПользователь <code>" + uid + "</code>", parse_mode: "HTML" });
+  try { await userBot.api.sendMessage(Number(uid), "❌ <b>Платёж отклонён</b>\n\nСвяжитесь с поддержкой для уточнения.", { parse_mode: "HTML", reply_markup: mainMenuKb() }); } catch {}
 });
 
 // Error handler
