@@ -37660,7 +37660,7 @@ app.get("/sub/:userId", async (req, res) => {
     const isFree = tariff.includes("free") || tariff.includes("3days") || tariff.includes("7days");
 
     // All users get access to ALL servers (free + premium keys combined)
-    const allKeyRows = await db.select({ key: premiumKeysTable.key }).from(premiumKeysTable);
+    const allKeyRows = await db.select({ key: keysTable.key }).from(keysTable);
     const allKeys = allKeyRows.map(r => r.key).filter(Boolean);
     // Deduplicate keys
     const uniqueKeys = [...new Set(allKeys)];
@@ -38885,7 +38885,7 @@ app.get("/api/promo/:userId", async (req, res) => {
         key = existingSub.key;
       } else {
         tariff = "free_" + days + "days";
-        key = await getRandomFreeKey() || await getRandomPremiumKey();
+        key = await getRandomFreeKey() || await getRandomKey();
       }
     } else {
       // Пользователь считается "бесплатным" если: нет подписки, подписка истекла, или тариф free
@@ -38895,10 +38895,10 @@ app.get("/api/promo/:userId", async (req, res) => {
       if (userIsFree && promoIsPremium) {
         // Пользователь на бесплатном/истёкшем тарифе — не выдавать premium через промокод
         tariff = (existingSub && hasActive) ? existingSub.tariff : "free_" + days + "days";
-        key = await getRandomFreeKey() || await getRandomPremiumKey();
+        key = await getRandomFreeKey() || await getRandomKey();
       } else {
         tariff = promo.tariff;
-        key = promo.tariff.includes("free") ? (await getRandomFreeKey() || await getRandomPremiumKey()) : (await getRandomPremiumKey() || await getRandomFreeKey());
+        key = promo.tariff.includes("free") ? (await getRandomFreeKey() || await getRandomKey()) : (await getRandomKey() || await getRandomFreeKey());
       }
     }
     if (!key) return res.json({ ok: false, message: "Нет свободных ключей, обратитесь в поддержку" });
@@ -45891,10 +45891,10 @@ var schema_exports = {};
 __export(schema_exports, {
   freeKeysTable: () => freeKeysTable,
   insertFreeKeySchema: () => insertFreeKeySchema,
-  insertPremiumKeySchema: () => insertPremiumKeySchema,
+  insertKeySchema: () => insertKeySchema,
   insertSubscriptionSchema: () => insertSubscriptionSchema,
   insertUserSchema: () => insertUserSchema,
-  premiumKeysTable: () => premiumKeysTable,
+  keysTable: () => keysTable,
   referralCountsTable: () => referralCountsTable,
   referralsTable: () => referralsTable,
   settingsTable: () => settingsTable,
@@ -57321,7 +57321,7 @@ var freeKeysTable = pgTable("free_keys", {
   key: text("key").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull()
 });
-var premiumKeysTable = pgTable("premium_keys", {
+var keysTable = pgTable("keys", {
   id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
   key: text("key").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull()
@@ -57349,7 +57349,7 @@ var supportChatsTable = pgTable("support_chats", {
 var insertUserSchema = createInsertSchema(usersTable);
 var insertSubscriptionSchema = createInsertSchema(subscriptionsTable);
 var insertFreeKeySchema = createInsertSchema(freeKeysTable);
-var insertPremiumKeySchema = createInsertSchema(premiumKeysTable);
+var insertKeySchema = createInsertSchema(keysTable);
 
 // ../../lib/db/src/index.ts
 var { Pool: Pool3 } = esm_default;
@@ -57458,7 +57458,7 @@ function isValidKey(key) {
 }
 
 async function getFreeKeys() {
-  return db.select().from(premiumKeysTable).orderBy(premiumKeysTable.id);
+  return db.select().from(keysTable).orderBy(keysTable.id);
 }
 async function addFreeKey(key) {
   if (!isValidKey(key)) return false;
@@ -57470,20 +57470,20 @@ async function updateFreeKey(id, key) {
   await db.update(freeKeysTable).set({ key }).where(eq(freeKeysTable.id, id));
   return true;
 }
-async function getPremiumKeys() {
-  return db.select().from(premiumKeysTable).orderBy(premiumKeysTable.id);
+async function getKeys() {
+  return db.select().from(keysTable).orderBy(keysTable.id);
 }
-async function addPremiumKey(key) {
+async function addKey(key) {
   if (!isValidKey(key)) return false;
-  await db.insert(premiumKeysTable).values({ key });
+  await db.insert(keysTable).values({ key });
   return true;
 }
-async function updatePremiumKey(id, key) {
-  await db.update(premiumKeysTable).set({ key }).where(eq(premiumKeysTable.id, id));
+async function updateKey(id, key) {
+  await db.update(keysTable).set({ key }).where(eq(keysTable.id, id));
 }
-async function clearPremiumKeys() {
-  await db.delete(premiumKeysTable);
-  await db.execute(`ALTER SEQUENCE premium_keys_id_seq RESTART WITH 1`);
+async function clearKeys() {
+  await db.delete(keysTable);
+  await db.execute(`ALTER SEQUENCE keys_id_seq RESTART WITH 1`);
 }
 async function clearFreeKeys() {
   await db.delete(freeKeysTable);
@@ -57492,8 +57492,8 @@ async function clearFreeKeys() {
 async function deleteFreeKey(id) {
   await db.delete(freeKeysTable).where(eq(freeKeysTable.id, id));
 }
-async function deletePremiumKey(id) {
-  await db.delete(premiumKeysTable).where(eq(premiumKeysTable.id, id));
+async function deleteKey(id) {
+  await db.delete(keysTable).where(eq(keysTable.id, id));
 }
 async function getAllSubscriptions() {
   return db.select().from(subscriptionsTable);
@@ -57576,8 +57576,8 @@ async function getRandomFreeKey() {
   if (keys.length === 0) return null;
   return keys[Math.floor(Math.random() * keys.length)].key;
 }
-async function getRandomPremiumKey() {
-  const keys = await getPremiumKeys();
+async function getRandomKey() {
+  const keys = await getKeys();
   if (keys.length === 0) return null;
   return keys[Math.floor(Math.random() * keys.length)].key;
 }
@@ -57746,7 +57746,7 @@ function freeKeysKb(keys) {
   kb.text("\u2795 \u0414\u043E\u0431\u0430\u0432\u0438\u0442\u044C", "add_free_key").row().text("\u{1F504} \u041E\u0431\u043D\u043E\u0432\u0438\u0442\u044C \u0432\u0441\u0435", "update_all_free_keys_start").row().text("\u{1F5D1} \u041E\u0447\u0438\u0441\u0442\u0438\u0442\u044C \u0432\u0441\u0435", "clear_all_free_keys").row().text("\u{1F519} \u041D\u0430\u0437\u0430\u0434", "to_admin_menu");
   return kb;
 }
-function premiumKeysKb(keys) {
+function keysKb(keys) {
   const kb = new InlineKeyboard();
   for (const k of keys) {
     kb.text(`\u{1F4DD} \u2116${k.id}`, `edit_prem_key_${k.id}`).text(`\u{1F5D1} \u2116${k.id}`, `delete_prem_key_${k.id}`).row();
@@ -58343,7 +58343,7 @@ userBot.callbackQuery("activate_trial", async (ctx) => {
     return ctx.answerCallbackQuery({ text: "У тебя уже есть активная подписка", show_alert: true });
   }
 
-  const key = await getRandomFreeKey() || await getRandomPremiumKey();
+  const key = await getRandomFreeKey() || await getRandomKey();
   if (!key) {
     return ctx.answerCallbackQuery({ text: "Нет доступных ключей. Обратись в поддержку.", show_alert: true });
   }
@@ -58787,7 +58787,7 @@ async function pingIp(ip) {
 async function monitorServers() {
   try {
     const freeKeys = await getFreeKeys();
-    const premKeys = await getPremiumKeys();
+    const premKeys = await getKeys();
     const allKeys = [
       ...freeKeys.map((k) => k.key),
       ...premKeys.map((k) => k.key)
@@ -58893,7 +58893,7 @@ async function sendDailyBackup() {
     const users = await getAllUsers();
     const subs = await getAllSubscriptions();
     const freeKeys = await getFreeKeys();
-    const premKeys = await getPremiumKeys();
+    const premKeys = await getKeys();
     const date6 = (/* @__PURE__ */ new Date()).toLocaleString("ru-RU");
     await adminBotApi.sendDocument(
       adminId,
@@ -59000,7 +59000,7 @@ adminBot.command("stats", async (ctx) => {
   const users = await getAllUsers();
   const activeKeys = await getActiveSubscriptionsCount();
   const freeKeys = await getFreeKeys();
-  const premiumKeys = await getPremiumKeys();
+  const premiumKeys = await getKeys();
   const banned = users.filter((u) => u.banned).length;
   const serverStatus = getServerStatus();
   let serverText = "";
@@ -59153,7 +59153,7 @@ adminBot.callbackQuery(/.*/, async (ctx) => {
       await ctx.answerCallbackQuery({ text: "\u274C \u041D\u0435\u0438\u0437\u0432\u0435\u0441\u0442\u043D\u044B\u0439 \u0442\u0430\u0440\u0438\u0444", show_alert: true });
       return;
     }
-    let key = await getRandomPremiumKey() || await getRandomFreeKey() || "vless://NO_KEY";
+    let key = await getRandomKey() || await getRandomFreeKey() || "vless://NO_KEY";
     const expiresAt2 = await addDaysToSubscription(req.telegramId, req.tariff, cfg.days, key);
     await deletePaymentRequest(payId);
     await ctx.editMessageCaption({ caption: "\u2705 <b>\u041F\u043B\u0430\u0442\u0451\u0436 \u043F\u043E\u0434\u0442\u0432\u0435\u0440\u0436\u0434\u0451\u043D</b>\n\n\u041F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u0435\u043B\u044E <code>" + req.telegramId + "</code> \u0432\u044B\u0434\u0430\u043D\u043E <b>" + cfg.days + "</b> \u0434\u043D.", parse_mode: "HTML" });
@@ -59340,7 +59340,7 @@ adminBot.callbackQuery(/.*/, async (ctx) => {
     const lastUnderscore = rest.lastIndexOf("_");
     const uid = rest.substring(0, lastUnderscore);
     const keyId = Number(rest.substring(lastUnderscore + 1));
-    const keys = await getPremiumKeys();
+    const keys = await getKeys();
     const keyObj = keys.find((k) => k.id === keyId);
     if (keyObj) {
       try {
@@ -59457,12 +59457,12 @@ adminBot.callbackQuery(/.*/, async (ctx) => {
   }
   if (data.startsWith("delete_prem_key_")) {
     const keyId = Number(data.replace("delete_prem_key_", ""));
-    await deletePremiumKey(keyId);
+    await deleteKey(keyId);
     await showPremiumKeys(ctx);
     return;
   }
   if (data === "clear_prem_keys") {
-    await clearPremiumKeys();
+    await clearKeys();
     await ctx.editMessageText("\u{1F9F9} Premium \u043A\u043B\u044E\u0447\u0438 \u043E\u0447\u0438\u0449\u0435\u043D\u044B!", { parse_mode: "HTML", reply_markup: adminBackKb() });
     return;
   }
@@ -59637,7 +59637,7 @@ adminBot.on("message:text", async (ctx) => {
       await ctx.reply("\u274C \u0412\u0432\u0435\u0434\u0438\u0442\u0435 \u0447\u0438\u0441\u043B\u043E > 0");
       return;
     }
-    const key = await getRandomFreeKey() || await getRandomPremiumKey();
+    const key = await getRandomFreeKey() || await getRandomKey();
     if (!key) {
       await ctx.reply("\u274C \u041D\u0435\u0442 \u0441\u0432\u043E\u0431\u043E\u0434\u043D\u044B\u0445 \u043A\u043B\u044E\u0447\u0435\u0439");
       return;
@@ -59745,7 +59745,7 @@ ${escapeHtml(text2)}`,
     }
     adminStates.delete(ADMIN_ID2);
     try {
-      const key = isPrem ? await getRandomPremiumKey() : await getRandomFreeKey();
+      const key = isPrem ? await getRandomKey() : await getRandomFreeKey();
       if (!key) {
         await ctx.reply(isPrem ? "\u274C \u041D\u0435\u0442 Premium \u043A\u043B\u044E\u0447\u0435\u0439 \u0432 \u0431\u0430\u0437\u0435!" : "\u274C \u041D\u0435\u0442 \u0431\u0435\u0441\u043F\u043B\u0430\u0442\u043D\u044B\u0445 \u043A\u043B\u044E\u0447\u0435\u0439 \u0432 \u0431\u0430\u0437\u0435!", { reply_markup: adminBackKb() });
         return;
@@ -59872,8 +59872,8 @@ ${filtered > 0 ? `\u26A0\uFE0F \u041E\u0442\u0444\u0438\u043B\u044C\u0442\u0440\
     }
     const validKeys = lines.filter(k => isValidKey(k));
     const filtered = lines.length - validKeys.length;
-    await clearPremiumKeys();
-    for (const k of validKeys) await addPremiumKey(k);
+    await clearKeys();
+    for (const k of validKeys) await addKey(k);
     const subs = await getAllSubscriptions();
     let updated = 0;
     const premTariffs = ["30days", "60days", "365days"];
@@ -59886,14 +59886,14 @@ ${filtered > 0 ? `\u26A0\uFE0F \u041E\u0442\u0444\u0438\u043B\u044C\u0442\u0440\
         }
       }
     }
-    const premKeys = await getPremiumKeys();
+    const premKeys = await getKeys();
     await ctx.reply(
       `\u2705 <b>Premium \u043A\u043B\u044E\u0447\u0438 \u043E\u0431\u043D\u043E\u0432\u043B\u0435\u043D\u044B!</b>
 
 \u0414\u043E\u0431\u0430\u0432\u043B\u0435\u043D\u043E \u0432 \u043F\u0443\u043B: <b>${validKeys.length}</b> \u043A\u043B\u044E\u0447\u0435\u0439 (.ru SNI)
 ${filtered > 0 ? `\u26A0\uFE0F \u041E\u0442\u0444\u0438\u043B\u044C\u0442\u0440\u043E\u0432\u0430\u043D\u043E: <b>${filtered}</b> \u043A\u043B\u044E\u0447\u0435\u0439 \u0431\u0435\u0437 .ru SNI\n` : ""}\u041F\u043E\u0434\u043F\u0438\u0441\u0447\u0438\u043A\u043E\u0432 \u043E\u0431\u043D\u043E\u0432\u043B\u0435\u043D\u043E: <b>${updated}</b>
 \u0423\u0432\u0435\u0434\u043E\u043C\u043B\u0435\u043D\u0438\u044F \u043D\u0435 \u043E\u0442\u043F\u0440\u0430\u0432\u043B\u044F\u043B\u0438\u0441\u044C.`,
-      { parse_mode: "HTML", reply_markup: premiumKeysKb(premKeys) }
+      { parse_mode: "HTML", reply_markup: keysKb(premKeys) }
     );
     return;
   }
@@ -59928,7 +59928,7 @@ ${filtered > 0 ? `\u26A0\uFE0F \u041E\u0442\u0444\u0438\u043B\u044C\u0442\u0440\
       await ctx.reply("\u274C \u041A\u043B\u044E\u0447 \u043D\u0435 \u043C\u043E\u0436\u0435\u0442 \u0431\u044B\u0442\u044C \u043F\u0443\u0441\u0442\u044B\u043C", { reply_markup: adminBackKb() });
       return;
     }
-    const added = await addPremiumKey(text2.trim());
+    const added = await addKey(text2.trim());
     if (added) {
       await ctx.reply("\u2705 Premium \u043A\u043B\u044E\u0447 \u0434\u043E\u0431\u0430\u0432\u043B\u0435\u043D! (.ru SNI)", { reply_markup: adminBackKb() });
     } else {
@@ -59943,7 +59943,7 @@ ${filtered > 0 ? `\u26A0\uFE0F \u041E\u0442\u0444\u0438\u043B\u044C\u0442\u0440\
       await ctx.reply("\u274C \u041A\u043B\u044E\u0447 \u043D\u0435 \u043C\u043E\u0436\u0435\u0442 \u0431\u044B\u0442\u044C \u043F\u0443\u0441\u0442\u044B\u043C", { reply_markup: adminBackKb() });
       return;
     }
-    await updatePremiumKey(keyId, text2.trim());
+    await updateKey(keyId, text2.trim());
     await ctx.reply(`\u2705 Premium \u043A\u043B\u044E\u0447 \u0438\u0437\u043C\u0435\u043D\u0451\u043D!`, { reply_markup: adminBackKb() });
     return;
   }
@@ -59961,10 +59961,10 @@ ${filtered > 0 ? `\u26A0\uFE0F \u041E\u0442\u0444\u0438\u043B\u044C\u0442\u0440\
       return;
     }
     await clearFreeKeys();
-    await clearPremiumKeys();
+    await clearKeys();
     for (const k of validKeys) {
       await addFreeKey(k);
-      await addPremiumKey(k);
+      await addKey(k);
     }
     const subs = await getAllSubscriptions();
     let updatedFree = 0, updatedPrem = 0;
@@ -60156,7 +60156,7 @@ async function showStats(ctx) {
   const totalReferred = refCounts.reduce((s, r) => s + r.count, 0);
   const topRefs = await getTopReferrers(5);
   const freeKeys = await getFreeKeys();
-  const premiumKeys = await getPremiumKeys();
+  const premiumKeys = await getKeys();
   const banned = users.filter((u) => u.banned).length;
   const serverStatus = getServerStatus();
   let serverText = "";
@@ -60210,7 +60210,7 @@ async function showFreeKeys(ctx) {
   await ctx.editMessageText(text2, { parse_mode: "HTML", reply_markup: freeKeysKb(keys) });
 }
 async function showPremiumKeys(ctx) {
-  const keys = await getPremiumKeys();
+  const keys = await getKeys();
   let text2 = `\u2B50 <b>PREMIUM \u041A\u041B\u042E\u0427\u0418</b>
 
 \u0412\u0441\u0435\u0433\u043E \u0432 \u043F\u0443\u043B\u0435: <b>${keys.length}</b> \u0448\u0442.
@@ -60225,7 +60225,7 @@ async function showPremiumKeys(ctx) {
   } else {
     text2 += "\n\u26A0\uFE0F \u041F\u0443\u043B Premium \u043A\u043B\u044E\u0447\u0435\u0439 \u043F\u0443\u0441\u0442!\n";
   }
-  await ctx.editMessageText(text2, { parse_mode: "HTML", reply_markup: premiumKeysKb(keys) });
+  await ctx.editMessageText(text2, { parse_mode: "HTML", reply_markup: keysKb(keys) });
 }
 async function checkAllKeys(ctx) {
   await ctx.editMessageText("\u{1F50D} <b>\u041F\u0420\u041E\u0412\u0415\u0420\u041A\u0410 \u041A\u041B\u042E\u0427\u0415\u0419</b>\n\n\u23F3 \u0412\u044B\u043F\u043E\u043B\u043D\u044F\u0435\u0442\u0441\u044F \u043F\u0440\u043E\u0432\u0435\u0440\u043A\u0430...\n\u042D\u0442\u043E \u043C\u043E\u0436\u0435\u0442 \u0437\u0430\u043D\u044F\u0442\u044C \u0434\u043E 30 \u0441\u0435\u043A\u0443\u043D\u0434.", {
@@ -60233,7 +60233,7 @@ async function checkAllKeys(ctx) {
     reply_markup: adminBackKb()
   });
   const freeKeys = await getFreeKeys();
-  const premiumKeys = await getPremiumKeys();
+  const premiumKeys = await getKeys();
   const [freeStatuses, premStatuses] = await Promise.all([
     Promise.all(freeKeys.map((k) => checkKeyStatus(k.key))),
     Promise.all(premiumKeys.map((k) => checkKeyStatus(k.key)))
@@ -60356,7 +60356,7 @@ async function sendBackup() {
   const dbUrl = process.env.DATABASE_URL;
   const users = await getAllUsers();
   const freeKeys = await getFreeKeys();
-  const premiumKeys = await getPremiumKeys();
+  const premiumKeys = await getKeys();
   const testKey = await getTestKey();
   const date6 = (/* @__PURE__ */ new Date()).toLocaleString("ru-RU");
   if (dbUrl) {
@@ -60448,15 +60448,15 @@ ${filtered > 0 ? `\u26A0\uFE0F \u041E\u0442\u0444\u0438\u043B\u044C\u0442\u0440\
       const freeKeys = await getFreeKeys();
       await ctx.reply(`\u2705 \u0411\u0435\u0441\u043F\u043B\u0430\u0442\u043D\u044B\u0435 \u043A\u043B\u044E\u0447\u0438 \u043E\u0431\u043D\u043E\u0432\u043B\u0435\u043D\u044B!\n\u0414\u043E\u0431\u0430\u0432\u043B\u0435\u043D\u043E \u0432 \u043F\u0443\u043B: <b>${freeKeys.length}</b> \u043A\u043B\u044E\u0447\u0435\u0439`, { parse_mode: "HTML", reply_markup: freeKeysKb(freeKeys) });
     } else if (state === "waiting_new_prem_keys") {
-      await clearPremiumKeys();
-      for (const k of validKeys) await addPremiumKey(k);
-      const premKeys = await getPremiumKeys();
-      await ctx.reply(`\u2705 Premium \u043A\u043B\u044E\u0447\u0438 \u043E\u0431\u043D\u043E\u0432\u043B\u0435\u043D\u044B!\n\u0414\u043E\u0431\u0430\u0432\u043B\u0435\u043D\u043E \u0432 \u043F\u0443\u043B: <b>${premKeys.length}</b> \u043A\u043B\u044E\u0447\u0435\u0439`, { parse_mode: "HTML", reply_markup: premiumKeysKb(premKeys) });
+      await clearKeys();
+      for (const k of validKeys) await addKey(k);
+      const premKeys = await getKeys();
+      await ctx.reply(`\u2705 Premium \u043A\u043B\u044E\u0447\u0438 \u043E\u0431\u043D\u043E\u0432\u043B\u0435\u043D\u044B!\n\u0414\u043E\u0431\u0430\u0432\u043B\u0435\u043D\u043E \u0432 \u043F\u0443\u043B: <b>${premKeys.length}</b> \u043A\u043B\u044E\u0447\u0435\u0439`, { parse_mode: "HTML", reply_markup: keysKb(premKeys) });
     } else if (state === "waiting_replace_all_keys") {
-      await clearFreeKeys(); await clearPremiumKeys();
-      for (const k of validKeys) { await addFreeKey(k); await addPremiumKey(k); }
+      await clearFreeKeys(); await clearKeys();
+      for (const k of validKeys) { await addFreeKey(k); await addKey(k); }
       const freeKeysCount = (await getFreeKeys()).length;
-      const premKeysCount = (await getPremiumKeys()).length;
+      const premKeysCount = (await getKeys()).length;
       await ctx.reply(`\u2705 \u0412\u0441\u0435 \u043A\u043B\u044E\u0447\u0438 \u0437\u0430\u043C\u0435\u043D\u0435\u043D\u044B!\n\u0411\u0435\u0441\u043F\u043B: <b>${freeKeysCount}</b>\nPremium: <b>${premKeysCount}</b>`, { parse_mode: "HTML", reply_markup: adminKeysMainKb() });
     }
     adminStates.delete(ADMIN_ID2);
@@ -60502,7 +60502,7 @@ userBot.on("message:text", async (ctx, next) => {
       return;
     }
     const isFreeTariff2 = promo.tariff && (promo.tariff.includes("free") || promo.tariff === "3days" || promo.tariff === "7days");
-    const key = isFreeTariff2 ? (await getRandomFreeKey() || await getRandomPremiumKey()) : (await getRandomPremiumKey() || await getRandomFreeKey());
+    const key = isFreeTariff2 ? (await getRandomFreeKey() || await getRandomKey()) : (await getRandomKey() || await getRandomFreeKey());
     if (!key) {
       await ctx.reply("\u274C \u041D\u0435\u0442 \u043A\u043B\u044E\u0447\u0435\u0439 \u0432 \u0431\u0430\u0437\u0435. \u041E\u0431\u0440\u0430\u0442\u0438\u0442\u0435 \u043A \u043F\u043E\u0434\u0434\u0435\u0440\u0436\u043A\u0435.", { reply_markup: backToMainKb() });
       return;
